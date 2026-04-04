@@ -79,14 +79,6 @@ export function CoursesPage() {
     onError: error => toast.error(error.message),
   });
 
-  if (coursesQuery.isLoading) {
-    return <LoadingState label="Loading courses..." />;
-  }
-
-  if (coursesQuery.error) {
-    return <ErrorState description={coursesQuery.error.message} onRetry={() => void coursesQuery.refetch()} />;
-  }
-
   const courses = coursesQuery.data ?? [];
   const allUsers = usersQuery.data ?? [];
   const teachers = isAdminLike
@@ -108,6 +100,14 @@ export function CoursesPage() {
 
     return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
   }, [courses, search, sortDirection, teacherFilter]);
+
+  if (coursesQuery.isLoading) {
+    return <LoadingState label="Loading courses..." />;
+  }
+
+  if (coursesQuery.error) {
+    return <ErrorState description={coursesQuery.error.message} onRetry={() => void coursesQuery.refetch()} />;
+  }
 
   const totalPages = Math.max(1, Math.ceil(filteredCourses.length / pageSize));
   const pagedCourses = paginate(filteredCourses, page, pageSize);

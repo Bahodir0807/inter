@@ -85,14 +85,6 @@ export function GroupsPage() {
     onError: error => toast.error(error.message),
   });
 
-  if (groupsQuery.isLoading) {
-    return <LoadingState label="Loading groups..." />;
-  }
-
-  if (groupsQuery.error) {
-    return <ErrorState description={groupsQuery.error.message} onRetry={() => void groupsQuery.refetch()} />;
-  }
-
   const groups = groupsQuery.data ?? [];
   const courses = coursesQuery.data ?? [];
   const users = usersQuery.data ?? [];
@@ -121,6 +113,14 @@ export function GroupsPage() {
 
     return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
   }, [groups, search, sortDirection, teacherFilter]);
+
+  if (groupsQuery.isLoading) {
+    return <LoadingState label="Loading groups..." />;
+  }
+
+  if (groupsQuery.error) {
+    return <ErrorState description={groupsQuery.error.message} onRetry={() => void groupsQuery.refetch()} />;
+  }
 
   const totalPages = Math.max(1, Math.ceil(filteredGroups.length / pageSize));
   const pagedGroups = paginate(filteredGroups, page, pageSize);

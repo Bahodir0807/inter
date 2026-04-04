@@ -90,14 +90,6 @@ export function UsersPage() {
     onError: error => toast.error(error.message),
   });
 
-  if (query.isLoading) {
-    return <LoadingState label="Loading users..." />;
-  }
-
-  if (query.error) {
-    return <ErrorState description={query.error.message} onRetry={() => void query.refetch()} />;
-  }
-
   const users = query.data ?? [];
 
   const filteredUsers = useMemo(() => {
@@ -120,6 +112,14 @@ export function UsersPage() {
 
     return sortBy(filtered, item => getUserDisplayName(item).toLowerCase(), sortDirection);
   }, [roleFilter, search, sortDirection, users]);
+
+  if (query.isLoading) {
+    return <LoadingState label="Loading users..." />;
+  }
+
+  if (query.error) {
+    return <ErrorState description={query.error.message} onRetry={() => void query.refetch()} />;
+  }
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const pagedUsers = paginate(filteredUsers, page, pageSize);

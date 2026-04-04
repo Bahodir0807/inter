@@ -83,14 +83,6 @@ export function PaymentsPage() {
     onError: error => toast.error(error.message),
   });
 
-  if (paymentsQuery.isLoading) {
-    return <LoadingState label="Loading payments..." />;
-  }
-
-  if (paymentsQuery.error) {
-    return <ErrorState description={paymentsQuery.error.message} onRetry={() => void paymentsQuery.refetch()} />;
-  }
-
   const payments = paymentsQuery.data ?? [];
   const students = supportQuery.data?.students ?? [];
   const courses = supportQuery.data?.courses ?? [];
@@ -116,6 +108,14 @@ export function PaymentsPage() {
 
     return sortBy(filtered, item => item.paidAt || item.createdAt || '', sortDirection);
   }, [courseFilter, payments, search, sortDirection, studentFilter]);
+
+  if (paymentsQuery.isLoading) {
+    return <LoadingState label="Loading payments..." />;
+  }
+
+  if (paymentsQuery.error) {
+    return <ErrorState description={paymentsQuery.error.message} onRetry={() => void paymentsQuery.refetch()} />;
+  }
 
   const totalPages = Math.max(1, Math.ceil(filteredPayments.length / pageSize));
   const pagedPayments = paginate(filteredPayments, page, pageSize);

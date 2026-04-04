@@ -93,14 +93,6 @@ export function SchedulePage() {
     onError: error => toast.error(error.message),
   });
 
-  if (scheduleQuery.isLoading) {
-    return <LoadingState label="Loading schedule..." />;
-  }
-
-  if (scheduleQuery.error) {
-    return <ErrorState description={scheduleQuery.error.message} onRetry={() => void scheduleQuery.refetch()} />;
-  }
-
   const items = scheduleQuery.data ?? [];
   const support = supportQuery.data;
   const teachers = isAdminLike
@@ -131,6 +123,14 @@ export function SchedulePage() {
 
     return sortBy(filtered, item => item.timeStart, sortDirection);
   }, [groupFilter, items, search, sortDirection, teacherFilter]);
+
+  if (scheduleQuery.isLoading) {
+    return <LoadingState label="Loading schedule..." />;
+  }
+
+  if (scheduleQuery.error) {
+    return <ErrorState description={scheduleQuery.error.message} onRetry={() => void scheduleQuery.refetch()} />;
+  }
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
   const pagedItems = paginate(filteredItems, page, pageSize);
