@@ -8,7 +8,7 @@ import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
 import { EmptyState } from '../../shared/ui/feedback/empty-state';
 import { TableShell } from '../../shared/ui/data-display/table-shell';
-import { DataTable } from '../../shared/ui/data-display/data-table';
+import { DataTable, type Column } from '../../shared/ui/data-display/data-table';
 import { Badge } from '../../shared/ui/badges/badge';
 import { Card } from '../../shared/ui/surfaces/card';
 import { Button } from '../../shared/ui/buttons/button';
@@ -91,11 +91,12 @@ export function UsersPage() {
   });
 
   const users = query.data ?? [];
+  const usersWithContact = users.filter(item => item.phoneNumber || item.email).length;
 
   const filteredUsers = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     const filtered = users.filter(item => {
-      const matchesRole = roleFilter === 'all' || item.role === roleFilter;
+      const matchesRole = !isAdminLike || roleFilter === 'all' || item.role === roleFilter;
       const haystack = [
         item.username,
         item.firstName,
@@ -111,10 +112,10 @@ export function UsersPage() {
     });
 
     return sortBy(filtered, item => getUserDisplayName(item).toLowerCase(), sortDirection);
-  }, [roleFilter, search, sortDirection, users]);
+  }, [isAdminLike, roleFilter, search, sortDirection, users]);
 
   const toolbarFilters = [
-    ...(roleFilter !== 'all'
+    ...(isAdminLike && roleFilter !== 'all'
       ? [`Role: ${roleOptions.find(option => option.value === roleFilter)?.label ?? roleFilter}`]
       : []),
     ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
@@ -130,6 +131,85 @@ export function UsersPage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const pagedUsers = paginate(filteredUsers, page, pageSize);
+  const columns: Column<AppUser>[] = [
+    {
+      key: 'user',
+      header: 'User',
+      className: 'data-table__cell--primary',
+      cell: item => (
+        <div className="cell-stack cell-stack--primary cell-stack--relation">
+          <span className="cell-title">{getUserDisplayName(item)}</span>
+          {isAdminLike ? <span className="cell-meta cell-meta--strong">@{item.username}</span> : null}
+          <span className="cell-meta">{item.phoneNumber || item.email || 'No contact details yet'}</span>
+        </div>
+      ),
+    },
+    ...(isAdminLike
+      ? [
+          {
+            key: 'access',
+            header: 'Access',
+            className: 'data-table__cell--relation',
+            cell: (item: AppUser) => (
+              <div className="cell-stack cell-stack--relation">
+                <div className="cell-badges">
+                  <Badge tone="info">{getRoleDisplayName(item.role)}</Badge>
+                  <Badge tone={item.isActive ? 'success' : 'warning'}>
+                    {item.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                <span className="cell-meta">
+                  {item.telegramId ? `Telegram linked: ${item.telegramId}` : 'Telegram not linked'}
+                </span>
+              </div>
+            ),
+          },
+        ]
+      : [
+          {
+            key: 'contact',
+            header: 'Contact',
+            className: 'data-table__cell--relation',
+            cell: (item: AppUser) => (
+              <div className="cell-stack cell-stack--relation">
+                <span className="cell-title">{item.email || item.phoneNumber || 'No contact details yet'}</span>
+                <span className="cell-meta">
+                  {item.email && item.phoneNumber
+                    ? item.phoneNumber
+                    : item.email
+                      ? 'Email on file'
+                      : item.phoneNumber
+                        ? 'Phone on file'
+                        : 'No email or phone yet'}
+                </span>
+              </div>
+            ),
+          },
+        ]),
+    {
+      key: 'actions',
+      header: 'Actions',
+      className: 'data-table__cell--actions',
+      headClassName: 'data-table__head--actions',
+      cell: item => (
+        <div className="row-actions">
+          <Button size="sm" variant="ghost" onClick={() => openDetail(item)}>
+            View
+          </Button>
+          {isAdminLike ? (
+            <>
+              <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
+                Edit
+              </Button>
+              <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
+                Delete
+              </Button>
+            </>
+          ) : null}
+        </div>
+      ),
+    },
+  ];
 
   const openCreate = () => {
     setSelectedUser(null);
@@ -154,8 +234,8 @@ export function UsersPage() {
       title="Users"
       description={
         isAdminLike
-          ? 'Manage accounts, roles, and contact details from one working directory.'
-          : 'Teachers can use this directory to review student accounts and contact details.'
+          ? 'Accounts, roles, and contact details.'
+          : 'Students and their contact details.'
       }
       actions={isAdminLike ? <Button onClick={openCreate}>New user</Button> : undefined}
     >
@@ -166,18 +246,25 @@ export function UsersPage() {
           <span className="subtle">After filters and search</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">Active accounts</span>
-          <strong>{users.filter(item => item.isActive).length}</strong>
-          <span className="subtle">Marked as active</span>
+          <span className="subtle">{isAdminLike ? 'Active accounts' : 'With contact info'}</span>
+          <strong>{isAdminLike ? users.filter(item => item.isActive).length : usersWithContact}</strong>
+          <span className="subtle">{isAdminLike ? 'Marked as active' : 'Students with phone or email'}</span>
         </Card>
       </div>
 
       {users.length === 0 ? (
-        <EmptyState title="No people yet" description="No user records are visible in this workspace yet. New accounts will appear here as soon as they are available." />
+        <EmptyState
+          title={isAdminLike ? 'No users yet' : 'No students yet'}
+          description={
+            isAdminLike
+              ? 'User records will appear here when they are available.'
+              : 'Student records will appear here when they are available.'
+          }
+        />
       ) : (
         <TableShell
           title="User directory"
-          description="Roles, status, and contact details for daily operations."
+          description={isAdminLike ? 'Roles, status, and contact details.' : 'Student names and contact details.'}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -186,26 +273,28 @@ export function UsersPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder="Search by name, username, email, or phone"
+            searchPlaceholder={isAdminLike ? 'Search by name, username, email, or phone' : 'Search by name, email, or phone'}
             resultsLabel={`${filteredUsers.length} result${filteredUsers.length === 1 ? '' : 's'}`}
             activeFilters={toolbarFilters}
             filters={
               <>
-                <Select
-                  aria-label="Filter users by role"
-                  value={roleFilter}
-                  onChange={event => {
-                    setRoleFilter(event.target.value as 'all' | Role);
-                    setPage(1);
-                  }}
-                >
-                  <option value="all">All roles</option>
-                  {roleOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+                {isAdminLike ? (
+                  <Select
+                    aria-label="Filter users by role"
+                    value={roleFilter}
+                    onChange={event => {
+                      setRoleFilter(event.target.value as 'all' | Role);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="all">All roles</option>
+                    {roleOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                ) : null}
                 <Select
                   aria-label="Sort users"
                   value={sortDirection}
@@ -222,63 +311,9 @@ export function UsersPage() {
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No people match this view"
-            emptyDescription="Try a different search or clear the current role filter."
-            columns={[
-              {
-                key: 'user',
-                header: 'User',
-                className: 'data-table__cell--primary',
-                cell: item => (
-                  <div className="cell-stack cell-stack--primary cell-stack--relation">
-                    <span className="cell-title">{getUserDisplayName(item)}</span>
-                    <span className="cell-meta cell-meta--strong">@{item.username}</span>
-                    <span className="cell-meta">{item.phoneNumber || item.email || 'No contact details yet'}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'access',
-                header: 'Access',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <div className="cell-badges">
-                      <Badge tone="info">{getRoleDisplayName(item.role)}</Badge>
-                      <Badge tone={item.isActive ? 'success' : 'warning'}>
-                        {item.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-                    <span className="cell-meta">
-                      {item.telegramId ? `Telegram linked: ${item.telegramId}` : 'Telegram not linked'}
-                    </span>
-                  </div>
-                ),
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                className: 'data-table__cell--actions',
-                headClassName: 'data-table__head--actions',
-                cell: item => (
-                  <div className="row-actions">
-                    <Button size="sm" variant="ghost" onClick={() => openDetail(item)}>
-                      View
-                    </Button>
-                    {isAdminLike ? (
-                      <>
-                        <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                          Delete
-                        </Button>
-                      </>
-                    ) : null}
-                  </div>
-                ),
-              },
-            ]}
+            emptyTitle="No users found"
+            emptyDescription={isAdminLike ? 'Try another search or clear the role filter.' : 'Try another search.'}
+            columns={columns}
             rows={pagedUsers}
           />
         </TableShell>
@@ -311,7 +346,12 @@ export function UsersPage() {
         }}
       />
 
-      <UserDetailModal open={detailOpen} user={selectedUser} onClose={() => setDetailOpen(false)} />
+      <UserDetailModal
+        open={detailOpen}
+        user={selectedUser}
+        showAccountDetails={isAdminLike}
+        onClose={() => setDetailOpen(false)}
+      />
       <ConfirmModal
         open={!!deleteCandidate}
         title="Delete user?"

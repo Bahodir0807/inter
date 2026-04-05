@@ -68,6 +68,7 @@ export function ScheduleFormModal({
   teachers,
   students,
   defaultTeacherId,
+  teacherLocked = false,
   loading,
   onClose,
   onSubmit,
@@ -80,6 +81,7 @@ export function ScheduleFormModal({
   teachers: AppUser[];
   students: AppUser[];
   defaultTeacherId?: string;
+  teacherLocked?: boolean;
   loading: boolean;
   onClose: () => void;
   onSubmit: (values: ScheduleFormValues) => Promise<void>;
@@ -140,6 +142,11 @@ export function ScheduleFormModal({
   }, [item, open, preferredCourseId, preferredGroupId, preferredRoomId, preferredTeacherId, reset, setFocus]);
 
   const selectedStudents = watch('students');
+  const selectedTeacherId = watch('teacher');
+  const teacherLabel = getUserDisplayName(
+    teachers.find(teacher => teacher.id === selectedTeacherId)
+      ?? teachers.find(teacher => teacher.id === preferredTeacherId),
+  );
 
   return (
     <>
@@ -181,19 +188,31 @@ export function ScheduleFormModal({
                   </option>
                 ))}
               </Select>
-              <Select
-                label="Teacher"
-                hint="Defaults to the current teacher context when available."
-                error={errors.teacher?.message}
-                {...register('teacher')}
-              >
-                <option value="">Select teacher</option>
-                {teachers.map(teacher => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {getUserDisplayName(teacher)}
-                  </option>
-                ))}
-              </Select>
+              {teacherLocked ? (
+                <>
+                  <input type="hidden" {...register('teacher')} />
+                  <Input
+                    label="Teacher"
+                    hint="This lesson stays assigned to your account."
+                    value={teacherLabel || 'Current teacher'}
+                    readOnly
+                  />
+                </>
+              ) : (
+                <Select
+                  label="Teacher"
+                  hint="Defaults to the current teacher context when available."
+                  error={errors.teacher?.message}
+                  {...register('teacher')}
+                >
+                  <option value="">Select teacher</option>
+                  {teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {getUserDisplayName(teacher)}
+                    </option>
+                  ))}
+                </Select>
+              )}
               <Select
                 label="Room"
                 hint="If only one room is available, it is selected automatically."

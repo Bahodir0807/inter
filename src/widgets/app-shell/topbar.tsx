@@ -4,7 +4,7 @@ import { useAuthStore } from '../../features/auth/model/auth-store';
 import { getRoleDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { AppIcon } from '../../shared/ui/icons/app-icon';
 
-export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
+export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: () => void }) {
   const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
   const userName = getUserDisplayName(user) || 'CRM user';
@@ -18,15 +18,21 @@ export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
   return (
     <header className="app-topbar">
       <div className="app-topbar__left">
-        <Button variant="ghost" className="app-topbar__menu" onClick={onMenuToggle}>
+        <Button
+          variant="ghost"
+          className="app-topbar__menu"
+          aria-expanded={open}
+          aria-controls="app-sidebar"
+          onClick={onMenuToggle}
+        >
           <AppIcon name="menu" />
           <span>Menu</span>
         </Button>
         <div className="app-topbar__identity">
           <Breadcrumbs />
           <div className="app-topbar__headline">
-            <strong>Ibrat operations desk</strong>
-            <span className="subtle">Keep courses, cohorts, schedule, rooms, and payments aligned day to day.</span>
+            <strong>Workspace</strong>
+            <span className="subtle">People, courses, schedule, rooms, and payments.</span>
           </div>
         </div>
       </div>

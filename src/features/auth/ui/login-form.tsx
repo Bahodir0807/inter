@@ -59,18 +59,18 @@ export function LoginForm() {
       <div className="login-card__intro">
         <span className="eyebrow">Workspace access</span>
         <h1>Sign in</h1>
-        <p>Continue into the live operations workspace with the account issued for your role.</p>
+        <p>Sign in to continue.</p>
       </div>
       <div className="login-card__status">
-        <span className="login-card__status-label">Next stop</span>
+        <span className="login-card__status-label">Opens</span>
         <strong>{destinationLabel}</strong>
-        <p>Authentication uses the live backend at `/auth/login`.</p>
+        <p>Your access depends on your role.</p>
       </div>
       <form className="login-form" onSubmit={onSubmit}>
         <Input
           label="Username"
-          hint="Use the username issued by your team."
-          placeholder="For example: aziza.teacher"
+          hint="Use your work username."
+          placeholder="aziza.teacher"
           autoComplete="username"
           fieldClassName="ui-field--primary"
           error={errors.username?.message}
@@ -78,7 +78,7 @@ export function LoginForm() {
         />
         <Input
           label="Password"
-          hint="Role-based access is applied after sign in."
+          hint="Enter your password."
           type="password"
           placeholder="Enter your password"
           autoComplete="current-password"
@@ -90,7 +90,7 @@ export function LoginForm() {
           {status === 'loading' ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
-      <p className="login-card__footnote">People, courses, groups, schedule, rooms, and payments stay connected after sign in.</p>
+      <p className="login-card__footnote">People, courses, schedule, rooms, and payments stay in one place.</p>
     </Card>
   );
 }

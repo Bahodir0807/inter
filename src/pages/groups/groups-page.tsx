@@ -10,7 +10,7 @@ import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
 import { EmptyState } from '../../shared/ui/feedback/empty-state';
 import { TableShell } from '../../shared/ui/data-display/table-shell';
-import { DataTable } from '../../shared/ui/data-display/data-table';
+import { DataTable, type Column } from '../../shared/ui/data-display/data-table';
 import { Card } from '../../shared/ui/surfaces/card';
 import { TableToolbar } from '../../shared/ui/data-display/table-toolbar';
 import { Pagination } from '../../shared/ui/data-display/pagination';
@@ -30,6 +30,7 @@ export function GroupsPage() {
   const sessionUser = useAuthStore(state => state.user);
   const canManage = !!sessionUser && teachingRoles.includes(sessionUser.role);
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
+  const isTeacher = sessionUser?.role === 'teacher';
 
   const [search, setSearch] = useState('');
   const [teacherFilter, setTeacherFilter] = useState<'all' | string>('all');
@@ -94,10 +95,20 @@ export function GroupsPage() {
       ? [sessionUser]
       : [];
   const students = isAdminLike ? users.filter(user => user.role === 'student') : users;
+  const visibleGroups = useMemo(() => {
+    if (!sessionUser || isAdminLike) {
+      return groups;
+    }
+
+    return groups.filter(group => {
+      const teacherId = typeof group.teacher === 'string' ? group.teacher : group.teacher.id;
+      return teacherId === sessionUser.id;
+    });
+  }, [groups, isAdminLike, sessionUser]);
 
   const filteredGroups = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    const filtered = groups.filter(group => {
+    const filtered = visibleGroups.filter(group => {
       const teacherId = typeof group.teacher === 'string' ? group.teacher : group.teacher.id;
       const haystack = [
         group.name,
@@ -107,18 +118,18 @@ export function GroupsPage() {
         .join(' ')
         .toLowerCase();
 
-      const matchesTeacher = teacherFilter === 'all' || teacherId === teacherFilter;
+      const matchesTeacher = !isAdminLike || teacherFilter === 'all' || teacherId === teacherFilter;
       return matchesTeacher && haystack.includes(normalizedSearch);
     });
 
     return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
-  }, [groups, search, sortDirection, teacherFilter]);
+  }, [isAdminLike, search, sortDirection, teacherFilter, visibleGroups]);
 
   const selectedTeacherLabel =
     teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
 
   const toolbarFilters = [
-    ...(teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
+    ...(isAdminLike && teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
     ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
   ];
 
@@ -132,13 +143,75 @@ export function GroupsPage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredGroups.length / pageSize));
   const pagedGroups = paginate(filteredGroups, page, pageSize);
-  const totalLinkedStudents = groups.reduce((sum, item) => sum + item.students.length, 0);
+  const totalLinkedStudents = visibleGroups.reduce((sum, item) => sum + item.students.length, 0);
+  const columns: Column<Group>[] = [
+    {
+      key: 'group',
+      header: 'Group',
+      className: 'data-table__cell--primary',
+      cell: item => (
+        <div className="cell-stack cell-stack--primary cell-stack--relation">
+          <span className="cell-title">{item.name}</span>
+          <span className="cell-meta">{getCourseDisplayName(item.course)}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'teacher',
+      header: 'Teacher',
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
+          <span className="cell-meta">{isAdminLike ? 'Responsible teacher' : 'Assigned to this roster'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'students',
+      header: 'Students',
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">{item.students.length} students</span>
+          <span className="cell-meta">{getUserListSummary(item.students)}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: item => (
+        <Badge tone={item.students.length > 0 ? 'success' : 'warning'}>
+          {item.students.length > 0 ? 'Active roster' : 'No students yet'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      className: 'data-table__cell--actions',
+      headClassName: 'data-table__head--actions',
+      cell: item => (
+        <div className="row-actions">
+          <Button size="sm" variant="secondary" onClick={() => { setSelectedGroup(item); setFormOpen(true); }}>
+            Edit
+          </Button>
+          {isAdminLike ? (
+            <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
+              Delete
+            </Button>
+          ) : null}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <PageLayout
       eyebrow="Cohorts"
       title="Groups"
-      description="Organize cohorts, assign responsible teachers, and keep the student roster visible at a glance."
+      description={isAdminLike ? 'Groups, teachers, and student rosters.' : 'Your groups and student rosters.'}
       actions={canManage ? <Button onClick={() => { setSelectedGroup(null); setFormOpen(true); }}>New group</Button> : undefined}
     >
       <div className="dashboard-grid">
@@ -150,15 +223,22 @@ export function GroupsPage() {
         <Card className="metric-card">
           <span className="subtle">Linked students</span>
           <strong>{totalLinkedStudents}</strong>
-          <span className="subtle">Across all loaded groups</span>
+          <span className="subtle">Across visible groups</span>
         </Card>
       </div>
-      {groups.length === 0 ? (
-        <EmptyState title="No groups yet" description="No cohorts have been opened in this workspace yet. Create the first group when the roster is ready." />
+      {visibleGroups.length === 0 ? (
+        <EmptyState
+          title={isTeacher ? 'No groups assigned' : 'No groups yet'}
+          description={
+            isAdminLike
+              ? 'Create the first group to start working with cohorts.'
+              : 'Groups assigned to you will appear here.'
+          }
+        />
       ) : (
         <TableShell
           title="Group registry"
-          description="Each row shows the course context, teacher owner, and current student roster."
+          description={isAdminLike ? 'Group, course, teacher, and students.' : 'Group, course, and student roster.'}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -167,26 +247,28 @@ export function GroupsPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder="Search by group, course, or teacher"
+            searchPlaceholder={isAdminLike ? 'Search by group, course, or teacher' : 'Search by group or course'}
             resultsLabel={`${filteredGroups.length} result${filteredGroups.length === 1 ? '' : 's'}`}
             activeFilters={toolbarFilters}
             filters={
               <>
-                <Select
-                  aria-label="Filter groups by teacher"
-                  value={teacherFilter}
-                  onChange={event => {
-                    setTeacherFilter(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="all">All teachers</option>
-                  {teachers.map(teacher => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {getUserDisplayName(teacher)}
-                    </option>
-                  ))}
-                </Select>
+                {isAdminLike ? (
+                  <Select
+                    aria-label="Filter groups by teacher"
+                    value={teacherFilter}
+                    onChange={event => {
+                      setTeacherFilter(event.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="all">All teachers</option>
+                    {teachers.map(teacher => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {getUserDisplayName(teacher)}
+                      </option>
+                    ))}
+                  </Select>
+                ) : null}
                 <Select
                   aria-label="Sort groups"
                   value={sortDirection}
@@ -203,76 +285,9 @@ export function GroupsPage() {
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No groups match this view"
-            emptyDescription="Try a different search or clear the current teacher filter."
-            columns={[
-              {
-                key: 'group',
-                header: 'Group',
-                className: 'data-table__cell--primary',
-                cell: item => (
-                  <div className="cell-stack cell-stack--primary cell-stack--relation">
-                    <span className="cell-title">{item.name}</span>
-                    <span className="cell-meta">{getCourseDisplayName(item.course)}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'teacher',
-                header: 'Teacher',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
-                    <span className="cell-meta">Responsible teacher</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'students',
-                header: 'Students',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">{item.students.length} students</span>
-                    <span className="cell-meta">{getUserListSummary(item.students)}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                cell: item => (
-                  <Badge tone={item.students.length > 0 ? 'success' : 'warning'}>
-                    {item.students.length > 0 ? 'Active roster' : 'No students yet'}
-                  </Badge>
-                ),
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                className: 'data-table__cell--actions',
-                headClassName: 'data-table__head--actions',
-                cell: item => (
-                  <div className="row-actions">
-                    {canManage ? (
-                      <>
-                        <Button size="sm" variant="secondary" onClick={() => { setSelectedGroup(item); setFormOpen(true); }}>
-                          Edit
-                        </Button>
-                        {isAdminLike ? (
-                          <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                            Delete
-                          </Button>
-                        ) : null}
-                      </>
-                    ) : (
-                      <Badge tone="info">Read only</Badge>
-                    )}
-                  </div>
-                ),
-              },
-            ]}
+            emptyTitle="No groups found"
+            emptyDescription={isAdminLike ? 'Try another search or clear the teacher filter.' : 'Try another search.'}
+            columns={columns}
             rows={pagedGroups}
           />
         </TableShell>
@@ -285,6 +300,7 @@ export function GroupsPage() {
         teachers={teachers}
         students={students}
         defaultTeacherId={!isAdminLike ? sessionUser?.id : undefined}
+        teacherLocked={!isAdminLike}
         loading={createMutation.isPending || updateMutation.isPending}
         onClose={() => setFormOpen(false)}
         onSubmit={async values => {

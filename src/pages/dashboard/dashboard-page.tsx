@@ -119,38 +119,39 @@ export function DashboardPage() {
       <PageLayout
         eyebrow="Overview"
         title="Dashboard"
-        description="Operational overview for owners and admins with access to the core CRM data footprint."
+        description="Key numbers across the workspace."
+        variant="feature"
       >
         <div className="dashboard-grid dashboard-grid--overview">
-          <MetricCard className="metric-card--hero" label="Users" value={data.users.length} hint="People in the system" />
-          <MetricCard label="Courses" value={data.courses.length} hint="Active programs" />
-          <MetricCard label="Groups" value={data.groups.length} hint="Learning cohorts" />
-          <MetricCard className="metric-card--accent" label="Payments" value={data.payments.length} hint="Tracked transactions" />
+          <MetricCard className="metric-card--hero" label="People" value={data.users.length} hint="All accounts" />
+          <MetricCard label="Courses" value={data.courses.length} hint="Current courses" />
+          <MetricCard label="Groups" value={data.groups.length} hint="Active groups" />
+          <MetricCard className="metric-card--accent" label="Payments" value={data.payments.length} hint="All records" />
         </div>
         <div className="content-grid">
           <Card className="content-grid__wide dashboard-panel">
             <div className="dashboard-panel__intro">
               <div className="stack">
-                <h3>Operational pulse</h3>
-                <p className="subtle">A compact read on what is moving through the center today.</p>
+                <h3>Today</h3>
+                <p className="subtle">The main counts operators check most often.</p>
               </div>
             </div>
             <div className="stats-grid stats-grid--dashboard">
-              <MetricCard label="Schedule" value={data.schedule.length} hint="Planned sessions" />
-              <MetricCard label="Rooms" value={data.rooms.length} hint="Available spaces" />
-              <MetricCard label="Confirmed" value={data.payments.filter(item => item.isConfirmed).length} hint="Verified payments" />
+              <MetricCard label="Lessons" value={data.schedule.length} hint="Scheduled lessons" />
+              <MetricCard label="Rooms" value={data.rooms.length} hint="All rooms" />
+              <MetricCard label="Confirmed" value={data.payments.filter(item => item.isConfirmed).length} hint="Confirmed payments" />
               <MetricCard
                 className="metric-card--quiet"
-                label="Tracked amount"
+                label="Amount"
                 value={formatMoney(data.payments.reduce((sum, item) => sum + item.amount, 0))}
-                hint="Total payment amount"
+                hint="Total payments"
               />
             </div>
           </Card>
           <Card className="content-grid__side dashboard-note">
-            <span className="eyebrow">Working note</span>
-            <h3>List-first reporting for now</h3>
-            <p className="subtle">This dashboard still relies on list endpoints without server-side aggregates or pagination.</p>
+            <span className="eyebrow">Note</span>
+            <h3>List-based data</h3>
+            <p className="subtle">Counts come from the current list endpoints.</p>
           </Card>
         </div>
       </PageLayout>
@@ -164,18 +165,17 @@ export function DashboardPage() {
       <PageLayout
         eyebrow="Restricted access"
         title="Dashboard"
-        description="A safe overview for the panda role using only the backend endpoints that are explicitly available."
+        description="A limited view for this role."
+        variant="feature"
       >
         <div className="dashboard-grid">
-          <MetricCard className="metric-card--hero" label="Users" value={data.users.length} hint="Accessible through `/users`" />
+          <MetricCard className="metric-card--hero" label="People" value={data.users.length} hint="Visible users" />
           <MetricCard className="metric-card--accent" label="Students" value={data.users.filter(item => item.role === 'student').length} hint="Student accounts" />
         </div>
         <Card className="dashboard-note">
           <span className="eyebrow">Scope</span>
-          <h3>Intentionally narrow access</h3>
-          <p className="subtle">
-            The backend still gives `panda` a narrower scope than `owner` or `admin`, so this view stays intentionally limited.
-          </p>
+          <h3>Limited access</h3>
+          <p className="subtle">This role can only see a smaller part of the workspace.</p>
         </Card>
       </PageLayout>
     );
@@ -193,26 +193,27 @@ export function DashboardPage() {
     <PageLayout
       eyebrow="My workspace"
       title="Dashboard"
-      description="A daily overview for students and teachers using personal `me` endpoints."
+      description="What you need today."
+      variant="feature"
     >
       <div className="dashboard-grid">
-        <MetricCard className="metric-card--hero" label="Schedule" value={data.schedule.length} hint="Planned sessions" />
-        <MetricCard label="Homework" value={data.homework.length} hint="Assigned tasks" />
+        <MetricCard className="metric-card--hero" label="Lessons" value={data.schedule.length} hint="Scheduled lessons" />
+        <MetricCard label="Homework" value={data.homework.length} hint="Assigned work" />
         <MetricCard label="Grades" value={data.grades.length} hint="Recorded grades" />
         <MetricCard
           className="metric-card--accent"
           label="Payments"
           value={formatMoney(data.payments.reduce((sum, item) => sum + item.amount, 0))}
-          hint={isStudent ? 'My payment history' : 'Teachers do not have payment endpoints'}
+          hint={isStudent ? 'My payments' : 'Not available for teachers'}
         />
       </div>
       <div className="content-grid">
         <Card className="content-grid__side dashboard-note">
           <span className="eyebrow">Today</span>
           <h3>Attendance</h3>
-          <p className="subtle">Latest status: {data.attendance[0]?.status ?? 'no records yet'}</p>
+          <p className="subtle">Latest: {data.attendance[0]?.status ?? 'no records yet'}</p>
         </Card>
-        <TableShell title="Upcoming sessions" description="The next sessions from your personal schedule, kept in order.">
+        <TableShell title="Next lessons" description="Your next scheduled lessons.">
           <DataTable
             getRowKey={item => item.id}
             columns={[
@@ -245,8 +246,8 @@ export function DashboardPage() {
               },
             ]}
             rows={data.schedule.slice(0, 5)}
-            emptyTitle="No upcoming sessions"
-            emptyDescription="New sessions will appear here as soon as they are assigned."
+            emptyTitle="No lessons yet"
+            emptyDescription="Your next lessons will appear here."
           />
         </TableShell>
       </div>

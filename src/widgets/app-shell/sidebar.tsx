@@ -17,14 +17,14 @@ export function Sidebar({
   const items = navigationItems.filter(item => item.roles.includes(role));
 
   return (
-    <aside className={cn('app-sidebar', open && 'app-sidebar--open')}>
+    <aside id="app-sidebar" className={cn('app-sidebar', open && 'app-sidebar--open')}>
       <div className="app-sidebar__brand">
         <span className="app-sidebar__logo" aria-hidden="true">
           <AppIcon name="spark" />
         </span>
         <div className="app-sidebar__brand-copy">
           <strong>Ibrat CRM</strong>
-          <p>Courses, cohorts, rooms, and payments in one rhythm.</p>
+          <p>Daily operations across people, learning, schedule, and payments.</p>
         </div>
       </div>
       <div className="app-sidebar__section">

@@ -10,7 +10,7 @@ import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
 import { EmptyState } from '../../shared/ui/feedback/empty-state';
 import { TableShell } from '../../shared/ui/data-display/table-shell';
-import { DataTable } from '../../shared/ui/data-display/data-table';
+import { DataTable, type Column } from '../../shared/ui/data-display/data-table';
 import { Badge } from '../../shared/ui/badges/badge';
 import { Card } from '../../shared/ui/surfaces/card';
 import { formatDate, formatMoney } from '../../shared/lib/date';
@@ -115,8 +115,8 @@ export function PaymentsPage() {
     courseFilter === 'all' ? '' : getCourseDisplayName(courses.find(course => course.id === courseFilter));
 
   const toolbarFilters = [
-    ...(studentFilter !== 'all' ? [`Student: ${selectedStudentLabel}`] : []),
-    ...(courseFilter !== 'all' ? [`Course: ${selectedCourseLabel}`] : []),
+    ...(isAdminLike && studentFilter !== 'all' ? [`Student: ${selectedStudentLabel}`] : []),
+    ...(isAdminLike && courseFilter !== 'all' ? [`Course: ${selectedCourseLabel}`] : []),
     ...(sortDirection === 'asc' ? ['Order: Oldest first'] : []),
   ];
 
@@ -131,6 +131,72 @@ export function PaymentsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredPayments.length / pageSize));
   const pagedPayments = paginate(filteredPayments, page, pageSize);
   const confirmedPayments = payments.filter(item => item.isConfirmed).length;
+  const columns: Column<Payment>[] = [
+    {
+      key: 'payment',
+      header: 'Payment',
+      className: 'data-table__cell--primary',
+      cell: item => (
+        <div className="cell-stack cell-stack--primary cell-stack--relation">
+          <span className="cell-title">{formatMoney(item.amount)}</span>
+          <span className="cell-meta cell-meta--strong">{formatDate(item.paidAt)}</span>
+          <div className="cell-badges">
+            <Badge tone={item.isConfirmed ? 'success' : 'warning'}>
+              {item.isConfirmed ? 'Confirmed' : 'Pending'}
+            </Badge>
+          </div>
+        </div>
+      ),
+    },
+    ...(isAdminLike
+      ? [
+          {
+            key: 'student',
+            header: 'Student',
+            className: 'data-table__cell--relation',
+            cell: (item: Payment) => (
+              <div className="cell-stack cell-stack--relation">
+                <span className="cell-title">{getUserDisplayName(item.student)}</span>
+                <span className="cell-meta">Linked payer</span>
+              </div>
+            ),
+          },
+        ]
+      : []),
+    {
+      key: 'course',
+      header: 'Course',
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">{getCourseDisplayName(item.course)}</span>
+          <span className="cell-meta">{isAdminLike ? 'Linked offer' : 'Covered course'}</span>
+        </div>
+      ),
+    },
+    ...(isAdminLike
+      ? [
+          {
+            key: 'actions',
+            header: 'Actions',
+            className: 'data-table__cell--actions',
+            headClassName: 'data-table__head--actions',
+            cell: (item: Payment) => (
+              <div className="row-actions">
+                {!item.isConfirmed ? (
+                  <Button size="sm" variant="secondary" onClick={() => setConfirmCandidate(item)}>
+                    Confirm
+                  </Button>
+                ) : null}
+                <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
+                  Delete
+                </Button>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <PageLayout
@@ -138,8 +204,8 @@ export function PaymentsPage() {
       title="Payments"
       description={
         isAdminLike
-          ? 'Track payment records with clear links to students, courses, and confirmation status.'
-          : 'Review your personal payment history and confirmation status.'
+          ? 'Payments linked to students and courses.'
+          : 'Your payments and confirmation status.'
       }
       actions={isAdminLike ? <Button onClick={() => setFormOpen(true)}>New payment</Button> : undefined}
     >
@@ -156,11 +222,18 @@ export function PaymentsPage() {
         </Card>
       </div>
       {payments.length === 0 ? (
-        <EmptyState title="No payments yet" description="The ledger is still empty. Payment records will start appearing here as soon as the first one is created." />
+        <EmptyState
+          title="No payments yet"
+          description={
+            isAdminLike
+              ? 'Payment records will appear here after the first entry.'
+              : 'Your payments will appear here after the first record is added.'
+          }
+        />
       ) : (
         <TableShell
           title="Payment ledger"
-          description="Each row keeps the financial record tied to the student, course, and current confirmation state."
+          description={isAdminLike ? 'Student, course, amount, and status.' : 'Course, amount, and status.'}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -169,7 +242,7 @@ export function PaymentsPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder="Search by student, course, or amount"
+            searchPlaceholder={isAdminLike ? 'Search by student, course, or amount' : 'Search by course or amount'}
             resultsLabel={`${filteredPayments.length} result${filteredPayments.length === 1 ? '' : 's'}`}
             activeFilters={toolbarFilters}
             filters={
@@ -217,77 +290,26 @@ export function PaymentsPage() {
                     <option value="asc">Oldest first</option>
                   </Select>
                 </>
-              ) : undefined
+              ) : (
+                <Select
+                  aria-label="Sort payments"
+                  value={sortDirection}
+                  onChange={event => {
+                    setSortDirection(event.target.value as SortDirection);
+                    setPage(1);
+                  }}
+                >
+                  <option value="desc">Newest first</option>
+                  <option value="asc">Oldest first</option>
+                </Select>
+              )
             }
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No payments match this view"
-            emptyDescription="Try another search or clear the student and course filters."
-            columns={[
-              {
-                key: 'payment',
-                header: 'Payment',
-                className: 'data-table__cell--primary',
-                cell: item => (
-                  <div className="cell-stack cell-stack--primary cell-stack--relation">
-                    <span className="cell-title">{formatMoney(item.amount)}</span>
-                    <span className="cell-meta cell-meta--strong">{formatDate(item.paidAt)}</span>
-                    <div className="cell-badges">
-                      <Badge tone={item.isConfirmed ? 'success' : 'warning'}>
-                        {item.isConfirmed ? 'Confirmed' : 'Pending'}
-                      </Badge>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'student',
-                header: 'Student',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">{getUserDisplayName(item.student)}</span>
-                    <span className="cell-meta">Linked payer</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'course',
-                header: 'Course',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">{getCourseDisplayName(item.course)}</span>
-                    <span className="cell-meta">Linked offer</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                className: 'data-table__cell--actions',
-                headClassName: 'data-table__head--actions',
-                cell: item => (
-                  <div className="row-actions">
-                    {isAdminLike ? (
-                      <>
-                        {!item.isConfirmed ? (
-                          <Button size="sm" variant="secondary" onClick={() => setConfirmCandidate(item)}>
-                            Confirm
-                          </Button>
-                        ) : null}
-                        <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                          Delete
-                        </Button>
-                      </>
-                    ) : (
-                      <Badge tone="info">Read only</Badge>
-                    )}
-                  </div>
-                ),
-              },
-            ]}
+            emptyTitle="No payments found"
+            emptyDescription={isAdminLike ? 'Try another search or clear a filter.' : 'Try another search.'}
+            columns={columns}
             rows={pagedPayments}
           />
         </TableShell>

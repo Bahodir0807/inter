@@ -22,8 +22,8 @@ export function DataTable<T>({
   columns,
   rows,
   getRowKey,
-  emptyTitle = 'Nothing matches this view',
-  emptyDescription = 'Try a different search or loosen one of the filters.',
+  emptyTitle = 'No results',
+  emptyDescription = 'Try another search or clear a filter.',
 }: DataTableProps<T>) {
   return (
     <table className="data-table">
@@ -41,7 +41,11 @@ export function DataTable<T>({
           rows.map((row, rowIndex) => (
             <tr className="data-table__row" key={getRowKey ? getRowKey(row, rowIndex) : rowIndex}>
               {columns.map(column => (
-                <td key={column.key} className={cn('data-table__cell', column.className)}>
+                <td
+                  key={column.key}
+                  data-label={column.header}
+                  className={cn('data-table__cell', column.className)}
+                >
                   {column.cell(row)}
                 </td>
               ))}

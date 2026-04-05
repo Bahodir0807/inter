@@ -32,6 +32,7 @@ export function GroupFormModal({
   teachers,
   students,
   defaultTeacherId,
+  teacherLocked = false,
   loading,
   onClose,
   onSubmit,
@@ -42,6 +43,7 @@ export function GroupFormModal({
   teachers: AppUser[];
   students: AppUser[];
   defaultTeacherId?: string;
+  teacherLocked?: boolean;
   loading: boolean;
   onClose: () => void;
   onSubmit: (values: GroupFormValues) => Promise<void>;
@@ -90,6 +92,11 @@ export function GroupFormModal({
   }, [group, open, preferredCourseId, preferredTeacherId, reset, setFocus]);
 
   const selectedStudents = watch('students');
+  const selectedTeacherId = watch('teacher');
+  const teacherLabel = getUserDisplayName(
+    teachers.find(teacher => teacher.id === selectedTeacherId)
+      ?? teachers.find(teacher => teacher.id === preferredTeacherId),
+  );
 
   return (
     <>
@@ -129,19 +136,31 @@ export function GroupFormModal({
                   </option>
                 ))}
               </Select>
-              <Select
-                label="Teacher"
-                hint="Defaults to the current teacher context when available."
-                error={errors.teacher?.message}
-                {...register('teacher')}
-              >
-                <option value="">Select teacher</option>
-                {teachers.map(teacher => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {getUserDisplayName(teacher)}
-                  </option>
-                ))}
-              </Select>
+              {teacherLocked ? (
+                <>
+                  <input type="hidden" {...register('teacher')} />
+                  <Input
+                    label="Teacher"
+                    hint="This group stays assigned to your account."
+                    value={teacherLabel || 'Current teacher'}
+                    readOnly
+                  />
+                </>
+              ) : (
+                <Select
+                  label="Teacher"
+                  hint="Defaults to the current teacher context when available."
+                  error={errors.teacher?.message}
+                  {...register('teacher')}
+                >
+                  <option value="">Select teacher</option>
+                  {teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {getUserDisplayName(teacher)}
+                    </option>
+                  ))}
+                </Select>
+              )}
             </div>
           </FormSection>
           <FormSection

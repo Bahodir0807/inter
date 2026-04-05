@@ -9,7 +9,7 @@ export function EmptyState({
 }) {
   return (
     <div className={`ui-state${compact ? ' ui-state--compact' : ''}`} role="status">
-      <span className="ui-state__eyebrow">{compact ? 'Nothing matches this view' : 'Workspace update'}</span>
+      <span className="ui-state__eyebrow">{compact ? 'No results' : 'Nothing here yet'}</span>
       <h3>{title}</h3>
       <p>{description}</p>
     </div>

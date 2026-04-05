@@ -30,7 +30,7 @@ export function RoomsPage() {
     <PageLayout
       eyebrow="Infrastructure"
       title="Rooms"
-      description="A clean inventory of teaching spaces with availability, type, and capacity visible at a glance."
+      description="Rooms, type, capacity, and availability."
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
@@ -45,11 +45,11 @@ export function RoomsPage() {
         </Card>
       </div>
       {rooms.length === 0 ? (
-        <EmptyState title="No rooms yet" description="No teaching spaces are available in this workspace yet. Rooms will appear here once the backend returns them." />
+        <EmptyState title="No rooms yet" description="Rooms will appear here when they are available." />
       ) : (
         <TableShell
           title="Room inventory"
-          description="Teaching spaces are shown with room type, capacity, and current availability."
+          description="Type, capacity, and availability."
         >
           <DataTable
             getRowKey={item => item.id}
@@ -93,7 +93,7 @@ export function RoomsPage() {
             ]}
             rows={rooms}
             emptyTitle="No rooms found"
-            emptyDescription="Try refreshing the inventory or clearing the current view."
+            emptyDescription="Try refreshing the list or clearing the current view."
           />
         </TableShell>
       )}

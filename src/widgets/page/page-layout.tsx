@@ -1,15 +1,17 @@
 import { PropsWithChildren, ReactNode } from 'react';
+import { cn } from '../../shared/lib/cn';
 
 interface PageLayoutProps extends PropsWithChildren {
   title: string;
   description: string;
   actions?: ReactNode;
   eyebrow?: string;
+  variant?: 'default' | 'feature';
 }
 
-export function PageLayout({ title, description, actions, eyebrow, children }: PageLayoutProps) {
+export function PageLayout({ title, description, actions, eyebrow, variant = 'default', children }: PageLayoutProps) {
   return (
-    <div className="page-layout">
+    <div className={cn('page-layout', variant === 'feature' && 'page-layout--feature')}>
       <header className="page-layout__header">
         <div className="page-layout__lead">
           <div className="page-layout__copy">

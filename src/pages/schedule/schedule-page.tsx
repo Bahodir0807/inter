@@ -12,7 +12,7 @@ import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
 import { EmptyState } from '../../shared/ui/feedback/empty-state';
 import { TableShell } from '../../shared/ui/data-display/table-shell';
-import { DataTable } from '../../shared/ui/data-display/data-table';
+import { DataTable, type Column } from '../../shared/ui/data-display/data-table';
 import { Card } from '../../shared/ui/surfaces/card';
 import { TableToolbar } from '../../shared/ui/data-display/table-toolbar';
 import { Pagination } from '../../shared/ui/data-display/pagination';
@@ -28,7 +28,6 @@ import {
 } from '../../shared/lib/entity-display';
 import { paginate, sortBy, SortDirection } from '../../shared/lib/table';
 import { toast } from '../../shared/ui/feedback/toaster';
-import { Badge } from '../../shared/ui/badges/badge';
 import { ScheduleFormModal } from './schedule-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
 
@@ -39,6 +38,8 @@ export function SchedulePage() {
   const sessionUser = useAuthStore(state => state.user);
   const canManage = !!sessionUser && teachingRoles.includes(sessionUser.role);
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
+  const isTeacher = sessionUser?.role === 'teacher';
+  const isStudent = sessionUser?.role === 'student';
   const canSeeFull = canManage;
 
   const [search, setSearch] = useState('');
@@ -101,16 +102,32 @@ export function SchedulePage() {
 
   const items = scheduleQuery.data ?? [];
   const support = supportQuery.data;
-  const teachers = isAdminLike
-    ? (support?.users ?? []).filter(user => user.role === 'teacher')
-    : sessionUser
-      ? [sessionUser]
-      : [];
-  const students = isAdminLike ? (support?.users ?? []).filter(user => user.role === 'student') : support?.users ?? [];
+  const teachers = canManage
+    ? isAdminLike
+      ? (support?.users ?? []).filter(user => user.role === 'teacher')
+      : sessionUser
+        ? [sessionUser]
+        : []
+    : [];
+  const students = canManage ? (isAdminLike ? (support?.users ?? []).filter(user => user.role === 'student') : support?.users ?? []) : [];
+  const visibleItems = useMemo(() => {
+    if (!sessionUser || isAdminLike) {
+      return items;
+    }
+
+    if (isTeacher) {
+      return items.filter(item => {
+        const teacherId = typeof item.teacher === 'string' ? item.teacher : item.teacher.id;
+        return teacherId === sessionUser.id;
+      });
+    }
+
+    return items;
+  }, [isAdminLike, isTeacher, items, sessionUser]);
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    const filtered = items.filter(item => {
+    const filtered = visibleItems.filter(item => {
       const teacherId = typeof item.teacher === 'string' ? item.teacher : item.teacher.id;
       const groupId = typeof item.group === 'string' ? item.group : item.group?.id;
       const haystack = [
@@ -122,13 +139,13 @@ export function SchedulePage() {
         .join(' ')
         .toLowerCase();
 
-      const matchesTeacher = teacherFilter === 'all' || teacherId === teacherFilter;
-      const matchesGroup = groupFilter === 'all' || groupId === groupFilter;
+      const matchesTeacher = !isAdminLike || teacherFilter === 'all' || teacherId === teacherFilter;
+      const matchesGroup = !canManage || groupFilter === 'all' || groupId === groupFilter;
       return matchesTeacher && matchesGroup && haystack.includes(normalizedSearch);
     });
 
     return sortBy(filtered, item => item.timeStart, sortDirection);
-  }, [groupFilter, items, search, sortDirection, teacherFilter]);
+  }, [canManage, groupFilter, isAdminLike, search, sortDirection, teacherFilter, visibleItems]);
 
   const selectedTeacherLabel =
     teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
@@ -136,8 +153,8 @@ export function SchedulePage() {
     groupFilter === 'all' ? '' : getGroupDisplayName((support?.groups ?? []).find(group => group.id === groupFilter));
 
   const toolbarFilters = [
-    ...(teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
-    ...(groupFilter !== 'all' ? [`Group: ${selectedGroupLabel}`] : []),
+    ...(isAdminLike && teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
+    ...(canManage && groupFilter !== 'all' ? [`Group: ${selectedGroupLabel}`] : []),
     ...(sortDirection === 'desc' ? ['Order: Latest first'] : []),
   ];
 
@@ -151,13 +168,85 @@ export function SchedulePage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
   const pagedItems = paginate(filteredItems, page, pageSize);
-  const linkedGroups = items.filter(item => item.group).length;
+  const linkedGroups = visibleItems.filter(item => item.group).length;
+  const assignedRooms = visibleItems.filter(item => item.room).length;
+  const columns: Column<ScheduleItem>[] = [
+    {
+      key: 'session',
+      header: 'Session',
+      className: 'data-table__cell--primary',
+      cell: item => (
+        <div className="cell-stack cell-stack--primary cell-stack--relation">
+          <span className="cell-title">{getCourseDisplayName(item.course)}</span>
+          <span className="cell-meta cell-meta--strong">{formatDateTime(item.timeStart)}</span>
+          <span className="cell-meta">Ends {formatDateTime(item.timeEnd)}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'assignment',
+      header: 'Assignment',
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">{getRoomDisplayName(item.room)}</span>
+          <span className="cell-meta">{item.group ? getGroupDisplayName(item.group) : 'No group linked'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'people',
+      header: canManage ? 'People' : 'Teacher',
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
+          {canManage ? (
+            <>
+              <span className="cell-meta">{item.students?.length ?? 0} students linked</span>
+              <span className="cell-meta">{getUserListSummary(item.students)}</span>
+            </>
+          ) : (
+            <span className="cell-meta">Assigned teacher</span>
+          )}
+        </div>
+      ),
+    },
+    ...(canManage
+      ? [
+          {
+            key: 'actions',
+            header: 'Actions',
+            className: 'data-table__cell--actions',
+            headClassName: 'data-table__head--actions',
+            cell: (item: ScheduleItem) => (
+              <div className="row-actions">
+                <Button size="sm" variant="secondary" onClick={() => { setSelectedItem(item); setFormOpen(true); }}>
+                  Edit
+                </Button>
+                {isAdminLike ? (
+                  <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <PageLayout
       eyebrow="Operations"
       title="Schedule"
-      description="Plan lessons with clear links between courses, rooms, groups, teachers, and students."
+      description={
+        isAdminLike
+          ? 'Lessons, rooms, groups, teachers, and students.'
+          : isTeacher
+            ? 'Your lessons, rooms, groups, and attendance.'
+            : 'Your lesson schedule.'
+      }
       actions={canManage ? <Button onClick={() => { setSelectedItem(null); setFormOpen(true); }}>New lesson</Button> : undefined}
     >
       <div className="dashboard-grid">
@@ -167,17 +256,22 @@ export function SchedulePage() {
           <span className="subtle">After filters and search</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">Linked groups</span>
-          <strong>{linkedGroups}</strong>
-          <span className="subtle">Lessons already attached to a cohort</span>
+          <span className="subtle">{canManage ? 'Linked groups' : 'Assigned rooms'}</span>
+          <strong>{canManage ? linkedGroups : assignedRooms}</strong>
+          <span className="subtle">
+            {canManage ? 'Lessons already attached to a cohort' : 'Lessons with a room assigned'}
+          </span>
         </Card>
       </div>
-      {items.length === 0 ? (
-        <EmptyState title="No lessons yet" description="Nothing is scheduled in this workspace yet. New lessons will appear here as soon as they are planned." />
+      {visibleItems.length === 0 ? (
+        <EmptyState
+          title={isStudent ? 'No lessons scheduled' : 'No lessons yet'}
+          description={canManage ? 'Planned lessons will appear here.' : 'Your upcoming lessons will appear here.'}
+        />
       ) : (
         <TableShell
           title="Lesson plan"
-          description="Each row shows the operational assignment: when it happens, where it happens, and who is involved."
+          description={canManage ? 'Time, room, group, teacher, and students.' : 'Time, room, and teacher.'}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -186,41 +280,45 @@ export function SchedulePage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder="Search by course, room, teacher, or group"
+            searchPlaceholder={canManage ? 'Search by course, room, teacher, or group' : 'Search by course, room, or teacher'}
             resultsLabel={`${filteredItems.length} result${filteredItems.length === 1 ? '' : 's'}`}
             activeFilters={toolbarFilters}
             filters={
               <>
-                <Select
-                  aria-label="Filter lessons by teacher"
-                  value={teacherFilter}
-                  onChange={event => {
-                    setTeacherFilter(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="all">All teachers</option>
-                  {teachers.map(teacher => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {getUserDisplayName(teacher)}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  aria-label="Filter lessons by group"
-                  value={groupFilter}
-                  onChange={event => {
-                    setGroupFilter(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="all">All groups</option>
-                  {(support?.groups ?? []).map(group => (
-                    <option key={group.id} value={group.id}>
-                      {getGroupDisplayName(group)}
-                    </option>
-                  ))}
-                </Select>
+                {isAdminLike ? (
+                  <Select
+                    aria-label="Filter lessons by teacher"
+                    value={teacherFilter}
+                    onChange={event => {
+                      setTeacherFilter(event.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="all">All teachers</option>
+                    {teachers.map(teacher => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {getUserDisplayName(teacher)}
+                      </option>
+                    ))}
+                  </Select>
+                ) : null}
+                {canManage ? (
+                  <Select
+                    aria-label="Filter lessons by group"
+                    value={groupFilter}
+                    onChange={event => {
+                      setGroupFilter(event.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="all">All groups</option>
+                    {(support?.groups ?? []).map(group => (
+                      <option key={group.id} value={group.id}>
+                        {getGroupDisplayName(group)}
+                      </option>
+                    ))}
+                  </Select>
+                ) : null}
                 <Select
                   aria-label="Sort lessons"
                   value={sortDirection}
@@ -237,69 +335,9 @@ export function SchedulePage() {
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No lessons match this view"
-            emptyDescription="Try another search or clear the teacher and group filters."
-            columns={[
-              {
-                key: 'session',
-                header: 'Session',
-                className: 'data-table__cell--primary',
-                cell: item => (
-                  <div className="cell-stack cell-stack--primary cell-stack--relation">
-                    <span className="cell-title">{getCourseDisplayName(item.course)}</span>
-                    <span className="cell-meta cell-meta--strong">{formatDateTime(item.timeStart)}</span>
-                    <span className="cell-meta">Ends {formatDateTime(item.timeEnd)}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'assignment',
-                header: 'Assignment',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">{getRoomDisplayName(item.room)}</span>
-                    <span className="cell-meta">{item.group ? getGroupDisplayName(item.group) : 'No group linked'}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'people',
-                header: 'People',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
-                    <span className="cell-meta">{item.students?.length ?? 0} students linked</span>
-                    <span className="cell-meta">{getUserListSummary(item.students)}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                className: 'data-table__cell--actions',
-                headClassName: 'data-table__head--actions',
-                cell: item => (
-                  <div className="row-actions">
-                    {canManage ? (
-                      <>
-                        <Button size="sm" variant="secondary" onClick={() => { setSelectedItem(item); setFormOpen(true); }}>
-                          Edit
-                        </Button>
-                        {isAdminLike ? (
-                          <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                            Delete
-                          </Button>
-                        ) : null}
-                      </>
-                    ) : (
-                      <Badge tone="info">Read only</Badge>
-                    )}
-                  </div>
-                ),
-              },
-            ]}
+            emptyTitle="No lessons found"
+            emptyDescription={canManage ? 'Try another search or clear a filter.' : 'Try another search.'}
+            columns={columns}
             rows={pagedItems}
           />
         </TableShell>
@@ -314,6 +352,7 @@ export function SchedulePage() {
         teachers={teachers}
         students={students}
         defaultTeacherId={!isAdminLike ? sessionUser?.id : undefined}
+        teacherLocked={!isAdminLike}
         loading={createMutation.isPending || updateMutation.isPending}
         onClose={() => setFormOpen(false)}
         onSubmit={async values => {

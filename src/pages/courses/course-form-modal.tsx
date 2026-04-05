@@ -32,6 +32,7 @@ interface CourseFormModalProps {
   teachers: AppUser[];
   students: AppUser[];
   defaultTeacherId?: string;
+  teacherLocked?: boolean;
   loading: boolean;
   onClose: () => void;
   onSubmit: (values: CourseFormValues) => Promise<void>;
@@ -43,6 +44,7 @@ export function CourseFormModal({
   teachers,
   students,
   defaultTeacherId,
+  teacherLocked = false,
   loading,
   onClose,
   onSubmit,
@@ -100,6 +102,11 @@ export function CourseFormModal({
   }, [course, open, preferredTeacherId, reset, setFocus]);
 
   const selectedStudents = watch('students');
+  const selectedTeacherId = watch('teacherId');
+  const teacherLabel = getUserDisplayName(
+    teachers.find(teacher => teacher.id === selectedTeacherId)
+      ?? teachers.find(teacher => teacher.id === preferredTeacherId),
+  );
 
   return (
     <>
@@ -146,19 +153,31 @@ export function CourseFormModal({
                 error={errors.price?.message}
                 {...register('price')}
               />
-              <Select
-                label="Teacher"
-                hint="Pre-filled when only one teacher is available or a default owner is known."
-                error={errors.teacherId?.message}
-                {...register('teacherId')}
-              >
-                <option value="">No teacher assigned</option>
-                {teachers.map(teacher => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {getUserDisplayName(teacher)}
-                  </option>
-                ))}
-              </Select>
+              {teacherLocked ? (
+                <>
+                  <input type="hidden" {...register('teacherId')} />
+                  <Input
+                    label="Teacher"
+                    hint="This course stays assigned to your account."
+                    value={teacherLabel || 'Current teacher'}
+                    readOnly
+                  />
+                </>
+              ) : (
+                <Select
+                  label="Teacher"
+                  hint="Pre-filled when only one teacher is available or a default owner is known."
+                  error={errors.teacherId?.message}
+                  {...register('teacherId')}
+                >
+                  <option value="">No teacher assigned</option>
+                  {teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {getUserDisplayName(teacher)}
+                    </option>
+                  ))}
+                </Select>
+              )}
             </div>
           </FormSection>
           <FormSection

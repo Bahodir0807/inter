@@ -33,6 +33,7 @@ export function ProfilePage() {
       eyebrow="Account"
       title="Profile"
       description="Current session details and user profile information loaded from the live backend."
+      variant="feature"
     >
       <div className="content-grid">
         <Card className="content-grid__side">

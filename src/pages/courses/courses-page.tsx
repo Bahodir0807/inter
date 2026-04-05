@@ -9,7 +9,7 @@ import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
 import { EmptyState } from '../../shared/ui/feedback/empty-state';
 import { TableShell } from '../../shared/ui/data-display/table-shell';
-import { DataTable } from '../../shared/ui/data-display/data-table';
+import { DataTable, type Column } from '../../shared/ui/data-display/data-table';
 import { Badge } from '../../shared/ui/badges/badge';
 import { Card } from '../../shared/ui/surfaces/card';
 import { formatMoney } from '../../shared/lib/date';
@@ -30,6 +30,8 @@ export function CoursesPage() {
   const sessionUser = useAuthStore(state => state.user);
   const canManage = !!sessionUser && teachingRoles.includes(sessionUser.role);
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
+  const isTeacher = sessionUser?.role === 'teacher';
+  const isStudent = sessionUser?.role === 'student';
 
   const [search, setSearch] = useState('');
   const [teacherFilter, setTeacherFilter] = useState<'all' | string>('all');
@@ -81,31 +83,53 @@ export function CoursesPage() {
 
   const courses = coursesQuery.data ?? [];
   const allUsers = usersQuery.data ?? [];
-  const teachers = isAdminLike
-    ? allUsers.filter(user => user.role === 'teacher')
-    : sessionUser
-      ? [sessionUser]
-      : [];
-  const students = isAdminLike ? allUsers.filter(user => user.role === 'student') : allUsers;
+  const teachers = canManage
+    ? isAdminLike
+      ? allUsers.filter(user => user.role === 'teacher')
+      : sessionUser
+        ? [sessionUser]
+        : []
+    : [];
+  const students = canManage ? (isAdminLike ? allUsers.filter(user => user.role === 'student') : allUsers) : [];
+  const visibleCourses = useMemo(() => {
+    if (!sessionUser) {
+      return [];
+    }
+
+    if (isAdminLike) {
+      return courses;
+    }
+
+    if (isTeacher) {
+      return courses.filter(course => {
+        const teacherId = typeof course.teacherId === 'string' ? course.teacherId : course.teacherId?.id;
+        return teacherId === sessionUser.id;
+      });
+    }
+
+    return courses.filter(course =>
+      (course.students ?? []).some(student => (typeof student === 'string' ? student : student.id) === sessionUser.id),
+    );
+  }, [courses, isAdminLike, isTeacher, sessionUser]);
 
   const filteredCourses = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    const filtered = courses.filter(course => {
+    const filtered = visibleCourses.filter(course => {
       const teacherId = typeof course.teacherId === 'string' ? course.teacherId : course.teacherId?.id;
       const teacherName = typeof course.teacherId === 'string' ? course.teacherId : getUserDisplayName(course.teacherId);
-      const matchesTeacher = teacherFilter === 'all' || teacherId === teacherFilter;
+      const matchesTeacher = !isAdminLike || teacherFilter === 'all' || teacherId === teacherFilter;
       const haystack = [course.name, course.description, teacherName].filter(Boolean).join(' ').toLowerCase();
       return matchesTeacher && haystack.includes(normalizedSearch);
     });
 
     return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
-  }, [courses, search, sortDirection, teacherFilter]);
+  }, [isAdminLike, search, sortDirection, teacherFilter, visibleCourses]);
 
   const selectedTeacherLabel =
     teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
 
   const toolbarFilters = [
-    ...(teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
+    ...(isAdminLike && teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
     ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
   ];
 
@@ -119,13 +143,82 @@ export function CoursesPage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredCourses.length / pageSize));
   const pagedCourses = paginate(filteredCourses, page, pageSize);
-  const totalStudents = courses.reduce((sum, item) => sum + (item.students?.length ?? 0), 0);
+  const totalStudents = visibleCourses.reduce((sum, item) => sum + (item.students?.length ?? 0), 0);
+  const coursesWithTeacher = visibleCourses.filter(item => item.teacherId).length;
+  const columns: Column<Course>[] = [
+    {
+      key: 'course',
+      header: 'Course',
+      className: 'data-table__cell--primary',
+      cell: item => (
+        <div className="cell-stack cell-stack--primary cell-stack--relation">
+          <span className="cell-title">{item.name}</span>
+          <span className="cell-meta">{item.description || 'No description provided yet'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'delivery',
+      header: 'Delivery',
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">
+            {item.teacherId ? getUserDisplayName(item.teacherId) : 'No teacher assigned'}
+          </span>
+          <span className="cell-meta">{isStudent ? 'Assigned teacher' : 'Assigned instructor'}</span>
+          <div className="cell-badges">
+            <Badge tone="neutral">{formatMoney(item.price)}</Badge>
+          </div>
+        </div>
+      ),
+    },
+    ...(canManage
+      ? [
+          {
+            key: 'enrollment',
+            header: 'Enrollment',
+            className: 'data-table__cell--relation',
+            cell: (item: Course) => (
+              <div className="cell-stack cell-stack--relation">
+                <span className="cell-title">{item.students?.length ?? 0} students</span>
+                <span className="cell-meta">{getUserListSummary(item.students)}</span>
+              </div>
+            ),
+          },
+          {
+            key: 'actions',
+            header: 'Actions',
+            className: 'data-table__cell--actions',
+            headClassName: 'data-table__head--actions',
+            cell: (item: Course) => (
+              <div className="row-actions">
+                <Button size="sm" variant="secondary" onClick={() => { setSelectedCourse(item); setFormOpen(true); }}>
+                  Edit
+                </Button>
+                {isAdminLike ? (
+                  <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <PageLayout
       eyebrow="Programs"
       title="Courses"
-      description="Manage program offers, teacher assignments, pricing, and enrollment from one catalog."
+      description={
+        isAdminLike
+          ? 'Courses, teachers, prices, and enrollment.'
+          : isTeacher
+            ? 'Your courses, pricing, and student lists.'
+            : 'Courses you are enrolled in.'
+      }
       actions={canManage ? <Button onClick={() => { setSelectedCourse(null); setFormOpen(true); }}>New course</Button> : undefined}
     >
       <div className="dashboard-grid">
@@ -135,17 +228,26 @@ export function CoursesPage() {
           <span className="subtle">After filters and search</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">Linked students</span>
-          <strong>{totalStudents}</strong>
-          <span className="subtle">Across all loaded courses</span>
+          <span className="subtle">{isStudent ? 'With teacher assigned' : 'Linked students'}</span>
+          <strong>{isStudent ? coursesWithTeacher : totalStudents}</strong>
+          <span className="subtle">{isStudent ? 'Across your courses' : 'Across visible courses'}</span>
         </Card>
       </div>
-      {courses.length === 0 ? (
-        <EmptyState title="No courses yet" description="The catalog is still empty. Add the first course when you are ready to assign teachers and students." />
+      {visibleCourses.length === 0 ? (
+        <EmptyState
+          title={isStudent ? 'No courses assigned' : 'No courses yet'}
+          description={
+            isAdminLike
+              ? 'Create the first course to start working.'
+              : isTeacher
+                ? 'Courses assigned to you will appear here.'
+                : 'Courses you are enrolled in will appear here.'
+          }
+        />
       ) : (
         <TableShell
           title="Course catalog"
-          description="Each row shows the offer, teacher assignment, pricing, and enrollment context."
+          description={canManage ? 'Course, teacher, price, and enrollment.' : 'Course, teacher, and price.'}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -154,26 +256,28 @@ export function CoursesPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder="Search by course, description, or teacher"
+            searchPlaceholder={isStudent ? 'Search by course or teacher' : 'Search by course, description, or teacher'}
             resultsLabel={`${filteredCourses.length} result${filteredCourses.length === 1 ? '' : 's'}`}
             activeFilters={toolbarFilters}
             filters={
               <>
-                <Select
-                  aria-label="Filter courses by teacher"
-                  value={teacherFilter}
-                  onChange={event => {
-                    setTeacherFilter(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="all">All teachers</option>
-                  {teachers.map(teacher => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {getUserDisplayName(teacher)}
-                    </option>
-                  ))}
-                </Select>
+                {isAdminLike ? (
+                  <Select
+                    aria-label="Filter courses by teacher"
+                    value={teacherFilter}
+                    onChange={event => {
+                      setTeacherFilter(event.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="all">All teachers</option>
+                    {teachers.map(teacher => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {getUserDisplayName(teacher)}
+                      </option>
+                    ))}
+                  </Select>
+                ) : null}
                 <Select
                   aria-label="Sort courses"
                   value={sortDirection}
@@ -190,72 +294,9 @@ export function CoursesPage() {
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No courses match this view"
-            emptyDescription="Try a different search or clear one of the catalog filters."
-            columns={[
-              {
-                key: 'course',
-                header: 'Course',
-                className: 'data-table__cell--primary',
-                cell: item => (
-                  <div className="cell-stack cell-stack--primary cell-stack--relation">
-                    <span className="cell-title">{item.name}</span>
-                    <span className="cell-meta">{item.description || 'No description provided yet'}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'delivery',
-                header: 'Delivery',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">
-                      {item.teacherId ? getUserDisplayName(item.teacherId) : 'No teacher assigned'}
-                    </span>
-                    <span className="cell-meta">Assigned instructor</span>
-                    <div className="cell-badges">
-                      <Badge tone="neutral">{formatMoney(item.price)}</Badge>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'enrollment',
-                header: 'Enrollment',
-                className: 'data-table__cell--relation',
-                cell: item => (
-                  <div className="cell-stack cell-stack--relation">
-                    <span className="cell-title">{item.students?.length ?? 0} students</span>
-                    <span className="cell-meta">{getUserListSummary(item.students)}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                className: 'data-table__cell--actions',
-                headClassName: 'data-table__head--actions',
-                cell: item => (
-                  <div className="row-actions">
-                    {canManage ? (
-                      <>
-                        <Button size="sm" variant="secondary" onClick={() => { setSelectedCourse(item); setFormOpen(true); }}>
-                          Edit
-                        </Button>
-                        {isAdminLike ? (
-                          <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                            Delete
-                          </Button>
-                        ) : null}
-                      </>
-                    ) : (
-                      <Badge tone="info">Read only</Badge>
-                    )}
-                  </div>
-                ),
-              },
-            ]}
+            emptyTitle="No courses found"
+            emptyDescription={isAdminLike ? 'Try another search or clear a filter.' : 'Try another search.'}
+            columns={columns}
             rows={pagedCourses}
           />
         </TableShell>
@@ -267,6 +308,7 @@ export function CoursesPage() {
         teachers={teachers}
         students={students}
         defaultTeacherId={!isAdminLike ? sessionUser?.id : undefined}
+        teacherLocked={!isAdminLike}
         loading={createMutation.isPending || updateMutation.isPending}
         onClose={() => setFormOpen(false)}
         onSubmit={async values => {

@@ -18,27 +18,24 @@ export function LoginPage() {
       <div className="login-page__panel">
         <span className="eyebrow">Ibrat CRM</span>
         <div className="login-page__headline">
-          <h2>Daily center operations, kept in one calm workspace.</h2>
-          <p>
-            Sign in to work across people, programs, schedule, rooms, and payments without losing the operational context
-            between screens.
-          </p>
+          <h2>Run daily center work from one place.</h2>
+          <p>People, courses, groups, schedule, rooms, and payments stay connected.</p>
         </div>
         <div className="login-page__highlights">
           <div className="login-page__highlight">
-            <strong>People and cohorts</strong>
-            <span>Accounts, roles, groups, and ownership stay connected.</span>
+            <strong>People</strong>
+            <span>Accounts, roles, and groups stay together.</span>
           </div>
           <div className="login-page__highlight">
-            <strong>Lesson flow</strong>
-            <span>Courses, rooms, groups, teachers, and students remain visible in one path.</span>
+            <strong>Schedule</strong>
+            <span>Courses, rooms, teachers, and groups stay linked.</span>
           </div>
           <div className="login-page__highlight">
-            <strong>Clean financial trace</strong>
-            <span>Payments stay linked to the right learner and course from the first entry.</span>
+            <strong>Payments</strong>
+            <span>Each payment stays tied to the right student and course.</span>
           </div>
         </div>
-        <p className="login-page__note">Built for real daily use, not just a demo dashboard.</p>
+        <p className="login-page__note">Built for daily work.</p>
       </div>
       <LoginForm />
     </div>
