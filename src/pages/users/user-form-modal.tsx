@@ -23,9 +23,7 @@ const createSchema = z.object({
   telegramId: z.string().optional(),
 });
 
-const editSchema = createSchema.extend({
-  password: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
-});
+const editSchema = createSchema;
 
 export type UserFormInput = z.infer<typeof editSchema>;
 
@@ -124,10 +122,10 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
                 hint={
                   mode === 'create'
                     ? 'Set a temporary password the user can change later.'
-                    : 'Leave blank to keep the current password unchanged.'
+                    : 'Password is required when updating the account.'
                 }
                 type="password"
-                placeholder={mode === 'create' ? 'Set a temporary password' : 'Only fill this when you need to reset it'}
+                placeholder={mode === 'create' ? 'Set a temporary password' : 'Enter a new password'}
                 autoComplete="new-password"
                 error={errors.password?.message}
                 {...register('password')}
