@@ -87,6 +87,9 @@ export function PaymentFormModal({
       <ModalShell
         open={open}
         onClose={closeGuard.requestClose}
+        closeOnBackdrop={!loading}
+        closeOnEscape={!loading}
+        closeDisabled={loading}
         title="Create payment"
         description="Link the payment to a student and course so the record is immediately traceable."
       >
@@ -131,8 +134,9 @@ export function PaymentFormModal({
       <ConfirmModal
         open={closeGuard.confirmOpen}
         title="Discard changes?"
-        description="You have unsaved changes in this payment form. Close it without saving?"
+        description="You have unsaved changes in this form. Discard them and close the modal?"
         confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

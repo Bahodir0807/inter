@@ -92,6 +92,9 @@ export function GroupFormModal({
       <ModalShell
         open={open}
         onClose={closeGuard.requestClose}
+        closeOnBackdrop={!loading}
+        closeOnEscape={!loading}
+        closeDisabled={loading}
         title={group ? 'Edit group' : 'Create group'}
         description="Configure the cohort, assign the teacher, and manage the student roster in one flow."
       >
@@ -141,8 +144,9 @@ export function GroupFormModal({
       <ConfirmModal
         open={closeGuard.confirmOpen}
         title="Discard changes?"
-        description="You have unsaved changes in this group form. Close it without saving?"
+        description="You have unsaved changes in this form. Discard them and close the modal?"
         confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

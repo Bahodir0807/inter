@@ -103,6 +103,9 @@ export function CourseFormModal({
       <ModalShell
         open={open}
         onClose={closeGuard.requestClose}
+        closeOnBackdrop={!loading}
+        closeOnEscape={!loading}
+        closeDisabled={loading}
         title={course ? 'Edit course' : 'Create course'}
         description="Set the offer details, assign the teacher, and manage enrolled students in one place."
       >
@@ -151,8 +154,9 @@ export function CourseFormModal({
       <ConfirmModal
         open={closeGuard.confirmOpen}
         title="Discard changes?"
-        description="You have unsaved changes in this course form. Close it without saving?"
+        description="You have unsaved changes in this form. Discard them and close the modal?"
         confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

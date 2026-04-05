@@ -166,6 +166,7 @@ export function CoursesPage() {
             }
           />
           <DataTable
+            getRowKey={item => item.id}
             columns={[
               {
                 key: 'course',
@@ -251,10 +252,11 @@ export function CoursesPage() {
         title="Delete course?"
         description={
           deleteCandidate
-            ? `Delete ${deleteCandidate.name}? Groups and payment records may still reference this course historically.`
+            ? `This will permanently remove course "${deleteCandidate.name}" from the catalog. Teacher: ${deleteCandidate.teacherId ? getUserDisplayName(deleteCandidate.teacherId) : 'not assigned'}. Price: ${formatMoney(deleteCandidate.price)}. Historical references may remain visible in related records.`
             : ''
         }
         confirmLabel="Delete course"
+        cancelLabel="Keep course"
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

@@ -188,6 +188,7 @@ export function PaymentsPage() {
             }
           />
           <DataTable
+            getRowKey={item => item.id}
             columns={[
               {
                 key: 'payment',
@@ -269,10 +270,11 @@ export function PaymentsPage() {
         title="Confirm payment?"
         description={
           confirmCandidate
-            ? `Confirm ${formatMoney(confirmCandidate.amount)} for ${getUserDisplayName(confirmCandidate.student)}?`
+            ? `Mark the payment of ${formatMoney(confirmCandidate.amount)} for ${getUserDisplayName(confirmCandidate.student)} on ${getCourseDisplayName(confirmCandidate.course)} as confirmed?`
             : ''
         }
         confirmLabel="Confirm payment"
+        cancelLabel="Keep pending"
         loading={confirmMutation.isPending}
         onClose={() => setConfirmCandidate(null)}
         onConfirm={async () => {
@@ -289,10 +291,11 @@ export function PaymentsPage() {
         title="Delete payment?"
         description={
           deleteCandidate
-            ? `Delete the payment linked to ${getUserDisplayName(deleteCandidate.student)} and ${getCourseDisplayName(deleteCandidate.course)}?`
+            ? `This will permanently remove the payment of ${formatMoney(deleteCandidate.amount)} for ${getUserDisplayName(deleteCandidate.student)} on ${getCourseDisplayName(deleteCandidate.course)} from the ledger. Paid at: ${formatDate(deleteCandidate.paidAt)}. This action cannot be undone.`
             : ''
         }
         confirmLabel="Delete payment"
+        cancelLabel="Keep payment"
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

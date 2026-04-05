@@ -7,17 +7,21 @@ export interface Column<T> {
   cell: (row: T) => ReactNode;
 }
 
+interface DataTableProps<T> {
+  columns: Column<T>[];
+  rows: T[];
+  getRowKey?: (row: T, rowIndex: number) => string | number;
+  emptyTitle?: string;
+  emptyDescription?: string;
+}
+
 export function DataTable<T>({
   columns,
   rows,
+  getRowKey,
   emptyTitle = 'No results found',
   emptyDescription = 'Try adjusting the search or filters.',
-}: {
-  columns: Column<T>[];
-  rows: T[];
-  emptyTitle?: string;
-  emptyDescription?: string;
-}) {
+}: DataTableProps<T>) {
   return (
     <table className="data-table">
       <thead>
@@ -30,7 +34,7 @@ export function DataTable<T>({
       <tbody>
         {rows.length > 0 ? (
           rows.map((row, rowIndex) => (
-            <tr key={rowIndex}>
+            <tr key={getRowKey ? getRowKey(row, rowIndex) : rowIndex}>
               {columns.map(column => (
                 <td key={column.key}>{column.cell(row)}</td>
               ))}

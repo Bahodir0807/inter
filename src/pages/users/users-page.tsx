@@ -199,6 +199,7 @@ export function UsersPage() {
             }
           />
           <DataTable
+            getRowKey={item => item.id}
             columns={[
               {
                 key: 'user',
@@ -290,10 +291,11 @@ export function UsersPage() {
         title="Delete user?"
         description={
           deleteCandidate
-            ? `Delete ${getUserDisplayName(deleteCandidate)} from the CRM? This action cannot be undone from the interface.`
+            ? `This will permanently remove ${getUserDisplayName(deleteCandidate)} (@${deleteCandidate.username}, ${getRoleDisplayName(deleteCandidate.role)}) from the CRM. This action cannot be undone.`
             : ''
         }
         confirmLabel="Delete user"
+        cancelLabel="Keep user"
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

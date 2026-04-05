@@ -191,6 +191,7 @@ export function DashboardPage() {
         </Card>
         <TableShell title="Upcoming sessions">
           <DataTable
+            getRowKey={item => item.id}
             columns={[
               {
                 key: 'course',

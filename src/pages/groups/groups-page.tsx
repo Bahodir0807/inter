@@ -179,6 +179,7 @@ export function GroupsPage() {
             }
           />
           <DataTable
+            getRowKey={item => item.id}
             columns={[
               {
                 key: 'group',
@@ -272,10 +273,11 @@ export function GroupsPage() {
         title="Delete group?"
         description={
           deleteCandidate
-            ? `Delete ${deleteCandidate.name}? The current cohort structure will be removed from the registry.`
+            ? `This will permanently remove group "${deleteCandidate.name}" from the cohort registry. Course: ${getCourseDisplayName(deleteCandidate.course)}. Teacher: ${getUserDisplayName(deleteCandidate.teacher)}. This action cannot be undone.`
             : ''
         }
         confirmLabel="Delete group"
+        cancelLabel="Keep group"
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

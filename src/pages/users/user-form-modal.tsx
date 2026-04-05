@@ -92,6 +92,9 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
       <ModalShell
         open={open}
         onClose={closeGuard.requestClose}
+        closeOnBackdrop={!loading}
+        closeOnEscape={!loading}
+        closeDisabled={loading}
         title={mode === 'create' ? 'Create user' : 'Edit user'}
         description="Manage account details, role, and profile fields without leaving the registry."
       >
@@ -147,8 +150,9 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
       <ConfirmModal
         open={closeGuard.confirmOpen}
         title="Discard changes?"
-        description="You have unsaved changes in this form. Close it without saving?"
+        description="You have unsaved changes in this form. Discard them and close the modal?"
         confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

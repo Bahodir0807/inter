@@ -197,6 +197,7 @@ export function SchedulePage() {
             }
           />
           <DataTable
+            getRowKey={item => item.id}
             columns={[
               {
                 key: 'session',
@@ -286,10 +287,11 @@ export function SchedulePage() {
         title="Delete lesson?"
         description={
           deleteCandidate
-            ? `Delete ${getCourseDisplayName(deleteCandidate.course)} scheduled for ${formatDateTime(deleteCandidate.timeStart)}?`
+            ? `This will permanently remove the lesson for ${getCourseDisplayName(deleteCandidate.course)} in ${getRoomDisplayName(deleteCandidate.room)} on ${formatDateTime(deleteCandidate.timeStart)}${deleteCandidate.group ? ` for group ${getGroupDisplayName(deleteCandidate.group)}` : ''}. This action cannot be undone.`
             : ''
         }
         confirmLabel="Delete lesson"
+        cancelLabel="Keep lesson"
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

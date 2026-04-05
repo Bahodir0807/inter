@@ -124,6 +124,9 @@ export function ScheduleFormModal({
       <ModalShell
         open={open}
         onClose={closeGuard.requestClose}
+        closeOnBackdrop={!loading}
+        closeOnEscape={!loading}
+        closeDisabled={loading}
         title={item ? 'Edit lesson' : 'Create lesson'}
         description="Plan the lesson, attach it to a room and group, and assign the relevant students."
       >
@@ -200,8 +203,9 @@ export function ScheduleFormModal({
       <ConfirmModal
         open={closeGuard.confirmOpen}
         title="Discard changes?"
-        description="You have unsaved changes in this schedule form. Close it without saving?"
+        description="You have unsaved changes in this form. Discard them and close the modal?"
         confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

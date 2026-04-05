@@ -25,9 +25,20 @@ export function ConfirmModal({
   onClose,
 }: ConfirmModalProps) {
   return (
-    <ModalShell open={open} onClose={onClose} title={title} description={description}>
+    <ModalShell
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={description}
+      closeOnBackdrop={false}
+      closeOnEscape={!loading}
+      closeDisabled={loading}
+    >
       <div className="stack">
         <div className="inline-actions">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+            {cancelLabel}
+          </Button>
           <Button
             type="button"
             variant={tone === 'danger' ? 'danger' : 'primary'}
@@ -35,9 +46,6 @@ export function ConfirmModal({
             disabled={loading}
           >
             {loading ? 'Working...' : confirmLabel}
-          </Button>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
-            {cancelLabel}
           </Button>
         </div>
       </div>

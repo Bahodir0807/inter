@@ -52,6 +52,7 @@ export function RoomsPage() {
           description="Teaching spaces are shown with room type, capacity, and current availability."
         >
           <DataTable
+            getRowKey={item => item.id}
             columns={[
               {
                 key: 'room',
