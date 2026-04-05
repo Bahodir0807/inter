@@ -20,10 +20,21 @@ import { TableShell } from '../../shared/ui/data-display/table-shell';
 import { Badge } from '../../shared/ui/badges/badge';
 import { formatDateTime, formatMoney } from '../../shared/lib/date';
 import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
+import { cn } from '../../shared/lib/cn';
 
-function MetricCard({ label, value, hint }: { label: string; value: string | number; hint: string }) {
+function MetricCard({
+  label,
+  value,
+  hint,
+  className,
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+  className?: string;
+}) {
   return (
-    <Card className="metric-card">
+    <Card className={cn('metric-card', className)}>
       <span className="subtle">{label}</span>
       <strong>{value}</strong>
       <span className="subtle">{hint}</span>
@@ -91,7 +102,7 @@ export function DashboardPage() {
   }
 
   if (!activeQuery.data) {
-    return <EmptyState title="No data yet" description="The dashboard has not received any usable data from the backend." />;
+    return <EmptyState title="No dashboard data yet" description="The dashboard is connected, but there is nothing usable to show in this workspace yet." />;
   }
 
   if (isOwnerAdmin) {
@@ -110,27 +121,35 @@ export function DashboardPage() {
         title="Dashboard"
         description="Operational overview for owners and admins with access to the core CRM data footprint."
       >
-        <div className="dashboard-grid">
-          <MetricCard label="Users" value={data.users.length} hint="People in the system" />
+        <div className="dashboard-grid dashboard-grid--overview">
+          <MetricCard className="metric-card--hero" label="Users" value={data.users.length} hint="People in the system" />
           <MetricCard label="Courses" value={data.courses.length} hint="Active programs" />
           <MetricCard label="Groups" value={data.groups.length} hint="Learning cohorts" />
-          <MetricCard label="Payments" value={data.payments.length} hint="Tracked transactions" />
+          <MetricCard className="metric-card--accent" label="Payments" value={data.payments.length} hint="Tracked transactions" />
         </div>
         <div className="content-grid">
-          <Card className="content-grid__wide">
-            <div className="stats-grid">
+          <Card className="content-grid__wide dashboard-panel">
+            <div className="dashboard-panel__intro">
+              <div className="stack">
+                <h3>Operational pulse</h3>
+                <p className="subtle">A compact read on what is moving through the center today.</p>
+              </div>
+            </div>
+            <div className="stats-grid stats-grid--dashboard">
               <MetricCard label="Schedule" value={data.schedule.length} hint="Planned sessions" />
               <MetricCard label="Rooms" value={data.rooms.length} hint="Available spaces" />
               <MetricCard label="Confirmed" value={data.payments.filter(item => item.isConfirmed).length} hint="Verified payments" />
               <MetricCard
+                className="metric-card--quiet"
                 label="Tracked amount"
                 value={formatMoney(data.payments.reduce((sum, item) => sum + item.amount, 0))}
                 hint="Total payment amount"
               />
             </div>
           </Card>
-          <Card className="content-grid__side">
-            <h3>Backend note</h3>
+          <Card className="content-grid__side dashboard-note">
+            <span className="eyebrow">Working note</span>
+            <h3>List-first reporting for now</h3>
             <p className="subtle">This dashboard still relies on list endpoints without server-side aggregates or pagination.</p>
           </Card>
         </div>
@@ -148,10 +167,12 @@ export function DashboardPage() {
         description="A safe overview for the panda role using only the backend endpoints that are explicitly available."
       >
         <div className="dashboard-grid">
-          <MetricCard label="Users" value={data.users.length} hint="Accessible through `/users`" />
-          <MetricCard label="Students" value={data.users.filter(item => item.role === 'student').length} hint="Student accounts" />
+          <MetricCard className="metric-card--hero" label="Users" value={data.users.length} hint="Accessible through `/users`" />
+          <MetricCard className="metric-card--accent" label="Students" value={data.users.filter(item => item.role === 'student').length} hint="Student accounts" />
         </div>
-        <Card>
+        <Card className="dashboard-note">
+          <span className="eyebrow">Scope</span>
+          <h3>Intentionally narrow access</h3>
           <p className="subtle">
             The backend still gives `panda` a narrower scope than `owner` or `admin`, so this view stays intentionally limited.
           </p>
@@ -175,38 +196,47 @@ export function DashboardPage() {
       description="A daily overview for students and teachers using personal `me` endpoints."
     >
       <div className="dashboard-grid">
-        <MetricCard label="Schedule" value={data.schedule.length} hint="Planned sessions" />
+        <MetricCard className="metric-card--hero" label="Schedule" value={data.schedule.length} hint="Planned sessions" />
         <MetricCard label="Homework" value={data.homework.length} hint="Assigned tasks" />
         <MetricCard label="Grades" value={data.grades.length} hint="Recorded grades" />
         <MetricCard
+          className="metric-card--accent"
           label="Payments"
           value={formatMoney(data.payments.reduce((sum, item) => sum + item.amount, 0))}
           hint={isStudent ? 'My payment history' : 'Teachers do not have payment endpoints'}
         />
       </div>
       <div className="content-grid">
-        <Card className="content-grid__side">
+        <Card className="content-grid__side dashboard-note">
+          <span className="eyebrow">Today</span>
           <h3>Attendance</h3>
           <p className="subtle">Latest status: {data.attendance[0]?.status ?? 'no records yet'}</p>
         </Card>
-        <TableShell title="Upcoming sessions">
+        <TableShell title="Upcoming sessions" description="The next sessions from your personal schedule, kept in order.">
           <DataTable
             getRowKey={item => item.id}
             columns={[
               {
                 key: 'course',
                 header: 'Course',
+                className: 'data-table__cell--primary',
                 cell: item => (
-                  <div className="stack">
-                    <strong>{getCourseDisplayName(item.course)}</strong>
-                    <span className="subtle">{formatDateTime(item.timeStart)}</span>
+                  <div className="cell-stack cell-stack--primary cell-stack--relation">
+                    <span className="cell-title">{getCourseDisplayName(item.course)}</span>
+                    <span className="cell-meta cell-meta--strong">{formatDateTime(item.timeStart)}</span>
                   </div>
                 ),
               },
               {
                 key: 'teacher',
                 header: 'Teacher',
-                cell: item => getUserDisplayName(item.teacher),
+                className: 'data-table__cell--relation',
+                cell: item => (
+                  <div className="cell-stack cell-stack--relation">
+                    <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
+                    <span className="cell-meta">Assigned teacher</span>
+                  </div>
+                ),
               },
               {
                 key: 'source',

@@ -113,6 +113,13 @@ export function UsersPage() {
     return sortBy(filtered, item => getUserDisplayName(item).toLowerCase(), sortDirection);
   }, [roleFilter, search, sortDirection, users]);
 
+  const toolbarFilters = [
+    ...(roleFilter !== 'all'
+      ? [`Role: ${roleOptions.find(option => option.value === roleFilter)?.label ?? roleFilter}`]
+      : []),
+    ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
+  ];
+
   if (query.isLoading) {
     return <LoadingState label="Loading users..." />;
   }
@@ -166,7 +173,7 @@ export function UsersPage() {
       </div>
 
       {users.length === 0 ? (
-        <EmptyState title="No users yet" description="This role scope does not currently return any user records." />
+        <EmptyState title="No people yet" description="No user records are visible in this workspace yet. New accounts will appear here as soon as they are available." />
       ) : (
         <TableShell
           title="User directory"
@@ -181,9 +188,17 @@ export function UsersPage() {
             }}
             searchPlaceholder="Search by name, username, email, or phone"
             resultsLabel={`${filteredUsers.length} result${filteredUsers.length === 1 ? '' : 's'}`}
+            activeFilters={toolbarFilters}
             filters={
               <>
-                <Select value={roleFilter} onChange={event => setRoleFilter(event.target.value as 'all' | Role)}>
+                <Select
+                  aria-label="Filter users by role"
+                  value={roleFilter}
+                  onChange={event => {
+                    setRoleFilter(event.target.value as 'all' | Role);
+                    setPage(1);
+                  }}
+                >
                   <option value="all">All roles</option>
                   {roleOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -191,7 +206,14 @@ export function UsersPage() {
                     </option>
                   ))}
                 </Select>
-                <Select value={sortDirection} onChange={event => setSortDirection(event.target.value as SortDirection)}>
+                <Select
+                  aria-label="Sort users"
+                  value={sortDirection}
+                  onChange={event => {
+                    setSortDirection(event.target.value as SortDirection);
+                    setPage(1);
+                  }}
+                >
                   <option value="asc">Name A-Z</option>
                   <option value="desc">Name Z-A</option>
                 </Select>
@@ -200,14 +222,17 @@ export function UsersPage() {
           />
           <DataTable
             getRowKey={item => item.id}
+            emptyTitle="No people match this view"
+            emptyDescription="Try a different search or clear the current role filter."
             columns={[
               {
                 key: 'user',
                 header: 'User',
+                className: 'data-table__cell--primary',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--primary cell-stack--relation">
                     <span className="cell-title">{getUserDisplayName(item)}</span>
-                    <span className="cell-meta">@{item.username}</span>
+                    <span className="cell-meta cell-meta--strong">@{item.username}</span>
                     <span className="cell-meta">{item.phoneNumber || item.email || 'No contact details yet'}</span>
                   </div>
                 ),
@@ -215,8 +240,9 @@ export function UsersPage() {
               {
                 key: 'access',
                 header: 'Access',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <div className="cell-badges">
                       <Badge tone="info">{getRoleDisplayName(item.role)}</Badge>
                       <Badge tone={item.isActive ? 'success' : 'warning'}>
@@ -232,8 +258,10 @@ export function UsersPage() {
               {
                 key: 'actions',
                 header: 'Actions',
+                className: 'data-table__cell--actions',
+                headClassName: 'data-table__head--actions',
                 cell: item => (
-                  <div className="inline-actions">
+                  <div className="row-actions">
                     <Button size="sm" variant="ghost" onClick={() => openDetail(item)}>
                       View
                     </Button>
@@ -252,8 +280,6 @@ export function UsersPage() {
               },
             ]}
             rows={pagedUsers}
-            emptyTitle="No matching users"
-            emptyDescription="Try another role filter or broaden the search."
           />
         </TableShell>
       )}

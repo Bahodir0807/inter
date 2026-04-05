@@ -1,10 +1,13 @@
 import { ReactNode } from 'react';
+import { cn } from '../../lib/cn';
 import { EmptyState } from '../feedback/empty-state';
 
 export interface Column<T> {
   key: string;
   header: string;
   cell: (row: T) => ReactNode;
+  className?: string;
+  headClassName?: string;
 }
 
 interface DataTableProps<T> {
@@ -19,24 +22,28 @@ export function DataTable<T>({
   columns,
   rows,
   getRowKey,
-  emptyTitle = 'No results found',
-  emptyDescription = 'Try adjusting the search or filters.',
+  emptyTitle = 'Nothing matches this view',
+  emptyDescription = 'Try a different search or loosen one of the filters.',
 }: DataTableProps<T>) {
   return (
     <table className="data-table">
       <thead>
         <tr>
           {columns.map(column => (
-            <th key={column.key}>{column.header}</th>
+            <th key={column.key} className={cn(column.headClassName)}>
+              {column.header}
+            </th>
           ))}
         </tr>
       </thead>
       <tbody>
         {rows.length > 0 ? (
           rows.map((row, rowIndex) => (
-            <tr key={getRowKey ? getRowKey(row, rowIndex) : rowIndex}>
+            <tr className="data-table__row" key={getRowKey ? getRowKey(row, rowIndex) : rowIndex}>
               {columns.map(column => (
-                <td key={column.key}>{column.cell(row)}</td>
+                <td key={column.key} className={cn('data-table__cell', column.className)}>
+                  {column.cell(row)}
+                </td>
               ))}
             </tr>
           ))

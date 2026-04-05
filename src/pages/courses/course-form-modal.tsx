@@ -10,6 +10,7 @@ import { Input } from '../../shared/ui/forms/input';
 import { Textarea } from '../../shared/ui/forms/textarea';
 import { Select } from '../../shared/ui/forms/select';
 import { CheckboxGroup } from '../../shared/ui/forms/checkbox-group';
+import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { getUserDisplayName } from '../../shared/lib/entity-display';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
@@ -72,6 +73,8 @@ export function CourseFormModal({
     onDiscard: onClose,
   });
 
+  const preferredTeacherId = defaultTeacherId ?? (teachers.length === 1 ? teachers[0]?.id ?? '' : '');
+
   useEffect(() => {
     if (!open) {
       return;
@@ -80,7 +83,7 @@ export function CourseFormModal({
     const teacherId =
       typeof course?.teacherId === 'string'
         ? course.teacherId
-        : course?.teacherId?.id ?? defaultTeacherId ?? '';
+        : course?.teacherId?.id ?? preferredTeacherId;
     const selectedStudents = (course?.students ?? []).map(student =>
       typeof student === 'string' ? student : student.id,
     );
@@ -94,7 +97,7 @@ export function CourseFormModal({
     });
 
     window.setTimeout(() => setFocus('name'), 0);
-  }, [course, defaultTeacherId, open, reset, setFocus]);
+  }, [course, open, preferredTeacherId, reset, setFocus]);
 
   const selectedStudents = watch('students');
 
@@ -109,37 +112,75 @@ export function CourseFormModal({
         title={course ? 'Edit course' : 'Create course'}
         description="Set the offer details, assign the teacher, and manage enrolled students in one place."
       >
-        <form className="stack" onSubmit={handleSubmit(async values => onSubmit(values))}>
-          <Input label="Course name" placeholder="For example: IELTS Intensive" error={errors.name?.message} {...register('name')} />
-          <Textarea
-            label="Description"
-            placeholder="Short description, level, or study format"
-            error={errors.description?.message}
-            {...register('description')}
-          />
-          <div className="detail-grid">
-            <Input label="Price" type="number" placeholder="1200000" error={errors.price?.message} {...register('price')} />
-            <Select label="Teacher" error={errors.teacherId?.message} {...register('teacherId')}>
-              <option value="">No teacher assigned</option>
-              {teachers.map(teacher => (
-                <option key={teacher.id} value={teacher.id}>
-                  {getUserDisplayName(teacher)}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <CheckboxGroup
-            label={`Students${selectedStudents.length ? ` (${selectedStudents.length})` : ''}`}
-            options={students.map(student => ({
-              value: student.id,
-              label: getUserDisplayName(student),
-              description: student.phoneNumber || student.email,
-            }))}
-            values={selectedStudents}
-            onChange={values => setValue('students', values, { shouldDirty: true })}
-          />
+        <form className="modal-form" onSubmit={handleSubmit(async values => onSubmit(values))}>
+          <FormSection
+            title="Core details"
+            description="Define the course offer first. This is the name and context people will see across tables, schedules, and payments."
+          >
+            <Input
+              label="Course name"
+              hint="Keep it clear enough to recognize in tables and dropdowns."
+              placeholder="For example: IELTS Intensive"
+              error={errors.name?.message}
+              fieldClassName="ui-field--primary"
+              {...register('name')}
+            />
+            <Textarea
+              label="Description"
+              hint="Useful for level, format, or a short teaching note."
+              placeholder="For example: Evening group, upper-intermediate, 3 sessions per week"
+              error={errors.description?.message}
+              {...register('description')}
+            />
+          </FormSection>
+          <FormSection
+            title="Delivery"
+            description="Set the commercial and ownership details so the course is ready to assign in operations."
+          >
+            <div className="detail-grid">
+              <Input
+                label="Price"
+                hint="Enter the full amount as a number."
+                type="number"
+                placeholder="1200000"
+                error={errors.price?.message}
+                {...register('price')}
+              />
+              <Select
+                label="Teacher"
+                hint="Pre-filled when only one teacher is available or a default owner is known."
+                error={errors.teacherId?.message}
+                {...register('teacherId')}
+              >
+                <option value="">No teacher assigned</option>
+                {teachers.map(teacher => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {getUserDisplayName(teacher)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </FormSection>
+          <FormSection
+            title="Enrollment"
+            description="Add students now if the roster is already known, or leave this empty and return later."
+          >
+            <CheckboxGroup
+              label={`Students${selectedStudents.length ? ` (${selectedStudents.length})` : ''}`}
+              hint="Selected students will immediately appear as enrolled in the course."
+              options={students.map(student => ({
+                value: student.id,
+                label: getUserDisplayName(student),
+                description: student.phoneNumber || student.email,
+              }))}
+              values={selectedStudents}
+              onChange={values => setValue('students', values, { shouldDirty: true, shouldValidate: true })}
+            />
+          </FormSection>
           <div className="form-actions">
-            <span className="subtle">{isDirty ? 'Unsaved changes' : course ? 'No changes yet' : 'Start with the core course details'}</span>
+            <span className="subtle">
+              {isDirty ? 'Changes are ready to save.' : course ? 'Update pricing, ownership, or roster when needed.' : 'Start with the course identity, then add delivery details.'}
+            </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || (!!course && !isDirty)}>
                 {loading ? 'Saving...' : course ? 'Save changes' : 'Create course'}

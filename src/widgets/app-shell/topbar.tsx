@@ -1,29 +1,48 @@
 import { Button } from '../../shared/ui/buttons/button';
-import { Badge } from '../../shared/ui/badges/badge';
 import { Breadcrumbs } from './breadcrumbs';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { getRoleDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
+import { AppIcon } from '../../shared/ui/icons/app-icon';
 
 export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
   const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
+  const userName = getUserDisplayName(user) || 'CRM user';
+  const initials = userName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('') || 'IC';
 
   return (
     <header className="app-topbar">
       <div className="app-topbar__left">
         <Button variant="ghost" className="app-topbar__menu" onClick={onMenuToggle}>
-          Menu
+          <AppIcon name="menu" />
+          <span>Menu</span>
         </Button>
         <div className="app-topbar__identity">
           <Breadcrumbs />
-          <strong>{getUserDisplayName(user) || 'CRM'}</strong>
-          <span className="subtle">Daily operations workspace</span>
+          <div className="app-topbar__headline">
+            <strong>Ibrat operations desk</strong>
+            <span className="subtle">Keep courses, cohorts, schedule, rooms, and payments aligned day to day.</span>
+          </div>
         </div>
       </div>
       <div className="app-topbar__right">
-        <Badge tone="info">{getRoleDisplayName(user?.role)}</Badge>
-        <Button variant="secondary" onClick={logout}>
-          Log out
+        <div className="app-topbar__user-chip">
+          <span className="app-topbar__avatar" aria-hidden="true">
+            {initials}
+          </span>
+          <div className="app-topbar__user-copy">
+            <strong>{userName}</strong>
+            <span className="subtle">{getRoleDisplayName(user?.role)}</span>
+          </div>
+        </div>
+        <Button variant="ghost" onClick={logout}>
+          <AppIcon name="logout" />
+          <span>Log out</span>
         </Button>
       </div>
     </header>

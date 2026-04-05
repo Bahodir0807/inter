@@ -109,6 +109,17 @@ export function PaymentsPage() {
     return sortBy(filtered, item => item.paidAt || item.createdAt || '', sortDirection);
   }, [courseFilter, payments, search, sortDirection, studentFilter]);
 
+  const selectedStudentLabel =
+    studentFilter === 'all' ? '' : getUserDisplayName(students.find(student => student.id === studentFilter));
+  const selectedCourseLabel =
+    courseFilter === 'all' ? '' : getCourseDisplayName(courses.find(course => course.id === courseFilter));
+
+  const toolbarFilters = [
+    ...(studentFilter !== 'all' ? [`Student: ${selectedStudentLabel}`] : []),
+    ...(courseFilter !== 'all' ? [`Course: ${selectedCourseLabel}`] : []),
+    ...(sortDirection === 'asc' ? ['Order: Oldest first'] : []),
+  ];
+
   if (paymentsQuery.isLoading) {
     return <LoadingState label="Loading payments..." />;
   }
@@ -145,7 +156,7 @@ export function PaymentsPage() {
         </Card>
       </div>
       {payments.length === 0 ? (
-        <EmptyState title="No payments yet" description="Payment records will appear here as soon as they are created." />
+        <EmptyState title="No payments yet" description="The ledger is still empty. Payment records will start appearing here as soon as the first one is created." />
       ) : (
         <TableShell
           title="Payment ledger"
@@ -160,10 +171,18 @@ export function PaymentsPage() {
             }}
             searchPlaceholder="Search by student, course, or amount"
             resultsLabel={`${filteredPayments.length} result${filteredPayments.length === 1 ? '' : 's'}`}
+            activeFilters={toolbarFilters}
             filters={
               isAdminLike ? (
                 <>
-                  <Select value={studentFilter} onChange={event => setStudentFilter(event.target.value)}>
+                  <Select
+                    aria-label="Filter payments by student"
+                    value={studentFilter}
+                    onChange={event => {
+                      setStudentFilter(event.target.value);
+                      setPage(1);
+                    }}
+                  >
                     <option value="all">All students</option>
                     {students.map(student => (
                       <option key={student.id} value={student.id}>
@@ -171,7 +190,14 @@ export function PaymentsPage() {
                       </option>
                     ))}
                   </Select>
-                  <Select value={courseFilter} onChange={event => setCourseFilter(event.target.value)}>
+                  <Select
+                    aria-label="Filter payments by course"
+                    value={courseFilter}
+                    onChange={event => {
+                      setCourseFilter(event.target.value);
+                      setPage(1);
+                    }}
+                  >
                     <option value="all">All courses</option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
@@ -179,7 +205,14 @@ export function PaymentsPage() {
                       </option>
                     ))}
                   </Select>
-                  <Select value={sortDirection} onChange={event => setSortDirection(event.target.value as SortDirection)}>
+                  <Select
+                    aria-label="Sort payments"
+                    value={sortDirection}
+                    onChange={event => {
+                      setSortDirection(event.target.value as SortDirection);
+                      setPage(1);
+                    }}
+                  >
                     <option value="desc">Newest first</option>
                     <option value="asc">Oldest first</option>
                   </Select>
@@ -189,14 +222,17 @@ export function PaymentsPage() {
           />
           <DataTable
             getRowKey={item => item.id}
+            emptyTitle="No payments match this view"
+            emptyDescription="Try another search or clear the student and course filters."
             columns={[
               {
                 key: 'payment',
                 header: 'Payment',
+                className: 'data-table__cell--primary',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--primary cell-stack--relation">
                     <span className="cell-title">{formatMoney(item.amount)}</span>
-                    <span className="cell-meta">{formatDate(item.paidAt)}</span>
+                    <span className="cell-meta cell-meta--strong">{formatDate(item.paidAt)}</span>
                     <div className="cell-badges">
                       <Badge tone={item.isConfirmed ? 'success' : 'warning'}>
                         {item.isConfirmed ? 'Confirmed' : 'Pending'}
@@ -208,8 +244,9 @@ export function PaymentsPage() {
               {
                 key: 'student',
                 header: 'Student',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{getUserDisplayName(item.student)}</span>
                     <span className="cell-meta">Linked payer</span>
                   </div>
@@ -218,8 +255,9 @@ export function PaymentsPage() {
               {
                 key: 'course',
                 header: 'Course',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{getCourseDisplayName(item.course)}</span>
                     <span className="cell-meta">Linked offer</span>
                   </div>
@@ -228,8 +266,10 @@ export function PaymentsPage() {
               {
                 key: 'actions',
                 header: 'Actions',
+                className: 'data-table__cell--actions',
+                headClassName: 'data-table__head--actions',
                 cell: item => (
-                  <div className="inline-actions">
+                  <div className="row-actions">
                     {isAdminLike ? (
                       <>
                         {!item.isConfirmed ? (
@@ -249,8 +289,6 @@ export function PaymentsPage() {
               },
             ]}
             rows={pagedPayments}
-            emptyTitle="No matching payments"
-            emptyDescription="Adjust the filters or broaden the search query."
           />
         </TableShell>
       )}

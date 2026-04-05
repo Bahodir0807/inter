@@ -8,7 +8,8 @@ export function EmptyState({
   compact?: boolean;
 }) {
   return (
-    <div className={`ui-state${compact ? ' ui-state--compact' : ''}`}>
+    <div className={`ui-state${compact ? ' ui-state--compact' : ''}`} role="status">
+      <span className="ui-state__eyebrow">{compact ? 'Nothing matches this view' : 'Workspace update'}</span>
       <h3>{title}</h3>
       <p>{description}</p>
     </div>

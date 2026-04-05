@@ -12,6 +12,7 @@ import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
 import { Input } from '../../shared/ui/forms/input';
 import { Select } from '../../shared/ui/forms/select';
 import { CheckboxGroup } from '../../shared/ui/forms/checkbox-group';
+import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { getCourseDisplayName, getGroupDisplayName, getRoomDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
@@ -42,6 +43,20 @@ function toLocalDateTime(value?: string) {
 
 function toIso(value: string) {
   return value ? new Date(value).toISOString() : value;
+}
+
+function getUpcomingLessonWindow() {
+  const start = new Date();
+  start.setMinutes(0, 0, 0);
+  start.setHours(start.getHours() + 1);
+
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+
+  return {
+    date: toLocalDateTime(start.toISOString()),
+    timeStart: toLocalDateTime(start.toISOString()),
+    timeEnd: toLocalDateTime(end.toISOString()),
+  };
 }
 
 export function ScheduleFormModal({
@@ -98,24 +113,31 @@ export function ScheduleFormModal({
     onDiscard: onClose,
   });
 
+  const preferredTeacherId = defaultTeacherId ?? (teachers.length === 1 ? teachers[0]?.id ?? '' : '');
+  const preferredCourseId = courses.length === 1 ? courses[0]?.id ?? '' : '';
+  const preferredRoomId = rooms.length === 1 ? rooms[0]?.id ?? '' : '';
+  const preferredGroupId = groups.length === 1 ? groups[0]?.id ?? '' : '';
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    const newLessonWindow = getUpcomingLessonWindow();
+
     reset({
-      course: typeof item?.course === 'string' ? item.course : item?.course?.id ?? '',
-      room: typeof item?.room === 'string' ? item.room : item?.room?.id ?? '',
-      date: toLocalDateTime(item?.date),
-      timeStart: toLocalDateTime(item?.timeStart),
-      timeEnd: toLocalDateTime(item?.timeEnd),
-      teacher: typeof item?.teacher === 'string' ? item.teacher : item?.teacher?.id ?? defaultTeacherId ?? '',
+      course: typeof item?.course === 'string' ? item.course : item?.course?.id ?? preferredCourseId,
+      room: typeof item?.room === 'string' ? item.room : item?.room?.id ?? preferredRoomId,
+      date: toLocalDateTime(item?.date) || newLessonWindow.date,
+      timeStart: toLocalDateTime(item?.timeStart) || newLessonWindow.timeStart,
+      timeEnd: toLocalDateTime(item?.timeEnd) || newLessonWindow.timeEnd,
+      teacher: typeof item?.teacher === 'string' ? item.teacher : item?.teacher?.id ?? preferredTeacherId,
       students: (item?.students ?? []).map(student => (typeof student === 'string' ? student : student.id)),
-      group: typeof item?.group === 'string' ? item.group : item?.group?.id ?? '',
+      group: typeof item?.group === 'string' ? item.group : item?.group?.id ?? preferredGroupId,
     });
 
     window.setTimeout(() => setFocus('course'), 0);
-  }, [defaultTeacherId, item, open, reset, setFocus]);
+  }, [item, open, preferredCourseId, preferredGroupId, preferredRoomId, preferredTeacherId, reset, setFocus]);
 
   const selectedStudents = watch('students');
 
@@ -131,7 +153,7 @@ export function ScheduleFormModal({
         description="Plan the lesson, attach it to a room and group, and assign the relevant students."
       >
         <form
-          className="stack"
+          className="modal-form"
           onSubmit={handleSubmit(async values =>
             onSubmit({
               ...values,
@@ -140,55 +162,115 @@ export function ScheduleFormModal({
               timeEnd: toIso(values.timeEnd),
             }))}
         >
-          <div className="detail-grid">
-            <Select label="Course" error={errors.course?.message} {...register('course')}>
-              <option value="">Select course</option>
-              {courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  {getCourseDisplayName(course)}
-                </option>
-              ))}
-            </Select>
-            <Select label="Room" error={errors.room?.message} {...register('room')}>
-              <option value="">Select room</option>
-              {rooms.map(room => (
-                <option key={room.id} value={room.id}>
-                  {getRoomDisplayName(room)}
-                </option>
-              ))}
-            </Select>
-            <Input label="Session date" type="datetime-local" error={errors.date?.message} {...register('date')} />
-            <Input label="Start time" type="datetime-local" error={errors.timeStart?.message} {...register('timeStart')} />
-            <Input label="End time" type="datetime-local" error={errors.timeEnd?.message} {...register('timeEnd')} />
-            <Select label="Teacher" error={errors.teacher?.message} {...register('teacher')}>
-              <option value="">Select teacher</option>
-              {teachers.map(teacher => (
-                <option key={teacher.id} value={teacher.id}>
-                  {getUserDisplayName(teacher)}
-                </option>
-              ))}
-            </Select>
-            <Select label="Group" error={errors.group?.message} {...register('group')}>
-              <option value="">No group linked</option>
-              {groups.map(group => (
-                <option key={group.id} value={group.id}>
-                  {getGroupDisplayName(group)}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <CheckboxGroup
-            label={`Students${selectedStudents.length ? ` (${selectedStudents.length})` : ''}`}
-            options={students.map(student => ({
-              value: student.id,
-              label: getUserDisplayName(student),
-              description: student.phoneNumber || student.email,
-            }))}
-            values={selectedStudents}
-            onChange={values => setValue('students', values, { shouldDirty: true })}
-          />
+          <FormSection
+            title="Lesson details"
+            description="Choose the learning context first. This defines what the lesson is, where it happens, and who owns it."
+          >
+            <div className="detail-grid">
+              <Select
+                label="Course"
+                hint="Pre-filled when the lesson is being created from a single course context."
+                error={errors.course?.message}
+                fieldClassName="ui-field--primary"
+                {...register('course')}
+              >
+                <option value="">Select course</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {getCourseDisplayName(course)}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Teacher"
+                hint="Defaults to the current teacher context when available."
+                error={errors.teacher?.message}
+                {...register('teacher')}
+              >
+                <option value="">Select teacher</option>
+                {teachers.map(teacher => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {getUserDisplayName(teacher)}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Room"
+                hint="If only one room is available, it is selected automatically."
+                error={errors.room?.message}
+                {...register('room')}
+              >
+                <option value="">Select room</option>
+                {rooms.map(room => (
+                  <option key={room.id} value={room.id}>
+                    {getRoomDisplayName(room)}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Group"
+                hint="Optional. Link a cohort when this lesson belongs to a group flow."
+                error={errors.group?.message}
+                fieldClassName="ui-field--quiet"
+                {...register('group')}
+              >
+                <option value="">No group linked</option>
+                {groups.map(group => (
+                  <option key={group.id} value={group.id}>
+                    {getGroupDisplayName(group)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </FormSection>
+          <FormSection
+            title="Timing"
+            description="New lessons start one hour from now by default so operators can create a session with minimal typing."
+          >
+            <div className="detail-grid">
+              <Input
+                label="Session date"
+                hint="Used in calendar and timeline views."
+                type="datetime-local"
+                error={errors.date?.message}
+                {...register('date')}
+              />
+              <Input
+                label="Starts at"
+                hint="Defaults to the next full hour."
+                type="datetime-local"
+                error={errors.timeStart?.message}
+                {...register('timeStart')}
+              />
+              <Input
+                label="Ends at"
+                hint="Pre-filled one hour after the start time."
+                type="datetime-local"
+                error={errors.timeEnd?.message}
+                {...register('timeEnd')}
+              />
+            </div>
+          </FormSection>
+          <FormSection
+            title="Attendance"
+            description="Select the students who should be attached to this lesson. Leave it empty if attendance will be added later."
+          >
+            <CheckboxGroup
+              label={`Students${selectedStudents.length ? ` (${selectedStudents.length})` : ''}`}
+              hint="Only selected students will appear as linked to this session."
+              options={students.map(student => ({
+                value: student.id,
+                label: getUserDisplayName(student),
+                description: student.phoneNumber || student.email,
+              }))}
+              values={selectedStudents}
+              onChange={values => setValue('students', values, { shouldDirty: true, shouldValidate: true })}
+            />
+          </FormSection>
           <div className="form-actions">
-            <span className="subtle">{isDirty ? 'Unsaved changes' : item ? 'No changes yet' : 'Plan the core lesson details first'}</span>
+            <span className="subtle">
+              {isDirty ? 'Changes are ready to save.' : item ? 'Adjust only the lesson details that changed.' : 'Start with lesson context, then confirm time and attendance.'}
+            </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || (!!item && !isDirty)}>
                 {loading ? 'Saving...' : item ? 'Save changes' : 'Create lesson'}

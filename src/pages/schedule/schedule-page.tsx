@@ -19,7 +19,13 @@ import { Pagination } from '../../shared/ui/data-display/pagination';
 import { Button } from '../../shared/ui/buttons/button';
 import { Select } from '../../shared/ui/forms/select';
 import { formatDateTime } from '../../shared/lib/date';
-import { getCourseDisplayName, getGroupDisplayName, getRoomDisplayName, getUserDisplayName, getUserListSummary } from '../../shared/lib/entity-display';
+import {
+  getCourseDisplayName,
+  getGroupDisplayName,
+  getRoomDisplayName,
+  getUserDisplayName,
+  getUserListSummary,
+} from '../../shared/lib/entity-display';
 import { paginate, sortBy, SortDirection } from '../../shared/lib/table';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { Badge } from '../../shared/ui/badges/badge';
@@ -124,6 +130,17 @@ export function SchedulePage() {
     return sortBy(filtered, item => item.timeStart, sortDirection);
   }, [groupFilter, items, search, sortDirection, teacherFilter]);
 
+  const selectedTeacherLabel =
+    teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
+  const selectedGroupLabel =
+    groupFilter === 'all' ? '' : getGroupDisplayName((support?.groups ?? []).find(group => group.id === groupFilter));
+
+  const toolbarFilters = [
+    ...(teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
+    ...(groupFilter !== 'all' ? [`Group: ${selectedGroupLabel}`] : []),
+    ...(sortDirection === 'desc' ? ['Order: Latest first'] : []),
+  ];
+
   if (scheduleQuery.isLoading) {
     return <LoadingState label="Loading schedule..." />;
   }
@@ -156,7 +173,7 @@ export function SchedulePage() {
         </Card>
       </div>
       {items.length === 0 ? (
-        <EmptyState title="No lessons yet" description="There are no schedule entries in the current scope." />
+        <EmptyState title="No lessons yet" description="Nothing is scheduled in this workspace yet. New lessons will appear here as soon as they are planned." />
       ) : (
         <TableShell
           title="Lesson plan"
@@ -171,9 +188,17 @@ export function SchedulePage() {
             }}
             searchPlaceholder="Search by course, room, teacher, or group"
             resultsLabel={`${filteredItems.length} result${filteredItems.length === 1 ? '' : 's'}`}
+            activeFilters={toolbarFilters}
             filters={
               <>
-                <Select value={teacherFilter} onChange={event => setTeacherFilter(event.target.value)}>
+                <Select
+                  aria-label="Filter lessons by teacher"
+                  value={teacherFilter}
+                  onChange={event => {
+                    setTeacherFilter(event.target.value);
+                    setPage(1);
+                  }}
+                >
                   <option value="all">All teachers</option>
                   {teachers.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
@@ -181,7 +206,14 @@ export function SchedulePage() {
                     </option>
                   ))}
                 </Select>
-                <Select value={groupFilter} onChange={event => setGroupFilter(event.target.value)}>
+                <Select
+                  aria-label="Filter lessons by group"
+                  value={groupFilter}
+                  onChange={event => {
+                    setGroupFilter(event.target.value);
+                    setPage(1);
+                  }}
+                >
                   <option value="all">All groups</option>
                   {(support?.groups ?? []).map(group => (
                     <option key={group.id} value={group.id}>
@@ -189,7 +221,14 @@ export function SchedulePage() {
                     </option>
                   ))}
                 </Select>
-                <Select value={sortDirection} onChange={event => setSortDirection(event.target.value as SortDirection)}>
+                <Select
+                  aria-label="Sort lessons"
+                  value={sortDirection}
+                  onChange={event => {
+                    setSortDirection(event.target.value as SortDirection);
+                    setPage(1);
+                  }}
+                >
                   <option value="asc">Soonest first</option>
                   <option value="desc">Latest first</option>
                 </Select>
@@ -198,14 +237,17 @@ export function SchedulePage() {
           />
           <DataTable
             getRowKey={item => item.id}
+            emptyTitle="No lessons match this view"
+            emptyDescription="Try another search or clear the teacher and group filters."
             columns={[
               {
                 key: 'session',
                 header: 'Session',
+                className: 'data-table__cell--primary',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--primary cell-stack--relation">
                     <span className="cell-title">{getCourseDisplayName(item.course)}</span>
-                    <span className="cell-meta">{formatDateTime(item.timeStart)}</span>
+                    <span className="cell-meta cell-meta--strong">{formatDateTime(item.timeStart)}</span>
                     <span className="cell-meta">Ends {formatDateTime(item.timeEnd)}</span>
                   </div>
                 ),
@@ -213,8 +255,9 @@ export function SchedulePage() {
               {
                 key: 'assignment',
                 header: 'Assignment',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{getRoomDisplayName(item.room)}</span>
                     <span className="cell-meta">{item.group ? getGroupDisplayName(item.group) : 'No group linked'}</span>
                   </div>
@@ -223,20 +266,22 @@ export function SchedulePage() {
               {
                 key: 'people',
                 header: 'People',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
-                    <span className="cell-meta">
-                      {item.students?.length ?? 0} students • {getUserListSummary(item.students)}
-                    </span>
+                    <span className="cell-meta">{item.students?.length ?? 0} students linked</span>
+                    <span className="cell-meta">{getUserListSummary(item.students)}</span>
                   </div>
                 ),
               },
               {
                 key: 'actions',
                 header: 'Actions',
+                className: 'data-table__cell--actions',
+                headClassName: 'data-table__head--actions',
                 cell: item => (
-                  <div className="inline-actions">
+                  <div className="row-actions">
                     {canManage ? (
                       <>
                         <Button size="sm" variant="secondary" onClick={() => { setSelectedItem(item); setFormOpen(true); }}>
@@ -256,8 +301,6 @@ export function SchedulePage() {
               },
             ]}
             rows={pagedItems}
-            emptyTitle="No matching lessons"
-            emptyDescription="Try another teacher or group filter."
           />
         </TableShell>
       )}

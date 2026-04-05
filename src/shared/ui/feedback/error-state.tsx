@@ -1,7 +1,7 @@
 import { Button } from '../buttons/button';
 
 export function ErrorState({
-  title = 'Не удалось загрузить данные',
+  title = 'Unable to load data',
   description,
   onRetry,
 }: {
@@ -13,7 +13,7 @@ export function ErrorState({
     <div className="ui-state ui-state--error">
       <h3>{title}</h3>
       <p>{description}</p>
-      {onRetry ? <Button onClick={onRetry}>Повторить</Button> : null}
+      {onRetry ? <Button onClick={onRetry}>Retry</Button> : null}
     </div>
   );
 }

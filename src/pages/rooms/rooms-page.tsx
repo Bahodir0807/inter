@@ -45,7 +45,7 @@ export function RoomsPage() {
         </Card>
       </div>
       {rooms.length === 0 ? (
-        <EmptyState title="No rooms yet" description="Room records will appear here once they are available in the backend." />
+        <EmptyState title="No rooms yet" description="No teaching spaces are available in this workspace yet. Rooms will appear here once the backend returns them." />
       ) : (
         <TableShell
           title="Room inventory"
@@ -57,8 +57,9 @@ export function RoomsPage() {
               {
                 key: 'room',
                 header: 'Room',
+                className: 'data-table__cell--primary',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--primary cell-stack--relation">
                     <span className="cell-title">{item.name}</span>
                     <span className="cell-meta">{item.description || 'No room notes provided'}</span>
                   </div>
@@ -72,8 +73,9 @@ export function RoomsPage() {
               {
                 key: 'capacity',
                 header: 'Capacity',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{item.capacity}</span>
                     <span className="cell-meta">Seats available</span>
                   </div>
@@ -91,7 +93,7 @@ export function RoomsPage() {
             ]}
             rows={rooms}
             emptyTitle="No rooms found"
-            emptyDescription="Try refreshing the inventory list."
+            emptyDescription="Try refreshing the inventory or clearing the current view."
           />
         </TableShell>
       )}

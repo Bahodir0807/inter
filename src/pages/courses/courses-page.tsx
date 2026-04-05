@@ -101,6 +101,14 @@ export function CoursesPage() {
     return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
   }, [courses, search, sortDirection, teacherFilter]);
 
+  const selectedTeacherLabel =
+    teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
+
+  const toolbarFilters = [
+    ...(teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
+    ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
+  ];
+
   if (coursesQuery.isLoading) {
     return <LoadingState label="Loading courses..." />;
   }
@@ -133,7 +141,7 @@ export function CoursesPage() {
         </Card>
       </div>
       {courses.length === 0 ? (
-        <EmptyState title="No courses yet" description="Create the first course to start assigning teachers and students." />
+        <EmptyState title="No courses yet" description="The catalog is still empty. Add the first course when you are ready to assign teachers and students." />
       ) : (
         <TableShell
           title="Course catalog"
@@ -148,9 +156,17 @@ export function CoursesPage() {
             }}
             searchPlaceholder="Search by course, description, or teacher"
             resultsLabel={`${filteredCourses.length} result${filteredCourses.length === 1 ? '' : 's'}`}
+            activeFilters={toolbarFilters}
             filters={
               <>
-                <Select value={teacherFilter} onChange={event => setTeacherFilter(event.target.value)}>
+                <Select
+                  aria-label="Filter courses by teacher"
+                  value={teacherFilter}
+                  onChange={event => {
+                    setTeacherFilter(event.target.value);
+                    setPage(1);
+                  }}
+                >
                   <option value="all">All teachers</option>
                   {teachers.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
@@ -158,7 +174,14 @@ export function CoursesPage() {
                     </option>
                   ))}
                 </Select>
-                <Select value={sortDirection} onChange={event => setSortDirection(event.target.value as SortDirection)}>
+                <Select
+                  aria-label="Sort courses"
+                  value={sortDirection}
+                  onChange={event => {
+                    setSortDirection(event.target.value as SortDirection);
+                    setPage(1);
+                  }}
+                >
                   <option value="asc">Name A-Z</option>
                   <option value="desc">Name Z-A</option>
                 </Select>
@@ -167,12 +190,15 @@ export function CoursesPage() {
           />
           <DataTable
             getRowKey={item => item.id}
+            emptyTitle="No courses match this view"
+            emptyDescription="Try a different search or clear one of the catalog filters."
             columns={[
               {
                 key: 'course',
                 header: 'Course',
+                className: 'data-table__cell--primary',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--primary cell-stack--relation">
                     <span className="cell-title">{item.name}</span>
                     <span className="cell-meta">{item.description || 'No description provided yet'}</span>
                   </div>
@@ -181,20 +207,25 @@ export function CoursesPage() {
               {
                 key: 'delivery',
                 header: 'Delivery',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">
                       {item.teacherId ? getUserDisplayName(item.teacherId) : 'No teacher assigned'}
                     </span>
-                    <span className="cell-meta">{formatMoney(item.price)}</span>
+                    <span className="cell-meta">Assigned instructor</span>
+                    <div className="cell-badges">
+                      <Badge tone="neutral">{formatMoney(item.price)}</Badge>
+                    </div>
                   </div>
                 ),
               },
               {
                 key: 'enrollment',
                 header: 'Enrollment',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{item.students?.length ?? 0} students</span>
                     <span className="cell-meta">{getUserListSummary(item.students)}</span>
                   </div>
@@ -203,8 +234,10 @@ export function CoursesPage() {
               {
                 key: 'actions',
                 header: 'Actions',
+                className: 'data-table__cell--actions',
+                headClassName: 'data-table__head--actions',
                 cell: item => (
-                  <div className="inline-actions">
+                  <div className="row-actions">
                     {canManage ? (
                       <>
                         <Button size="sm" variant="secondary" onClick={() => { setSelectedCourse(item); setFormOpen(true); }}>
@@ -224,8 +257,6 @@ export function CoursesPage() {
               },
             ]}
             rows={pagedCourses}
-            emptyTitle="No matching courses"
-            emptyDescription="Adjust the teacher filter or broaden the search query."
           />
         </TableShell>
       )}

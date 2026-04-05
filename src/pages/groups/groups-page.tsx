@@ -114,6 +114,14 @@ export function GroupsPage() {
     return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
   }, [groups, search, sortDirection, teacherFilter]);
 
+  const selectedTeacherLabel =
+    teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
+
+  const toolbarFilters = [
+    ...(teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
+    ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
+  ];
+
   if (groupsQuery.isLoading) {
     return <LoadingState label="Loading groups..." />;
   }
@@ -146,7 +154,7 @@ export function GroupsPage() {
         </Card>
       </div>
       {groups.length === 0 ? (
-        <EmptyState title="No groups yet" description="Create the first cohort to start assigning students and teachers." />
+        <EmptyState title="No groups yet" description="No cohorts have been opened in this workspace yet. Create the first group when the roster is ready." />
       ) : (
         <TableShell
           title="Group registry"
@@ -161,9 +169,17 @@ export function GroupsPage() {
             }}
             searchPlaceholder="Search by group, course, or teacher"
             resultsLabel={`${filteredGroups.length} result${filteredGroups.length === 1 ? '' : 's'}`}
+            activeFilters={toolbarFilters}
             filters={
               <>
-                <Select value={teacherFilter} onChange={event => setTeacherFilter(event.target.value)}>
+                <Select
+                  aria-label="Filter groups by teacher"
+                  value={teacherFilter}
+                  onChange={event => {
+                    setTeacherFilter(event.target.value);
+                    setPage(1);
+                  }}
+                >
                   <option value="all">All teachers</option>
                   {teachers.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
@@ -171,7 +187,14 @@ export function GroupsPage() {
                     </option>
                   ))}
                 </Select>
-                <Select value={sortDirection} onChange={event => setSortDirection(event.target.value as SortDirection)}>
+                <Select
+                  aria-label="Sort groups"
+                  value={sortDirection}
+                  onChange={event => {
+                    setSortDirection(event.target.value as SortDirection);
+                    setPage(1);
+                  }}
+                >
                   <option value="asc">Name A-Z</option>
                   <option value="desc">Name Z-A</option>
                 </Select>
@@ -180,12 +203,15 @@ export function GroupsPage() {
           />
           <DataTable
             getRowKey={item => item.id}
+            emptyTitle="No groups match this view"
+            emptyDescription="Try a different search or clear the current teacher filter."
             columns={[
               {
                 key: 'group',
                 header: 'Group',
+                className: 'data-table__cell--primary',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--primary cell-stack--relation">
                     <span className="cell-title">{item.name}</span>
                     <span className="cell-meta">{getCourseDisplayName(item.course)}</span>
                   </div>
@@ -194,8 +220,9 @@ export function GroupsPage() {
               {
                 key: 'teacher',
                 header: 'Teacher',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
                     <span className="cell-meta">Responsible teacher</span>
                   </div>
@@ -204,8 +231,9 @@ export function GroupsPage() {
               {
                 key: 'students',
                 header: 'Students',
+                className: 'data-table__cell--relation',
                 cell: item => (
-                  <div className="cell-stack">
+                  <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{item.students.length} students</span>
                     <span className="cell-meta">{getUserListSummary(item.students)}</span>
                   </div>
@@ -223,8 +251,10 @@ export function GroupsPage() {
               {
                 key: 'actions',
                 header: 'Actions',
+                className: 'data-table__cell--actions',
+                headClassName: 'data-table__head--actions',
                 cell: item => (
-                  <div className="inline-actions">
+                  <div className="row-actions">
                     {canManage ? (
                       <>
                         <Button size="sm" variant="secondary" onClick={() => { setSelectedGroup(item); setFormOpen(true); }}>
@@ -244,8 +274,6 @@ export function GroupsPage() {
               },
             ]}
             rows={pagedGroups}
-            emptyTitle="No matching groups"
-            emptyDescription="Adjust the teacher filter or broaden the search query."
           />
         </TableShell>
       )}
