@@ -139,7 +139,7 @@ export function DashboardPage() {
             <div className="stats-grid stats-grid--dashboard">
               <MetricCard label="Lessons" value={data.schedule.length} hint="Scheduled lessons" />
               <MetricCard label="Rooms" value={data.rooms.length} hint="All rooms" />
-              <MetricCard label="Confirmed" value={data.payments.filter(item => item.isConfirmed).length} hint="Confirmed payments" />
+              <MetricCard label="Confirmed" value={data.payments.filter(item => item.status === 'confirmed').length} hint="Confirmed payments" />
               <MetricCard
                 className="metric-card--quiet"
                 label="Amount"

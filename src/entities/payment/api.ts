@@ -2,19 +2,22 @@ import { http } from '../../shared/api/http';
 import { AppUser } from '../../shared/types/auth';
 import { Course } from '../course/api';
 
+export type PaymentStatus = 'pending' | 'confirmed' | 'cancelled';
+
 export interface Payment {
   id: string;
   amount: number;
   paidAt?: string;
-  isConfirmed: boolean;
+  status: PaymentStatus;
   student?: AppUser | string;
   course?: Course | string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PaymentFormValues {
   student: string;
-  courseId: string;
+  course: string;
   paidAt?: string;
 }
 
@@ -33,6 +36,10 @@ export const paymentsApi = {
   },
   async confirm(id: string) {
     const { data } = await http.patch<Payment>(`/payments/${id}/confirm`);
+    return data;
+  },
+  async cancel(id: string) {
+    const { data } = await http.patch<Payment>(`/payments/${id}/cancel`);
     return data;
   },
   async remove(id: string) {

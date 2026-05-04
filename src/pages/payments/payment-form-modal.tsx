@@ -16,7 +16,7 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 
 const schema = z.object({
   student: z.string().min(1, 'Select a student'),
-  courseId: z.string().min(1, 'Select a course'),
+  course: z.string().min(1, 'Select a course'),
   paidAt: z.string().optional(),
 });
 
@@ -35,7 +35,7 @@ function toLocalDateTime(value?: string) {
 function getDefaultPaymentValues(defaultStudentId: string, defaultCourseId: string) {
   return {
     student: defaultStudentId,
-    courseId: defaultCourseId,
+    course: defaultCourseId,
     paidAt: toLocalDateTime(new Date().toISOString()),
   };
 }
@@ -66,7 +66,7 @@ export function PaymentFormModal({
     mode: 'onChange',
     defaultValues: {
       student: '',
-      courseId: '',
+      course: '',
       paidAt: '',
     },
   });
@@ -131,8 +131,8 @@ export function PaymentFormModal({
               <Select
                 label="Course"
                 hint="Pre-selected when the payment is created from a single course context."
-                error={errors.courseId?.message}
-                {...register('courseId')}
+                error={errors.course?.message}
+                {...register('course')}
               >
                 <option value="">Select course</option>
                 {courses.map(course => (

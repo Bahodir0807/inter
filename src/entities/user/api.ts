@@ -13,6 +13,14 @@ export interface UserFormValues {
   telegramId?: string;
 }
 
+export interface ProfileSelfServiceValues {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  avatarUrl?: string;
+}
+
 export const usersApi = {
   async getAll() {
     const { data } = await http.get<AppUser[]>('/users');

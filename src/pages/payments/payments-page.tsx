@@ -130,7 +130,17 @@ export function PaymentsPage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredPayments.length / pageSize));
   const pagedPayments = paginate(filteredPayments, page, pageSize);
-  const confirmedPayments = payments.filter(item => item.isConfirmed).length;
+  const confirmedPayments = payments.filter(item => item.status === 'confirmed').length;
+  const statusToneMap: Record<string, 'success' | 'warning' | 'danger'> = {
+    confirmed: 'success',
+    pending: 'warning',
+    cancelled: 'danger',
+  };
+  const statusLabelMap: Record<string, string> = {
+    confirmed: 'Confirmed',
+    pending: 'Pending',
+    cancelled: 'Cancelled',
+  };
   const columns: Column<Payment>[] = [
     {
       key: 'payment',
@@ -141,8 +151,8 @@ export function PaymentsPage() {
           <span className="cell-title">{formatMoney(item.amount)}</span>
           <span className="cell-meta cell-meta--strong">{formatDate(item.paidAt)}</span>
           <div className="cell-badges">
-            <Badge tone={item.isConfirmed ? 'success' : 'warning'}>
-              {item.isConfirmed ? 'Confirmed' : 'Pending'}
+            <Badge tone={statusToneMap[item.status]}>
+              {statusLabelMap[item.status]}
             </Badge>
           </div>
         </div>
@@ -183,14 +193,26 @@ export function PaymentsPage() {
             headClassName: 'data-table__head--actions',
             cell: (item: Payment) => (
               <div className="row-actions">
-                {!item.isConfirmed ? (
-                  <Button size="sm" variant="secondary" onClick={() => setConfirmCandidate(item)}>
-                    Confirm
+                {item.status === 'pending' && (
+                  <>
+                    <Button size="sm" variant="secondary" onClick={() => setConfirmCandidate(item)}>
+                      Confirm
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
+                      Delete
+                    </Button>
+                  </>
+                )}
+                {item.status === 'cancelled' && (
+                  <Button size="sm" variant="ghost" disabled>
+                    Cancelled
                   </Button>
-                ) : null}
-                <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                  Delete
-                </Button>
+                )}
+                {item.status === 'confirmed' && (
+                  <Button size="sm" variant="ghost" disabled>
+                    Confirmed
+                  </Button>
+                )}
               </div>
             ),
           },

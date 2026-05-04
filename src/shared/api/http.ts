@@ -29,9 +29,14 @@ http.interceptors.response.use(
   error => {
     const mappedError = mapApiError(error);
 
+    // 401: Unauthorized - clear token and redirect to login (automatic via auth store)
     if (mappedError.statusCode === 401) {
       clearStoredToken();
     }
+
+    // 403: Forbidden - user lacks permissions (handled by UI error state)
+    // 429: Rate limit - request throttled (handled by UI error state)
+    // All other errors propagated to caller for handling
 
     return Promise.reject(mappedError);
   },
