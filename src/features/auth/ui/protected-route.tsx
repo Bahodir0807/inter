@@ -1,22 +1,25 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { Role } from '../../../shared/types/auth';
 import { useAuthStore } from '../model/auth-store';
-import { LoadingState } from '../../../shared/ui/feedback/loading-state';
+import { Role } from '../../../shared/types/auth';
 
-export function ProtectedRoute({ roles }: { roles?: Role[] }) {
+interface ProtectedRouteProps {
+  roles?: Role[];
+}
+
+export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
   const location = useLocation();
-  const status = useAuthStore(state => state.status);
   const user = useAuthStore(state => state.user);
+  const bootstrapped = useAuthStore(state => state.bootstrapped);
 
-  if (status === 'loading' || status === 'idle') {
-    return <LoadingState label="Проверяем сессию..." />;
+  if (!bootstrapped) {
+    return <div className="app-loading">Loading...</div>;
   }
 
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (roles && !roles.includes(user.role)) {
+  if (roles.length > 0 && !roles.includes(user.role)) {
     return <Navigate to="/app/dashboard" replace />;
   }
 

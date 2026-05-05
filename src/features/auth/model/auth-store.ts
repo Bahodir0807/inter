@@ -1,57 +1,79 @@
 import { create } from 'zustand';
 import { authApi } from '../../../entities/auth/api';
-import { AppError, AppUser } from '../../../shared/types/auth';
-import { clearStoredToken, getStoredToken, setStoredToken } from '../../../shared/api/token-storage';
+import { AppUser, Role } from '../../../shared/types/auth';
 
 interface AuthState {
-  status: 'idle' | 'loading' | 'authenticated' | 'anonymous';
   user: AppUser | null;
-  token: string | null;
-  error: AppError | null;
-  login: (payload: { username: string; password: string }) => Promise<void>;
+  role: Role | null;
+  bootstrapped: boolean;
+  isLoading: boolean;
+  error: string | null;
   bootstrap: () => Promise<void>;
+  login: (payload: { username: string; password: string }) => Promise<void>;
   logout: () => void;
-  clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  status: getStoredToken() ? 'loading' : 'anonymous',
+function persistSession(payload: any) {
+  const token = payload?.token || payload?.accessToken;
+  const refreshToken = payload?.refreshToken;
+
+  if (token) {
+    localStorage.setItem('token', token);
+  }
+
+  if (refreshToken) {
+    localStorage.setItem('refreshToken', refreshToken);
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: getStoredToken(),
+  role: null,
+  bootstrapped: false,
+  isLoading: false,
   error: null,
-  async login(payload) {
-    set({ status: 'loading', error: null });
-    try {
-      const session = await authApi.login(payload);
-      setStoredToken(session.token);
-      set({ status: 'authenticated', user: session.user, token: session.token, error: null });
-    } catch (error) {
-      clearStoredToken();
-      set({ status: 'anonymous', user: null, token: null, error: error as AppError });
-      throw error;
-    }
-  },
-  async bootstrap() {
-    if (!get().token) {
-      set({ status: 'anonymous', user: null });
+
+  bootstrap: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      set({ user: null, role: null, bootstrapped: true });
       return;
     }
 
-    set({ status: 'loading' });
-
     try {
       const user = await authApi.me();
-      set({ status: 'authenticated', user, error: null });
+      set({ user, role: user.role, bootstrapped: true, error: null });
     } catch {
-      clearStoredToken();
-      set({ status: 'anonymous', user: null, token: null });
+      clearSession();
+      set({ user: null, role: null, bootstrapped: true });
     }
   },
-  logout() {
-    clearStoredToken();
-    set({ status: 'anonymous', user: null, token: null, error: null });
+
+  login: async (payload) => {
+    set({ isLoading: true, error: null });
+    try {
+      const session = await authApi.login(payload);
+      persistSession(session);
+      set({
+        user: session.user,
+        role: session.user.role,
+        isLoading: false,
+        bootstrapped: true,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
   },
-  clearError() {
-    set({ error: null });
+
+  logout: () => {
+    clearSession();
+    set({ user: null, role: null, bootstrapped: true });
   },
 }));

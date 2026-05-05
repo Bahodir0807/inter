@@ -1,20 +1,51 @@
 import axios from 'axios';
 import { env } from '../config/env';
-import { mapApiError } from './errors';
-import { normalizeIds } from './normalize';
-import { clearStoredToken, getStoredToken } from './token-storage';
+
+function unwrapEnvelope(payload: unknown) {
+  if (
+    payload
+    && typeof payload === 'object'
+    && 'success' in payload
+    && 'data' in payload
+  ) {
+    return (payload as { data: unknown }).data;
+  }
+
+  return payload;
+}
+
+function getErrorMessage(error: unknown) {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error.message : 'Request failed';
+  }
+
+  const status = error.response?.status;
+  const message = (error.response?.data as { message?: string | string[] } | undefined)?.message;
+
+  if (Array.isArray(message)) {
+    return message.join(', ');
+  }
+
+  if (message) {
+    return message;
+  }
+
+  if (status === 401) return 'Your session has expired. Please sign in again.';
+  if (status === 403) return 'You do not have access to this action.';
+  if (status === 429) return 'Too many requests. Please wait and try again.';
+
+  return error.message || 'Request failed';
+}
 
 export const http = axios.create({
   baseURL: env.apiUrl,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  withCredentials: false,
 });
 
-http.interceptors.request.use(config => {
-  const token = getStoredToken();
-
+http.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
   if (token) {
+    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
 
@@ -22,22 +53,17 @@ http.interceptors.request.use(config => {
 });
 
 http.interceptors.response.use(
-  response => {
-    response.data = normalizeIds(response.data);
+  (response) => {
+    response.data = unwrapEnvelope(response.data);
     return response;
   },
-  error => {
-    const mappedError = mapApiError(error);
-
-    // 401: Unauthorized - clear token and redirect to login (automatic via auth store)
-    if (mappedError.statusCode === 401) {
-      clearStoredToken();
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
     }
 
-    // 403: Forbidden - user lacks permissions (handled by UI error state)
-    // 429: Rate limit - request throttled (handled by UI error state)
-    // All other errors propagated to caller for handling
-
-    return Promise.reject(mappedError);
+    error.message = getErrorMessage(error);
+    return Promise.reject(error);
   },
 );

@@ -1,96 +1,67 @@
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../model/auth-store';
+import { FormEvent, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../shared/ui/buttons/button';
 import { Input } from '../../../shared/ui/forms/input';
-import { Card } from '../../../shared/ui/surfaces/card';
 import { toast } from '../../../shared/ui/feedback/toaster';
-
-const schema = z.object({
-  username: z.string().min(1, 'Enter your username'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-type LoginFormValues = z.infer<typeof schema>;
+import { useAuthStore } from '../model/auth-store';
 
 export function LoginForm() {
   const navigate = useNavigate();
-  const location = useLocation();
   const login = useAuthStore(state => state.login);
-  const status = useAuthStore(state => state.status);
+  const isLoading = useAuthStore(state => state.isLoading);
   const error = useAuthStore(state => state.error);
-  const destination = (location.state as { from?: string } | null)?.from ?? '/app/dashboard';
-  const destinationLabel =
-    destination === '/app/dashboard'
-      ? 'dashboard'
-      : destination
-          .replace('/app/', '')
-          .replace('/', ' ')
-          .replace(/-/g, ' ');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      username: '',
-      password: '',
-    },
-  });
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-  const onSubmit = handleSubmit(async values => {
     try {
-      await login(values);
+      await login({ username, password });
       toast.success('Signed in successfully');
-      navigate(destination, { replace: true });
+      navigate('/app/dashboard', { replace: true });
     } catch (submitError) {
-      const message = error?.message[0] ?? 'Unable to sign in';
+      const message = submitError instanceof Error ? submitError.message : 'Login failed';
       toast.error(message);
-      console.error(submitError);
     }
-  });
+  }
 
   return (
-    <Card className="login-card">
-      <div className="login-card__intro">
-        <span className="eyebrow">Workspace access</span>
-        <h1>Sign in</h1>
-        <p>Sign in to continue.</p>
+    <form className="login-form" onSubmit={handleSubmit}>
+      <div className="login-form__header">
+        <span className="eyebrow">Sign in</span>
+        <h1>Welcome back</h1>
+        <p>Use your CRM account to continue.</p>
       </div>
-      <div className="login-card__status">
-        <span className="login-card__status-label">Opens</span>
-        <strong>{destinationLabel}</strong>
-        <p>Your access depends on your role.</p>
-      </div>
-      <form className="login-form" onSubmit={onSubmit}>
+
+      {error ? <div className="banner banner--error">{error}</div> : null}
+
+      <div className="form-stack">
         <Input
-          label="Username"
-          hint="Use your work username."
-          placeholder="aziza.teacher"
           autoComplete="username"
-          fieldClassName="ui-field--primary"
-          error={errors.username?.message}
-          {...register('username')}
+          disabled={isLoading}
+          label="Username"
+          name="username"
+          onChange={event => setUsername(event.target.value)}
+          required
+          type="text"
+          value={username}
         />
         <Input
-          label="Password"
-          hint="Enter your password."
-          type="password"
-          placeholder="Enter your password"
           autoComplete="current-password"
-          error={errors.password?.message}
-          {...register('password')}
+          disabled={isLoading}
+          label="Password"
+          name="password"
+          onChange={event => setPassword(event.target.value)}
+          required
+          type="password"
+          value={password}
         />
-        {error ? <p className="form-error login-form__error">{error.message.join(', ')}</p> : null}
-        <Button type="submit" disabled={status === 'loading'} fullWidth>
-          {status === 'loading' ? 'Signing in...' : 'Sign in'}
-        </Button>
-      </form>
-      <p className="login-card__footnote">People, courses, schedule, rooms, and payments stay in one place.</p>
-    </Card>
+      </div>
+
+      <Button disabled={isLoading} fullWidth type="submit">
+        {isLoading ? 'Signing in...' : 'Sign in'}
+      </Button>
+    </form>
   );
 }
