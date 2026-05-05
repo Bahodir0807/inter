@@ -27,41 +27,43 @@ export function LoginForm() {
   }
 
   return (
-    <form className="login-form" onSubmit={handleSubmit}>
-      <div className="login-form__header">
-        <span className="eyebrow">Sign in</span>
-        <h1>Welcome back</h1>
-        <p>Use your CRM account to continue.</p>
-      </div>
+    <div className="login-card">
+      <form className="login-form" onSubmit={handleSubmit}>
+        <div className="login-form__header">
+          <span className="eyebrow">Sign in</span>
+          <h1>Welcome back</h1>
+          <p>Use your CRM account to continue.</p>
+        </div>
 
-      {error ? <div className="banner banner--error">{error}</div> : null}
+        {error ? <div className="banner banner--error">{error}</div> : null}
 
-      <div className="form-stack">
-        <Input
-          autoComplete="username"
-          disabled={isLoading}
-          label="Username"
-          name="username"
-          onChange={event => setUsername(event.target.value)}
-          required
-          type="text"
-          value={username}
-        />
-        <Input
-          autoComplete="current-password"
-          disabled={isLoading}
-          label="Password"
-          name="password"
-          onChange={event => setPassword(event.target.value)}
-          required
-          type="password"
-          value={password}
-        />
-      </div>
+        <div className="form-stack">
+          <Input
+            autoComplete="username"
+            disabled={isLoading}
+            label="Username"
+            name="username"
+            onChange={event => setUsername(event.target.value)}
+            required
+            type="text"
+            value={username}
+          />
+          <Input
+            autoComplete="current-password"
+            disabled={isLoading}
+            label="Password"
+            name="password"
+            onChange={event => setPassword(event.target.value)}
+            required
+            type="password"
+            value={password}
+          />
+        </div>
 
-      <Button disabled={isLoading} fullWidth type="submit">
-        {isLoading ? 'Signing in...' : 'Sign in'}
-      </Button>
-    </form>
+        <Button disabled={isLoading} fullWidth type="submit">
+          {isLoading ? 'Signing in...' : 'Sign in'}
+        </Button>
+      </form>
+    </div>
   );
 }

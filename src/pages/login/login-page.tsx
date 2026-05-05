@@ -37,7 +37,9 @@ export function LoginPage() {
         </div>
         <p className="login-page__note">Built for daily work.</p>
       </div>
-      <LoginForm />
+      <div className="login-page__form-shell">
+        <LoginForm />
+      </div>
     </div>
   );
 }
