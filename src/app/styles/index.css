@@ -328,9 +328,11 @@ textarea.ui-input {
 }
 
 .login-page {
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 620px;
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+  overflow: hidden;
   background:
     radial-gradient(circle at 16% 12%, rgba(165, 82, 44, 0.12), transparent 30%),
     radial-gradient(circle at 88% 18%, rgba(127, 62, 33, 0.08), transparent 26%),
@@ -338,10 +340,11 @@ textarea.ui-input {
 }
 
 .login-page__panel {
-  padding: clamp(2rem, 5vw, 4.5rem);
+  min-height: 0;
+  padding: clamp(1.75rem, 3.4vw, 3rem);
   display: grid;
   align-content: center;
-  gap: 1.55rem;
+  gap: 1.05rem;
   background:
     radial-gradient(circle at top left, rgba(162, 72, 32, 0.18), transparent 34%),
     linear-gradient(155deg, rgba(234, 219, 195, 0.96) 0%, rgba(246, 237, 224, 0.9) 100%);
@@ -350,99 +353,103 @@ textarea.ui-input {
 
 .login-page__headline {
   display: grid;
-  gap: 0.95rem;
+  gap: 0.6rem;
   max-width: 38rem;
 }
 
 .login-page__headline h2 {
-  max-width: 11ch;
-  font-size: clamp(2.4rem, 4.3vw, 3.8rem);
-  line-height: 0.98;
+  max-width: 12ch;
+  font-size: clamp(2.2rem, 3.8vw, 3.35rem);
+  line-height: 0.96;
 }
 
 .login-page__headline p {
   max-width: 58ch;
-  font-size: 1.03rem;
+  font-size: 0.97rem;
+  line-height: 1.45;
   color: #5f554c;
 }
 
 .login-page__highlights {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.62rem;
   max-width: 36rem;
 }
 
 .login-page__highlight {
   display: grid;
-  gap: 0.32rem;
-  padding: 1.05rem 1.08rem;
-  border-radius: 1rem;
+  gap: 0.22rem;
+  padding: 0.78rem 0.9rem;
+  border-radius: 0.88rem;
   border: 1px solid rgba(127, 62, 33, 0.12);
   background: rgba(255, 252, 247, 0.62);
-  box-shadow: 0 12px 28px rgba(73, 47, 21, 0.055);
+  box-shadow: 0 8px 20px rgba(73, 47, 21, 0.045);
   backdrop-filter: blur(8px);
 }
 
 .login-page__highlight strong {
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   font-weight: 650;
   color: var(--text);
 }
 
 .login-page__highlight span {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+  line-height: 1.38;
   color: #6a5e52;
 }
 
 .login-page__note {
   max-width: 32rem;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   color: #6e6257;
 }
 
 .login-page__form-shell {
-  min-height: 100vh;
+  min-height: 0;
+  height: 100%;
   display: grid;
   place-items: center;
-  padding: clamp(1.5rem, 4vw, 4rem);
+  padding: clamp(1.25rem, 3vw, 2.6rem);
 }
 
 .login-card {
-  width: min(100%, 420px);
+  width: min(100%, 400px);
   display: grid;
-  gap: 1.35rem;
-  padding: clamp(1.35rem, 3vw, 2rem);
+  gap: 1rem;
+  padding: clamp(1.2rem, 2.4vw, 1.55rem);
   border: 1px solid rgba(127, 62, 33, 0.12);
-  border-radius: 1.35rem;
+  border-radius: 1.1rem;
   background: linear-gradient(180deg, rgba(255, 253, 249, 0.98), rgba(251, 247, 241, 0.98));
   box-shadow:
-    0 22px 55px rgba(64, 42, 20, 0.12),
+    0 18px 42px rgba(64, 42, 20, 0.1),
     0 1px 0 rgba(255, 255, 255, 0.8) inset;
 }
 
 .login-form {
   display: grid;
-  gap: 1.15rem;
+  gap: 0.92rem;
 }
 
 .login-form__header {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.45rem;
 }
 
 .login-form__header h1 {
-  font-size: clamp(1.85rem, 3vw, 2.25rem);
+  font-size: clamp(1.68rem, 2.5vw, 2rem);
   line-height: 1.08;
 }
 
 .login-form__header p {
   max-width: 30ch;
-  font-size: 0.94rem;
+  font-size: 0.88rem;
+  line-height: 1.42;
   color: var(--text-muted);
 }
 
 .login-form .form-stack {
-  gap: 0.9rem;
+  gap: 0.68rem;
 }
 
 .login-form .ui-field__label {
@@ -450,8 +457,9 @@ textarea.ui-input {
 }
 
 .login-form .ui-input {
-  min-height: 2.85rem;
-  border-radius: 0.82rem;
+  min-height: 2.55rem;
+  border-radius: 0.76rem;
+  padding: 0.62rem 0.8rem;
   background: #fffaf4;
   border-color: rgba(127, 62, 33, 0.14);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
@@ -470,9 +478,9 @@ textarea.ui-input {
 }
 
 .login-form .ui-button {
-  min-height: 2.85rem;
-  border-radius: 0.85rem;
-  padding-block: 0.68rem;
+  min-height: 2.55rem;
+  border-radius: 0.78rem;
+  padding-block: 0.56rem;
 }
 
 .login-form .ui-button--primary:hover:not(:disabled) {
@@ -1741,7 +1749,10 @@ textarea.ui-input {
 
 @media (max-width: 920px) {
   .login-page {
+    height: auto;
+    min-height: 100vh;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .login-page__panel {
@@ -1751,6 +1762,7 @@ textarea.ui-input {
   }
 
   .login-page__form-shell {
+    height: auto;
     min-height: auto;
     padding: 1.5rem;
   }
