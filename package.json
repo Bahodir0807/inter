@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "qa:up": "docker compose -f docker-compose.qa.yml up --build -d",
+    "qa:seed": "docker compose -f docker-compose.qa.yml --profile seed run --rm seed",
+    "smoke:live": "node scripts/smoke-live.mjs",
+    "smoke:static": "node scripts/smoke-static.mjs"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

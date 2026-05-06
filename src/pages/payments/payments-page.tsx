@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { coursesApi } from '../../entities/course/api';
-import { Payment, paymentsApi, PaymentFormValues } from '../../entities/payment/api';
+import { Payment, paymentsApi, PaymentFormValues, PaymentStatus } from '../../entities/payment/api';
 import { usersApi } from '../../entities/user/api';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { paymentsManagerRoles } from '../../app/router/navigation';
@@ -19,30 +19,90 @@ import { Pagination } from '../../shared/ui/data-display/pagination';
 import { Select } from '../../shared/ui/forms/select';
 import { Button } from '../../shared/ui/buttons/button';
 import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
-import { paginate, sortBy, SortDirection } from '../../shared/lib/table';
+import { SortDirection } from '../../shared/lib/table';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { PaymentFormModal } from './payment-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
+import { useDebouncedValue } from '../../shared/hooks/use-debounced-value';
+import { useUrlState } from '../../shared/hooks/use-url-state';
 
 const pageSize = 8;
+const statusToneMap: Record<PaymentStatus, 'success' | 'warning' | 'danger'> = {
+  confirmed: 'success',
+  pending: 'warning',
+  cancelled: 'danger',
+};
+const statusLabelMap: Record<PaymentStatus, string> = {
+  confirmed: 'Confirmed',
+  pending: 'Pending',
+  cancelled: 'Cancelled',
+};
+
+function getPaymentCourse(payment: Payment) {
+  return payment.course ?? payment.courseId;
+}
 
 export function PaymentsPage() {
   const queryClient = useQueryClient();
   const user = useAuthStore(state => state.user);
   const isAdminLike = !!user && paymentsManagerRoles.includes(user.role);
+  const urlState = useUrlState();
 
-  const [search, setSearch] = useState('');
-  const [studentFilter, setStudentFilter] = useState<'all' | string>('all');
-  const [courseFilter, setCourseFilter] = useState<'all' | string>('all');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [page, setPage] = useState(1);
+  const [search, setSearchState] = useState(urlState.getString('search'));
+  const [studentFilter, setStudentFilterState] = useState<'all' | string>(urlState.getString('student', 'all'));
+  const [courseFilter, setCourseFilterState] = useState<'all' | string>(urlState.getString('course', 'all'));
+  const [statusFilter, setStatusFilterState] = useState<'all' | PaymentStatus>(urlState.getString('status', 'all') as 'all' | PaymentStatus);
+  const [sortDirection, setSortDirectionState] = useState<SortDirection>(urlState.getString('sort', 'desc') as SortDirection);
+  const [page, setPageState] = useState(urlState.getNumber('page', 1));
+  const debouncedSearch = useDebouncedValue(search);
   const [formOpen, setFormOpen] = useState(false);
   const [confirmCandidate, setConfirmCandidate] = useState<Payment | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<Payment | null>(null);
 
+  const setPage = (value: number) => {
+    setPageState(value);
+    urlState.setValue('page', value > 1 ? value : undefined);
+  };
+  const setSearch = (value: string) => {
+    setSearchState(value);
+    setPageState(1);
+    urlState.setValues({ search: value || undefined, page: undefined });
+  };
+  const setStudentFilter = (value: string) => {
+    setStudentFilterState(value);
+    setPageState(1);
+    urlState.setValues({ student: value === 'all' ? undefined : value, page: undefined });
+  };
+  const setCourseFilter = (value: string) => {
+    setCourseFilterState(value);
+    setPageState(1);
+    urlState.setValues({ course: value === 'all' ? undefined : value, page: undefined });
+  };
+  const setStatusFilter = (value: 'all' | PaymentStatus) => {
+    setStatusFilterState(value);
+    setPageState(1);
+    urlState.setValues({ status: value === 'all' ? undefined : value, page: undefined });
+  };
+  const setSortDirection = (value: SortDirection) => {
+    setSortDirectionState(value);
+    setPageState(1);
+    urlState.setValues({ sort: value === 'desc' ? undefined : value, page: undefined });
+  };
+
+  const paymentParams = useMemo(() => ({
+    page,
+    limit: pageSize,
+    search: debouncedSearch || undefined,
+    studentId: isAdminLike && studentFilter !== 'all' ? studentFilter : undefined,
+    courseId: isAdminLike && courseFilter !== 'all' ? courseFilter : undefined,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    sortBy: 'paidAt',
+    sortOrder: sortDirection,
+  }), [courseFilter, debouncedSearch, isAdminLike, page, sortDirection, statusFilter, studentFilter]);
+
   const paymentsQuery = useQuery({
-    queryKey: ['payments', isAdminLike ? 'all' : 'me'],
-    queryFn: () => (isAdminLike ? paymentsApi.getAll() : paymentsApi.getMine()),
+    queryKey: ['payments', isAdminLike ? 'all' : 'me', paymentParams],
+    queryFn: () => (isAdminLike ? paymentsApi.getAllPage(paymentParams) : paymentsApi.getMinePage(paymentParams)),
     enabled: !!user,
   });
 
@@ -83,31 +143,10 @@ export function PaymentsPage() {
     onError: error => toast.error(error.message),
   });
 
-  const payments = paymentsQuery.data ?? [];
+  const payments = paymentsQuery.data?.items ?? [];
+  const pagination = paymentsQuery.data?.pagination;
   const students = supportQuery.data?.students ?? [];
   const courses = supportQuery.data?.courses ?? [];
-
-  const filteredPayments = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    const filtered = payments.filter(payment => {
-      const studentId = typeof payment.student === 'string' ? payment.student : payment.student?.id;
-      const courseId = typeof payment.course === 'string' ? payment.course : payment.course?.id;
-      const haystack = [
-        getUserDisplayName(payment.student),
-        getCourseDisplayName(payment.course),
-        formatMoney(payment.amount),
-      ]
-        .join(' ')
-        .toLowerCase();
-
-      const matchesStudent = studentFilter === 'all' || studentId === studentFilter;
-      const matchesCourse = courseFilter === 'all' || courseId === courseFilter;
-
-      return matchesStudent && matchesCourse && haystack.includes(normalizedSearch);
-    });
-
-    return sortBy(filtered, item => item.paidAt || item.createdAt || '', sortDirection);
-  }, [courseFilter, payments, search, sortDirection, studentFilter]);
 
   const selectedStudentLabel =
     studentFilter === 'all' ? '' : getUserDisplayName(students.find(student => student.id === studentFilter));
@@ -117,6 +156,7 @@ export function PaymentsPage() {
   const toolbarFilters = [
     ...(isAdminLike && studentFilter !== 'all' ? [`Student: ${selectedStudentLabel}`] : []),
     ...(isAdminLike && courseFilter !== 'all' ? [`Course: ${selectedCourseLabel}`] : []),
+    ...(statusFilter !== 'all' ? [`Status: ${statusLabelMap[statusFilter]}`] : []),
     ...(sortDirection === 'asc' ? ['Order: Oldest first'] : []),
   ];
 
@@ -128,19 +168,7 @@ export function PaymentsPage() {
     return <ErrorState description={paymentsQuery.error.message} onRetry={() => void paymentsQuery.refetch()} />;
   }
 
-  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / pageSize));
-  const pagedPayments = paginate(filteredPayments, page, pageSize);
   const confirmedPayments = payments.filter(item => item.status === 'confirmed').length;
-  const statusToneMap: Record<string, 'success' | 'warning' | 'danger'> = {
-    confirmed: 'success',
-    pending: 'warning',
-    cancelled: 'danger',
-  };
-  const statusLabelMap: Record<string, string> = {
-    confirmed: 'Confirmed',
-    pending: 'Pending',
-    cancelled: 'Cancelled',
-  };
   const columns: Column<Payment>[] = [
     {
       key: 'payment',
@@ -179,7 +207,7 @@ export function PaymentsPage() {
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
-          <span className="cell-title">{getCourseDisplayName(item.course)}</span>
+          <span className="cell-title">{getCourseDisplayName(getPaymentCourse(item))}</span>
           <span className="cell-meta">{isAdminLike ? 'Linked offer' : 'Covered course'}</span>
         </div>
       ),
@@ -234,7 +262,7 @@ export function PaymentsPage() {
       <div className="dashboard-grid">
         <Card className="metric-card">
           <span className="subtle">Visible payments</span>
-          <strong>{filteredPayments.length}</strong>
+          <strong>{pagination?.total ?? payments.length}</strong>
           <span className="subtle">After filters and search</span>
         </Card>
         <Card className="metric-card">
@@ -256,16 +284,15 @@ export function PaymentsPage() {
         <TableShell
           title="Payment ledger"
           description={isAdminLike ? 'Student, course, amount, and status.' : 'Course, amount, and status.'}
-          actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
+          actions={<Pagination page={pagination?.page ?? page} totalPages={pagination?.totalPages ?? 1} onChange={setPage} />}
         >
           <TableToolbar
             search={search}
             onSearchChange={value => {
               setSearch(value);
-              setPage(1);
             }}
             searchPlaceholder={isAdminLike ? 'Search by student, course, or amount' : 'Search by course or amount'}
-            resultsLabel={`${filteredPayments.length} result${filteredPayments.length === 1 ? '' : 's'}`}
+            resultsLabel={`${pagination?.total ?? payments.length} result${(pagination?.total ?? payments.length) === 1 ? '' : 's'}`}
             activeFilters={toolbarFilters}
             filters={
               isAdminLike ? (
@@ -275,7 +302,6 @@ export function PaymentsPage() {
                     value={studentFilter}
                     onChange={event => {
                       setStudentFilter(event.target.value);
-                      setPage(1);
                     }}
                   >
                     <option value="all">All students</option>
@@ -286,11 +312,22 @@ export function PaymentsPage() {
                     ))}
                   </Select>
                   <Select
+                    aria-label="Filter payments by status"
+                    value={statusFilter}
+                    onChange={event => {
+                      setStatusFilter(event.target.value as 'all' | PaymentStatus);
+                    }}
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </Select>
+                  <Select
                     aria-label="Filter payments by course"
                     value={courseFilter}
                     onChange={event => {
                       setCourseFilter(event.target.value);
-                      setPage(1);
                     }}
                   >
                     <option value="all">All courses</option>
@@ -305,7 +342,6 @@ export function PaymentsPage() {
                     value={sortDirection}
                     onChange={event => {
                       setSortDirection(event.target.value as SortDirection);
-                      setPage(1);
                     }}
                   >
                     <option value="desc">Newest first</option>
@@ -318,7 +354,6 @@ export function PaymentsPage() {
                   value={sortDirection}
                   onChange={event => {
                     setSortDirection(event.target.value as SortDirection);
-                    setPage(1);
                   }}
                 >
                   <option value="desc">Newest first</option>
@@ -332,7 +367,7 @@ export function PaymentsPage() {
             emptyTitle="No payments found"
             emptyDescription={isAdminLike ? 'Try another search or clear a filter.' : 'Try another search.'}
             columns={columns}
-            rows={pagedPayments}
+            rows={payments}
           />
         </TableShell>
       )}
@@ -352,7 +387,7 @@ export function PaymentsPage() {
         title="Confirm payment?"
         description={
           confirmCandidate
-            ? `Mark the payment of ${formatMoney(confirmCandidate.amount)} for ${getUserDisplayName(confirmCandidate.student)} on ${getCourseDisplayName(confirmCandidate.course)} as confirmed?`
+            ? `Mark the payment of ${formatMoney(confirmCandidate.amount)} for ${getUserDisplayName(confirmCandidate.student)} on ${getCourseDisplayName(getPaymentCourse(confirmCandidate))} as confirmed?`
             : ''
         }
         confirmLabel="Confirm payment"
@@ -373,7 +408,7 @@ export function PaymentsPage() {
         title="Delete payment?"
         description={
           deleteCandidate
-            ? `This will permanently remove the payment of ${formatMoney(deleteCandidate.amount)} for ${getUserDisplayName(deleteCandidate.student)} on ${getCourseDisplayName(deleteCandidate.course)} from the ledger. Paid at: ${formatDate(deleteCandidate.paidAt)}. This action cannot be undone.`
+            ? `This will permanently remove the payment of ${formatMoney(deleteCandidate.amount)} for ${getUserDisplayName(deleteCandidate.student)} on ${getCourseDisplayName(getPaymentCourse(deleteCandidate))} from the ledger. Paid at: ${formatDate(deleteCandidate.paidAt)}. This action cannot be undone.`
             : ''
         }
         confirmLabel="Delete payment"

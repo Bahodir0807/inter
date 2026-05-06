@@ -1,14 +1,17 @@
-import { ReactNode } from 'react';
+import { lazy, ReactNode } from 'react';
 import { Role } from '../../shared/types/auth';
-import { DashboardPage } from '../../pages/dashboard/dashboard-page';
-import { UsersPage } from '../../pages/users/users-page';
-import { CoursesPage } from '../../pages/courses/courses-page';
-import { GroupsPage } from '../../pages/groups/groups-page';
-import { SchedulePage } from '../../pages/schedule/schedule-page';
-import { RoomsPage } from '../../pages/rooms/rooms-page';
-import { PaymentsPage } from '../../pages/payments/payments-page';
-import { ProfilePage } from '../../pages/profile/profile-page';
 import { AppIconName } from '../../shared/ui/icons/app-icon';
+
+const DashboardPage = lazy(() => import('../../pages/dashboard/dashboard-page').then(module => ({ default: module.DashboardPage })));
+const UsersPage = lazy(() => import('../../pages/users/users-page').then(module => ({ default: module.UsersPage })));
+const CoursesPage = lazy(() => import('../../pages/courses/courses-page').then(module => ({ default: module.CoursesPage })));
+const GroupsPage = lazy(() => import('../../pages/groups/groups-page').then(module => ({ default: module.GroupsPage })));
+const SchedulePage = lazy(() => import('../../pages/schedule/schedule-page').then(module => ({ default: module.SchedulePage })));
+const RoomsPage = lazy(() => import('../../pages/rooms/rooms-page').then(module => ({ default: module.RoomsPage })));
+const PaymentsPage = lazy(() => import('../../pages/payments/payments-page').then(module => ({ default: module.PaymentsPage })));
+const ProfilePage = lazy(() => import('../../pages/profile/profile-page').then(module => ({ default: module.ProfilePage })));
+const AcademicPage = lazy(() => import('../../pages/academic/academic-page').then(module => ({ default: module.AcademicPage })));
+const AdminToolsPage = lazy(() => import('../../pages/admin-tools/admin-tools-page').then(module => ({ default: module.AdminToolsPage })));
 
 export interface AppRouteConfig {
   path: string;
@@ -21,18 +24,20 @@ export interface AppRouteConfig {
 }
 
 export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda'];
-export const teachingRoles: Role[] = ['teacher', 'admin', 'owner'];
-export const paymentsManagerRoles: Role[] = ['admin', 'owner'];
+export const teachingRoles: Role[] = ['teacher', 'admin', 'owner', 'panda'];
+export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda'];
 const allAppRoles: Role[] = ['student', 'teacher', 'admin', 'owner', 'panda'];
 
 export const appRoutes: AppRouteConfig[] = [
   { path: '/app/dashboard', label: 'Dashboard', shortLabel: 'DB', icon: 'dashboard', roles: allAppRoles, element: <DashboardPage />, nav: true },
   { path: '/app/users', label: 'Users', shortLabel: 'US', icon: 'users', roles: ['teacher', 'admin', 'owner', 'panda'], element: <UsersPage />, nav: true },
-  { path: '/app/courses', label: 'Courses', shortLabel: 'CR', icon: 'courses', roles: ['student', 'teacher', 'admin', 'owner'], element: <CoursesPage />, nav: true },
-  { path: '/app/groups', label: 'Groups', shortLabel: 'GR', icon: 'groups', roles: teachingRoles, element: <GroupsPage />, nav: true },
-  { path: '/app/schedule', label: 'Schedule', shortLabel: 'SC', icon: 'schedule', roles: ['student', 'teacher', 'admin', 'owner'], element: <SchedulePage />, nav: true },
-  { path: '/app/rooms', label: 'Rooms', shortLabel: 'RM', icon: 'rooms', roles: teachingRoles, element: <RoomsPage />, nav: true },
+  { path: '/app/courses', label: 'Courses', shortLabel: 'CR', icon: 'courses', roles: allAppRoles, element: <CoursesPage />, nav: true },
+  { path: '/app/groups', label: 'Groups', shortLabel: 'GR', icon: 'groups', roles: allAppRoles, element: <GroupsPage />, nav: true },
+  { path: '/app/schedule', label: 'Schedule', shortLabel: 'SC', icon: 'schedule', roles: allAppRoles, element: <SchedulePage />, nav: true },
+  { path: '/app/rooms', label: 'Rooms', shortLabel: 'RM', icon: 'rooms', roles: allAppRoles, element: <RoomsPage />, nav: true },
   { path: '/app/payments', label: 'Payments', shortLabel: 'PY', icon: 'payments', roles: ['student', ...paymentsManagerRoles], element: <PaymentsPage />, nav: true },
+  { path: '/app/academic', label: 'Academic', shortLabel: 'AC', icon: 'courses', roles: allAppRoles, element: <AcademicPage />, nav: true },
+  { path: '/app/admin-tools', label: 'Admin tools', shortLabel: 'AT', icon: 'users', roles: adminLikeRoles, element: <AdminToolsPage />, nav: true },
   { path: '/app/profile', label: 'Profile', shortLabel: 'PF', icon: 'profile', roles: allAppRoles, element: <ProfilePage />, nav: true },
 ];
 

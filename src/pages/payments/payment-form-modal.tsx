@@ -16,7 +16,8 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 
 const schema = z.object({
   student: z.string().min(1, 'Select a student'),
-  course: z.string().min(1, 'Select a course'),
+  courseId: z.string().min(1, 'Select a course'),
+  method: z.string().optional(),
   paidAt: z.string().optional(),
 });
 
@@ -35,7 +36,8 @@ function toLocalDateTime(value?: string) {
 function getDefaultPaymentValues(defaultStudentId: string, defaultCourseId: string) {
   return {
     student: defaultStudentId,
-    course: defaultCourseId,
+    courseId: defaultCourseId,
+    method: '',
     paidAt: toLocalDateTime(new Date().toISOString()),
   };
 }
@@ -66,7 +68,8 @@ export function PaymentFormModal({
     mode: 'onChange',
     defaultValues: {
       student: '',
-      course: '',
+      courseId: '',
+      method: '',
       paidAt: '',
     },
   });
@@ -131,8 +134,8 @@ export function PaymentFormModal({
               <Select
                 label="Course"
                 hint="Pre-selected when the payment is created from a single course context."
-                error={errors.course?.message}
-                {...register('course')}
+                error={errors.courseId?.message}
+                {...register('courseId')}
               >
                 <option value="">Select course</option>
                 {courses.map(course => (
@@ -147,6 +150,13 @@ export function PaymentFormModal({
             title="Timing"
             description="The payment time defaults to now so operators only touch it when they are backfilling an older transaction."
           >
+            <Input
+              label="Method"
+              hint="Optional backend field for payment channel or note."
+              placeholder="cash, card, transfer"
+              error={errors.method?.message}
+              {...register('method')}
+            />
             <Input
               label="Paid at"
               hint="Change this only if the payment was recorded earlier."

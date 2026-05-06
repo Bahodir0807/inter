@@ -10,7 +10,7 @@ interface AuthState {
   error: string | null;
   bootstrap: () => Promise<void>;
   login: (payload: { username: string; password: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 function persistSession(payload: any) {
@@ -72,7 +72,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  logout: () => {
+  logout: async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      try {
+        await authApi.logout(refreshToken);
+      } catch {
+        // Local logout still wins if the backend session is already invalid.
+      }
+    }
     clearSession();
     set({ user: null, role: null, bootstrapped: true });
   },

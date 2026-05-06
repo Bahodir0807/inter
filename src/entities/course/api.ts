@@ -1,4 +1,5 @@
 import { http } from '../../shared/api/http';
+import { ListQueryParams, PaginatedList } from '../../shared/types/api';
 import { AppUser } from '../../shared/types/auth';
 
 export interface Course {
@@ -20,9 +21,22 @@ export interface CourseFormValues {
   students?: string[];
 }
 
+export interface CoursesListParams extends ListQueryParams {
+  teacherId?: string;
+  studentId?: string;
+}
+
 export const coursesApi = {
-  async getAll() {
-    const { data } = await http.get<Course[]>('/courses');
+  async getAll(params?: CoursesListParams) {
+    const { data } = await http.get<Course[]>('/courses', { params });
+    return data;
+  },
+  async getAllPage(params?: CoursesListParams): Promise<PaginatedList<Course>> {
+    const response = await http.get<Course[]>('/courses', { params });
+    return { items: response.data, pagination: response.apiMeta?.pagination };
+  },
+  async getOne(id: string) {
+    const { data } = await http.get<Course>(`/courses/${id}`);
     return data;
   },
   async create(payload: CourseFormValues) {

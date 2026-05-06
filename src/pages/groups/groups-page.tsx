@@ -31,6 +31,7 @@ export function GroupsPage() {
   const canManage = !!sessionUser && teachingRoles.includes(sessionUser.role);
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
   const isTeacher = sessionUser?.role === 'teacher';
+  const isStudent = sessionUser?.role === 'student';
 
   const [search, setSearch] = useState('');
   const [teacherFilter, setTeacherFilter] = useState<'all' | string>('all');
@@ -100,11 +101,24 @@ export function GroupsPage() {
       return groups;
     }
 
+    if (isTeacher) {
+      return groups.filter(group => {
+        const teacherId = typeof group.teacher === 'string' ? group.teacher : group.teacher.id;
+        return teacherId === sessionUser.id;
+      });
+    }
+
+    if (isStudent) {
+      return groups.filter(group =>
+        group.students.some(student => (typeof student === 'string' ? student : student.id) === sessionUser.id),
+      );
+    }
+
     return groups.filter(group => {
       const teacherId = typeof group.teacher === 'string' ? group.teacher : group.teacher.id;
       return teacherId === sessionUser.id;
     });
-  }, [groups, isAdminLike, sessionUser]);
+  }, [groups, isAdminLike, isStudent, isTeacher, sessionUser]);
 
   const filteredGroups = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -187,12 +201,12 @@ export function GroupsPage() {
         </Badge>
       ),
     },
-    {
+    ...(canManage ? [{
       key: 'actions',
       header: 'Actions',
       className: 'data-table__cell--actions',
       headClassName: 'data-table__head--actions',
-      cell: item => (
+      cell: (item: Group) => (
         <div className="row-actions">
           <Button size="sm" variant="secondary" onClick={() => { setSelectedGroup(item); setFormOpen(true); }}>
             Edit
@@ -204,7 +218,7 @@ export function GroupsPage() {
           ) : null}
         </div>
       ),
-    },
+    }] : []),
   ];
 
   return (

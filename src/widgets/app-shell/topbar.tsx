@@ -3,6 +3,7 @@ import { Breadcrumbs } from './breadcrumbs';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { getRoleDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { AppIcon } from '../../shared/ui/icons/app-icon';
+import { env } from '../../shared/config/env';
 
 export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: () => void }) {
   const user = useAuthStore(state => state.user);
@@ -37,6 +38,10 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
         </div>
       </div>
       <div className="app-topbar__right">
+        <div className={`environment-badge environment-badge--${env.appEnv}`} title={`${env.appVersion}+${env.buildHash}`}>
+          <strong>{env.appEnv.toUpperCase()}</strong>
+          <span>{env.appVersion}</span>
+        </div>
         <div className="app-topbar__user-chip">
           <span className="app-topbar__avatar" aria-hidden="true">
             {initials}

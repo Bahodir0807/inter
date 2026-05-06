@@ -1,5 +1,6 @@
 import { AppUser } from '../../shared/types/auth';
 import { http } from '../../shared/api/http';
+import { ListQueryParams, PaginatedList } from '../../shared/types/api';
 import { Course } from '../course/api';
 import { Group } from '../group/api';
 import { Room } from '../room/api';
@@ -27,13 +28,34 @@ export interface ScheduleFormValues {
   group?: string;
 }
 
+export interface ScheduleListParams extends ListQueryParams {
+  teacherId?: string;
+  groupId?: string;
+  courseId?: string;
+  studentId?: string;
+  from?: string;
+  to?: string;
+}
+
 export const scheduleApi = {
-  async getAll() {
-    const { data } = await http.get<ScheduleItem[]>('/schedule');
+  async getAll(params?: ScheduleListParams) {
+    const { data } = await http.get<ScheduleItem[]>('/schedule', { params });
     return data;
+  },
+  async getAllPage(params?: ScheduleListParams): Promise<PaginatedList<ScheduleItem>> {
+    const response = await http.get<ScheduleItem[]>('/schedule', { params });
+    return { items: response.data, pagination: response.apiMeta?.pagination };
   },
   async getMine() {
     const { data } = await http.get<ScheduleItem[]>('/schedule/me');
+    return data;
+  },
+  async getByUser(id: string) {
+    const { data } = await http.get<ScheduleItem[]>(`/schedule/user/${id}`);
+    return data;
+  },
+  async getOne(id: string) {
+    const { data } = await http.get<ScheduleItem>(`/schedule/${id}`);
     return data;
   },
   async create(payload: ScheduleFormValues) {

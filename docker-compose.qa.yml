@@ -1,0 +1,57 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - ibrat_qa_mongo:/data/db
+
+  backend:
+    build:
+      context: ../ibrat-backend
+    env_file:
+      - ../ibrat-backend/.env.qa
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: ibrat_qa
+      CORS_ORIGINS: http://localhost:4173,http://localhost:5173
+      BUILD_HASH: ${BUILD_HASH:-qa-local}
+      BUILD_TIME: ${BUILD_TIME:-local}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+
+  seed:
+    build:
+      context: ../ibrat-backend
+      target: seed
+    env_file:
+      - ../ibrat-backend/.env.qa
+    environment:
+      NODE_ENV: staging
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: ibrat_qa
+      SEED_ALLOW_PRODUCTION: "true"
+    depends_on:
+      - mongo
+    profiles:
+      - seed
+
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_URL: http://localhost:3000
+        VITE_APP_ENV: qa
+        VITE_APP_VERSION: ${APP_VERSION:-0.0.0}
+        VITE_BUILD_HASH: ${BUILD_HASH:-qa-local}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend
+
+volumes:
+  ibrat_qa_mongo:

@@ -793,6 +793,46 @@ textarea.ui-input {
   background: rgba(255, 252, 247, 0.9);
 }
 
+.environment-badge {
+  display: inline-grid;
+  gap: 0.02rem;
+  align-content: center;
+  min-height: 2.45rem;
+  padding: 0.38rem 0.68rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(219, 207, 192, 0.92);
+  background: rgba(255, 252, 247, 0.9);
+  color: var(--text-muted);
+  line-height: 1.1;
+}
+
+.environment-badge strong {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.environment-badge span {
+  font-size: 0.72rem;
+}
+
+.environment-badge--dev {
+  color: var(--info);
+  background: rgba(41, 92, 141, 0.09);
+  border-color: rgba(41, 92, 141, 0.18);
+}
+
+.environment-badge--qa {
+  color: var(--warning);
+  background: rgba(178, 106, 0, 0.09);
+  border-color: rgba(178, 106, 0, 0.18);
+}
+
+.environment-badge--prod {
+  color: var(--success);
+  background: rgba(45, 106, 79, 0.09);
+  border-color: rgba(45, 106, 79, 0.18);
+}
+
 .app-topbar__avatar {
   width: 2.25rem;
   height: 2.25rem;

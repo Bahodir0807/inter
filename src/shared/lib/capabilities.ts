@@ -8,6 +8,8 @@ export type AppRouteKey =
   | 'schedule'
   | 'rooms'
   | 'payments'
+  | 'academic'
+  | 'adminTools'
   | 'profile';
 
 export interface RoleCapabilities {
@@ -51,6 +53,18 @@ export interface RoleCapabilities {
     confirm: boolean;
     filter: boolean;
   };
+  academic: {
+    view: boolean;
+    manageAttendance: boolean;
+    manageGrades: boolean;
+    manageHomework: boolean;
+    sendNotifications: boolean;
+  };
+  adminTools: {
+    manageRoles: boolean;
+    manageStatistics: boolean;
+    managePhoneRequests: boolean;
+  };
 }
 
 const noRoutes: Record<AppRouteKey, boolean> = {
@@ -61,6 +75,8 @@ const noRoutes: Record<AppRouteKey, boolean> = {
   schedule: false,
   rooms: false,
   payments: false,
+  academic: false,
+  adminTools: false,
   profile: false,
 };
 
@@ -105,6 +121,18 @@ const guestCapabilities: RoleCapabilities = {
     confirm: false,
     filter: false,
   },
+  academic: {
+    view: false,
+    manageAttendance: false,
+    manageGrades: false,
+    manageHomework: false,
+    sendNotifications: false,
+  },
+  adminTools: {
+    manageRoles: false,
+    manageStatistics: false,
+    managePhoneRequests: false,
+  },
 };
 
 const adminLikeCapabilities: RoleCapabilities = {
@@ -117,6 +145,8 @@ const adminLikeCapabilities: RoleCapabilities = {
     schedule: true,
     rooms: true,
     payments: true,
+    academic: true,
+    adminTools: true,
     profile: true,
   },
   dashboard: {
@@ -157,6 +187,18 @@ const adminLikeCapabilities: RoleCapabilities = {
     confirm: true,
     filter: true,
   },
+  academic: {
+    view: true,
+    manageAttendance: true,
+    manageGrades: true,
+    manageHomework: true,
+    sendNotifications: true,
+  },
+  adminTools: {
+    manageRoles: true,
+    manageStatistics: true,
+    managePhoneRequests: true,
+  },
 };
 
 const teacherCapabilities: RoleCapabilities = {
@@ -169,6 +211,8 @@ const teacherCapabilities: RoleCapabilities = {
     schedule: true,
     rooms: true,
     payments: false,
+    academic: true,
+    adminTools: false,
     profile: true,
   },
   dashboard: {
@@ -209,6 +253,18 @@ const teacherCapabilities: RoleCapabilities = {
     confirm: false,
     filter: false,
   },
+  academic: {
+    view: true,
+    manageAttendance: true,
+    manageGrades: true,
+    manageHomework: true,
+    sendNotifications: true,
+  },
+  adminTools: {
+    manageRoles: false,
+    manageStatistics: false,
+    managePhoneRequests: false,
+  },
 };
 
 const studentCapabilities: RoleCapabilities = {
@@ -219,8 +275,10 @@ const studentCapabilities: RoleCapabilities = {
     courses: true,
     groups: true,
     schedule: true,
-    rooms: false,
+    rooms: true,
     payments: true,
+    academic: true,
+    adminTools: false,
     profile: true,
   },
   dashboard: {
@@ -260,6 +318,18 @@ const studentCapabilities: RoleCapabilities = {
     delete: false,
     confirm: false,
     filter: false,
+  },
+  academic: {
+    view: true,
+    manageAttendance: false,
+    manageGrades: false,
+    manageHomework: false,
+    sendNotifications: false,
+  },
+  adminTools: {
+    manageRoles: false,
+    manageStatistics: false,
+    managePhoneRequests: false,
   },
 };
 

@@ -77,14 +77,15 @@ export function DashboardPage() {
   const learnerQuery = useQuery({
     queryKey: ['dashboard', 'learner', user?.role],
     queryFn: async () => {
-      const [schedule, homework, grades, attendance] = await Promise.all([
-        scheduleApi.getMine(),
-        homeworkApi.getMine(),
-        gradesApi.getMine(),
-        attendanceApi.getMine(),
-      ]);
-
-      const payments = isStudent ? await paymentsApi.getMine() : [];
+      const schedule = await scheduleApi.getMine();
+      const [homework, grades, attendance, payments] = isStudent
+        ? await Promise.all([
+            homeworkApi.getMine(),
+            gradesApi.getMine(),
+            attendanceApi.getMine(),
+            paymentsApi.getMine(),
+          ])
+        : [[], [], [], []];
 
       return { schedule, homework, grades, attendance, payments };
     },

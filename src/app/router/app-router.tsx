@@ -1,10 +1,12 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { Suspense } from 'react';
 import { ProtectedRoute } from '../../features/auth/ui/protected-route';
 import { RoleGate } from '../../features/auth/ui/role-gate';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { AppShell } from '../../widgets/app-shell/app-shell';
 import { LoginPage } from '../../pages/login/login-page';
 import { appRoutes } from './navigation';
+import { LoadingState } from '../../shared/ui/feedback/loading-state';
 
 function RootRedirect() {
   const user = useAuthStore(state => state.user);
@@ -19,7 +21,13 @@ function AppLayout() {
           <Route
             key={route.path}
             path={route.path.replace('/app/', '')}
-            element={<RoleGate roles={route.roles}>{route.element}</RoleGate>}
+            element={(
+              <RoleGate roles={route.roles}>
+                <Suspense fallback={<LoadingState label="Loading page..." />}>
+                  {route.element}
+                </Suspense>
+              </RoleGate>
+            )}
           />
         ))}
         <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
