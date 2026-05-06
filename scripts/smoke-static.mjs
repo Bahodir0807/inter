@@ -32,6 +32,7 @@ const i18nProvider = read('src/shared/i18n/i18n.tsx');
 const themeProvider = read('src/shared/theme/theme.tsx');
 const languageGate = read('src/shared/i18n/language-preference.tsx');
 const topbar = read('src/widgets/app-shell/topbar.tsx');
+const indexHtml = read('index.html');
 
 check('admin-like includes panda', navigation.includes("export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda']"), 'adminLikeRoles must include panda');
 check('payment managers include panda', navigation.includes("export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda']"), 'paymentsManagerRoles must include panda');
@@ -63,6 +64,8 @@ check('teacher notifications disabled', capabilities.includes('sendNotifications
 check('http preserves envelope meta', http.includes('response.apiMeta = unwrapped.meta'), 'http client must preserve envelope meta');
 check('http reads backend error message', http.includes('body?.error?.message'), 'http client must read backend error.message');
 check('http reads backend validation details', http.includes('body?.error?.details'), 'http client must read backend validation details');
+check('http avoids custom request-id header for production CORS compatibility', !http.includes("config.headers['X-Request-Id']") && !http.includes("'X-Request-Id': createRequestId()"), 'frontend must not send X-Request-Id unless production CORS allows it');
+check('favicon is declared', indexHtml.includes('rel="icon"') && indexHtml.includes('/favicon.svg'), 'index.html must declare favicon');
 
 check('theme tokens use requested light background', css.includes('--color-bg: #f8fafc'), 'light theme must define requested background token');
 check('theme tokens use requested dark background', css.includes("--color-bg: #020617"), 'dark theme must define requested background token');

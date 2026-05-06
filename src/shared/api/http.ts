@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { env } from '../config/env';
 import { ApiMeta } from '../types/api';
-import { captureFrontendError, createRequestId } from '../lib/observability';
+import { captureFrontendError } from '../lib/observability';
 
 declare module 'axios' {
   interface AxiosResponse<T = any, D = any> {
@@ -72,7 +72,6 @@ async function refreshAccessToken() {
     refreshPromise = axios.post(`${env.apiUrl}/auth/refresh`, { refreshToken }, {
       headers: {
         'content-type': 'application/json',
-        'X-Request-Id': createRequestId(),
       },
     })
       .then((response) => {
@@ -101,9 +100,6 @@ http.interceptors.request.use((config) => {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
-
-  config.headers = config.headers ?? {};
-  config.headers['X-Request-Id'] = String(config.headers['X-Request-Id'] ?? createRequestId());
 
   return config;
 });
