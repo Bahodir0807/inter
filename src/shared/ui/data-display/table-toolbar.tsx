@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Input } from '../forms/input';
+import { translate } from '../../i18n/i18n';
 
 interface TableToolbarProps {
   search: string;
@@ -14,7 +15,7 @@ interface TableToolbarProps {
 export function TableToolbar({
   search,
   onSearchChange,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = translate('common.search'),
   resultsLabel,
   activeFilters = [],
   filters,
@@ -22,7 +23,7 @@ export function TableToolbar({
 }: TableToolbarProps) {
   const searchValue = search.trim();
   const summaryItems = [
-    ...(searchValue ? [`Search: ${searchValue}`] : []),
+    ...(searchValue ? [`${translate('common.search')}: ${searchValue}`] : []),
     ...activeFilters,
   ];
 
@@ -30,7 +31,7 @@ export function TableToolbar({
     <div className="table-toolbar">
       <div className="table-toolbar__main">
         <div className="table-toolbar__search-wrap">
-          <span className="table-toolbar__label">Search</span>
+          <span className="table-toolbar__label">{translate('common.search')}</span>
           <Input
             className="table-toolbar__search"
             fieldClassName="table-toolbar__search-field"
@@ -42,7 +43,7 @@ export function TableToolbar({
         </div>
         {filters ? (
           <div className="table-toolbar__filters-wrap">
-            <span className="table-toolbar__label table-toolbar__label--quiet">Refine</span>
+            <span className="table-toolbar__label table-toolbar__label--quiet">{translate('common.refine')}</span>
             <div className="table-toolbar__filters">{filters}</div>
           </div>
         ) : null}

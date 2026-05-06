@@ -2,6 +2,7 @@ import { AppUser, Role, roleLabels } from '../types/auth';
 import { Course } from '../../entities/course/api';
 import { Group } from '../../entities/group/api';
 import { Room } from '../../entities/room/api';
+import { translate } from '../i18n/i18n';
 
 export function getUserDisplayName(user?: AppUser | string | null) {
   if (!user) {
@@ -20,7 +21,7 @@ export function getRoleDisplayName(role?: Role | null) {
     return '-';
   }
 
-  return roleLabels[role] ?? role;
+  return translate(`roles.${role}`, roleLabels[role] ?? role);
 }
 
 export function getUserListSummary(users?: Array<AppUser | string> | null, limit = 2) {

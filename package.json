@@ -6,9 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "npm run typecheck",
+    "test": "npm run smoke:static",
     "preview": "vite preview",
     "qa:up": "docker compose -f docker-compose.qa.yml up --build -d",
     "qa:seed": "docker compose -f docker-compose.qa.yml --profile seed run --rm seed",
+    "qa:local:backend": "powershell -ExecutionPolicy Bypass -File scripts/qa-local-backend.ps1",
+    "qa:local:seed": "powershell -ExecutionPolicy Bypass -File scripts/qa-local-seed.ps1",
+    "qa:local:smoke": "powershell -ExecutionPolicy Bypass -File scripts/qa-local-smoke.ps1",
+    "qa:local:smoke:mutate": "powershell -ExecutionPolicy Bypass -File scripts/qa-local-smoke.ps1 -Mutate",
     "smoke:live": "node scripts/smoke-live.mjs",
     "smoke:static": "node scripts/smoke-static.mjs"
   },

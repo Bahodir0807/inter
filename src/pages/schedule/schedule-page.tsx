@@ -5,7 +5,7 @@ import { groupsApi } from '../../entities/group/api';
 import { roomsApi } from '../../entities/room/api';
 import { scheduleApi, ScheduleFormValues, ScheduleItem } from '../../entities/schedule/api';
 import { usersApi } from '../../entities/user/api';
-import { teachingRoles, adminLikeRoles } from '../../app/router/navigation';
+import { adminLikeRoles } from '../../app/router/navigation';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { PageLayout } from '../../widgets/page/page-layout';
 import { LoadingState } from '../../shared/ui/feedback/loading-state';
@@ -36,8 +36,8 @@ const pageSize = 8;
 export function SchedulePage() {
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore(state => state.user);
-  const canManage = !!sessionUser && teachingRoles.includes(sessionUser.role);
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
+  const canManage = isAdminLike;
   const isTeacher = sessionUser?.role === 'teacher';
   const isStudent = sessionUser?.role === 'student';
   const canSeeFull = canManage;

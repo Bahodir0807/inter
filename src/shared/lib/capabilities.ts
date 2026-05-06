@@ -57,6 +57,7 @@ export interface RoleCapabilities {
     view: boolean;
     manageAttendance: boolean;
     manageGrades: boolean;
+    deleteGrades: boolean;
     manageHomework: boolean;
     sendNotifications: boolean;
   };
@@ -125,6 +126,7 @@ const guestCapabilities: RoleCapabilities = {
     view: false,
     manageAttendance: false,
     manageGrades: false,
+    deleteGrades: false,
     manageHomework: false,
     sendNotifications: false,
   },
@@ -191,6 +193,7 @@ const adminLikeCapabilities: RoleCapabilities = {
     view: true,
     manageAttendance: true,
     manageGrades: true,
+    deleteGrades: true,
     manageHomework: true,
     sendNotifications: true,
   },
@@ -257,8 +260,9 @@ const teacherCapabilities: RoleCapabilities = {
     view: true,
     manageAttendance: true,
     manageGrades: true,
+    deleteGrades: false,
     manageHomework: true,
-    sendNotifications: true,
+    sendNotifications: false,
   },
   adminTools: {
     manageRoles: false,
@@ -323,6 +327,7 @@ const studentCapabilities: RoleCapabilities = {
     view: true,
     manageAttendance: false,
     manageGrades: false,
+    deleteGrades: false,
     manageHomework: false,
     sendNotifications: false,
   },

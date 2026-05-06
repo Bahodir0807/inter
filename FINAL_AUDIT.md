@@ -338,7 +338,9 @@ Added:
 - Frontend `.env.qa.example`
 - Backend `.env.example`
 - Backend `.env.qa.example`
+- Backend `.env.staging.local.example`
 - `QA_README.md`
+- non-Docker QA PowerShell scripts
 
 QA stack:
 - MongoDB container on host port `27018`.
@@ -433,6 +435,49 @@ Recommended next:
 | Mutating live smoke | `SMOKE_MUTATE=true npm run smoke:live` | Not run without explicit production mutation approval |
 | QA compose live smoke | `SMOKE_API_URL=http://localhost:3000 npm run smoke:live` | Prepared; not run because QA stack was not started in this session |
 
+### Isolated QA Validation Attempt
+
+Requested QA command order was attempted against local QA only:
+
+| Step | Command | Result |
+|---|---|---|
+| Docker stack | `npm run qa:up` | Failed: `docker` command is not available in this environment/PATH |
+| Seed | `npm run qa:seed` | Failed: `docker` command is not available in this environment/PATH |
+| Read-only smoke | `SMOKE_API_URL=http://localhost:3000 npm run smoke:live` | Failed: `fetch failed`, no local backend was running |
+| Mutating smoke | `SMOKE_API_URL=http://localhost:3000 SMOKE_MUTATE=true npm run smoke:live` | Failed before mutation: `fetch failed`, no local backend was running |
+
+Reports generated:
+
+- `reports/smoke-static.json`
+- `reports/smoke-static.md`
+- `reports/smoke-live-readonly.json`
+- `reports/smoke-live-readonly.md`
+- `reports/smoke-live-mutating.json`
+- `reports/smoke-live-mutating.md`
+
+No production endpoints were used for this QA validation attempt.
+
+### Non-Docker Local QA
+
+Added as an alternative when Docker is unavailable:
+
+| Script | Purpose |
+|---|---|
+| `npm run qa:local:backend` | Starts backend via `npm run start:dev` with `NODE_ENV=staging` |
+| `npm run qa:local:seed` | Seeds isolated QA users/data using backend `.env.staging.local` |
+| `npm run qa:local:smoke` | Runs read-only smoke against `http://localhost:3000` |
+| `npm run qa:local:smoke:mutate` | Runs mutating smoke against `http://localhost:3000` |
+
+Database options:
+- local MongoDB: `mongodb://localhost:27017`, database `ibrat_qa`
+- MongoDB Atlas QA database: set `MONGO_URI` and `MONGO_DB_NAME=ibrat_qa` in `..\ibrat-backend\.env.staging.local`
+
+Backend seed now loads env files in the same order as the Nest runtime path for QA scripts:
+- `.env.<NODE_ENV>.local`
+- `.env.<NODE_ENV>`
+- `.env.local`
+- `.env`
+
 ### Found Bugs / Risks
 
 | Finding | Status |
@@ -462,3 +507,61 @@ Needs live/browser verification:
 - Pagination after deleting the last record on a page.
 - Profile edit/change password with real QA credentials.
 - Route guard redirects through actual browser navigation.
+
+## Pre-Production Role Visibility Pass - 2026-05-06
+
+### Role Visibility Matrix
+
+| Area | panda / owner / admin | teacher | student |
+|---|---|---|---|
+| Users | full list/search/detail/create/update/status/role/delete | own profile + own students via `/users/students` | own profile only |
+| Courses | full read/create/update/delete/enrollment | own assigned courses read-only | enrolled courses read-only |
+| Groups | full read/create/update/delete | own groups read-only | own groups read-only |
+| Schedule | full read/create/update/delete/user lookup | own schedule read-only | own schedule read-only |
+| Rooms | full read/create/update/delete | read only through own schedule scope | read only through own schedule scope |
+| Payments | full ledger + lifecycle actions | no UI / no endpoints | own payment history/status |
+| Attendance | full read + mark | own students/groups read + mark | own read-only |
+| Homework | full read + assign/complete | own students/groups read + assign/complete | own read-only |
+| Grades | full read/create/update/delete | own students/groups read/create/update, no delete | own read-only |
+| Statistics | admin tools only | hidden/forbidden | hidden/forbidden |
+| Notifications | send allowed | hidden/forbidden | hidden/forbidden |
+
+### Fixes Applied
+
+Backend:
+- Removed teacher role access from course/group/schedule structural mutation endpoints.
+- Added service-level mutation guards for courses, groups, and schedule.
+- Removed student access from homework completion mutation.
+- Restricted notifications to admin-like roles at controller and service level.
+- Added `src/pre-production-role-access.spec.ts` with teacher/student negative mutation checks.
+
+Frontend:
+- Course/group/schedule create/edit/delete UI is now admin-like only.
+- Teacher keeps read-only teaching workspace for courses/groups/schedule.
+- Grade delete action now uses separate admin-like `deleteGrades` capability.
+- Teacher notification UI is disabled.
+- Student homework completion action is hidden.
+- Teacher academic workspace no longer calls `/schedule/user/:id`; that lookup is admin-like only.
+- Staff academic scope now starts empty, so attendance/homework/grade queries wait for an explicit student selection.
+- Added frontend `test`, `lint`, and `typecheck` scripts. `test` runs static smoke; `lint` currently aliases typecheck until ESLint is added.
+- Static smoke now verifies role-gated structural mutations and student homework mutation visibility.
+
+### Validation Results
+
+| Check | Result |
+|---|---|
+| Backend `npm run build` | Passed |
+| Backend `npm test` | Passed, 12 suites / 55 tests |
+| Backend `npm run test:e2e` | Passed, 1 suite / 5 tests |
+| Backend `npm test -- --runInBand --detectOpenHandles` | Passed, no open handles reported |
+| Frontend `npm run build` | Passed |
+| Frontend `npm test` | Passed via static smoke |
+| Frontend `npm run lint` | Passed via typecheck alias |
+| Frontend `npm run typecheck` | Passed |
+| Frontend `npm run smoke:static` | Passed |
+
+### Remaining Production Risks
+
+- No browser-level role walkthrough was run in this pass because local QA backend/Mongo was not started.
+- Frontend lint is a typecheck alias until ESLint is configured.
+- Live mutating smoke remains blocked without explicit QA/local DB confirmation.

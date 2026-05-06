@@ -21,6 +21,7 @@ import { Badge } from '../../shared/ui/badges/badge';
 import { formatDateTime, formatMoney } from '../../shared/lib/date';
 import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { cn } from '../../shared/lib/cn';
+import { useI18n } from '../../shared/i18n/i18n';
 
 function MetricCard({
   label,
@@ -44,6 +45,7 @@ function MetricCard({
 
 export function DashboardPage() {
   const user = useAuthStore(state => state.user);
+  const { t } = useI18n();
   const isOwnerAdmin = !!user && paymentsManagerRoles.includes(user.role);
   const isPanda = user?.role === 'panda';
   const isStudent = user?.role === 'student';
@@ -95,7 +97,7 @@ export function DashboardPage() {
   const activeQuery = isOwnerAdmin ? ownerAdminQuery : isPanda ? pandaQuery : learnerQuery;
 
   if (activeQuery.isLoading) {
-    return <LoadingState label="Loading dashboard data..." />;
+    return <LoadingState label={t('common.loading')} />;
   }
 
   if (activeQuery.error) {
@@ -103,7 +105,7 @@ export function DashboardPage() {
   }
 
   if (!activeQuery.data) {
-    return <EmptyState title="No dashboard data yet" description="The dashboard is connected, but there is nothing usable to show in this workspace yet." />;
+    return <EmptyState title={t('dashboard.noDataTitle')} description={t('dashboard.noDataDescription')} />;
   }
 
   if (isOwnerAdmin) {
@@ -118,9 +120,9 @@ export function DashboardPage() {
 
     return (
       <PageLayout
-        eyebrow="Overview"
-        title="Dashboard"
-        description="Key numbers across the workspace."
+        eyebrow={t('dashboard.overview')}
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
         variant="feature"
       >
         <div className="dashboard-grid dashboard-grid--overview">
@@ -192,9 +194,9 @@ export function DashboardPage() {
 
   return (
     <PageLayout
-      eyebrow="My workspace"
-      title="Dashboard"
-      description="What you need today."
+      eyebrow={t('dashboard.myWorkspace')}
+      title={t('dashboard.title')}
+      description={t('dashboard.myDescription')}
       variant="feature"
     >
       <div className="dashboard-grid">

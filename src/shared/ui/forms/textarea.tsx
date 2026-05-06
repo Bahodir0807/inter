@@ -27,7 +27,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         ref={ref}
         aria-invalid={!!error}
         aria-describedby={descriptionIds}
-        className={cn('ui-input', error && 'ui-input--error', className)}
+        className={cn('ui-textarea', error && 'ui-input--error', className)}
         {...props}
       />
       {error ? <span id={`${textareaId}-error`} className="ui-field__error">{error}</span> : null}

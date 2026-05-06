@@ -4,10 +4,15 @@ import { useAuthStore } from '../../features/auth/model/auth-store';
 import { getRoleDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { AppIcon } from '../../shared/ui/icons/app-icon';
 import { env } from '../../shared/config/env';
+import { languageOptions, useI18n } from '../../shared/i18n/i18n';
+import { useTheme } from '../../shared/theme/theme';
+import { Select } from '../../shared/ui/forms/select';
 
 export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: () => void }) {
   const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
+  const { language, setLanguage, t } = useI18n();
+  const { theme, setTheme } = useTheme();
   const userName = getUserDisplayName(user) || 'CRM user';
   const initials = userName
     .split(' ')
@@ -27,17 +32,38 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
           onClick={onMenuToggle}
         >
           <AppIcon name="menu" />
-          <span>Menu</span>
+          <span>{t('common.menu')}</span>
         </Button>
         <div className="app-topbar__identity">
           <Breadcrumbs />
           <div className="app-topbar__headline">
-            <strong>Workspace</strong>
-            <span className="subtle">People, courses, schedule, rooms, and payments.</span>
+            <strong>{t('shell.headline')}</strong>
+            <span className="subtle">{t('shell.subheadline')}</span>
           </div>
         </div>
       </div>
       <div className="app-topbar__right">
+        <div className="app-topbar__controls">
+          <Select
+            aria-label={t('common.language')}
+            value={language}
+            onChange={event => setLanguage(event.target.value as typeof language)}
+          >
+            {languageOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            aria-label={t('common.theme')}
+            value={theme}
+            onChange={event => setTheme(event.target.value as typeof theme)}
+          >
+            <option value="light">{t('theme.light')}</option>
+            <option value="dark">{t('theme.dark')}</option>
+          </Select>
+        </div>
         <div className={`environment-badge environment-badge--${env.appEnv}`} title={`${env.appVersion}+${env.buildHash}`}>
           <strong>{env.appEnv.toUpperCase()}</strong>
           <span>{env.appVersion}</span>
@@ -53,7 +79,7 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
         </div>
         <Button variant="ghost" onClick={logout}>
           <AppIcon name="logout" />
-          <span>Log out</span>
+          <span>{t('common.logOut')}</span>
         </Button>
       </div>
     </header>

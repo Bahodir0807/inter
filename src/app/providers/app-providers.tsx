@@ -5,6 +5,9 @@ import { useAuthStore } from '../../features/auth/model/auth-store';
 import { Toaster } from '../../shared/ui/feedback/toaster';
 import { ErrorBoundary } from '../../shared/ui/feedback/error-boundary';
 import { captureFrontendError, initObservability } from '../../shared/lib/observability';
+import { I18nProvider } from '../../shared/i18n/i18n';
+import { LanguagePreferenceGate } from '../../shared/i18n/language-preference';
+import { ThemeProvider } from '../../shared/theme/theme';
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -50,12 +53,17 @@ function SessionBootstrap({ children }: PropsWithChildren) {
 export function AppProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ErrorBoundary>
-          <SessionBootstrap>{children}</SessionBootstrap>
-        </ErrorBoundary>
-        <Toaster />
-      </BrowserRouter>
+      <I18nProvider>
+        <ThemeProvider>
+          <BrowserRouter>
+            <ErrorBoundary>
+              <SessionBootstrap>{children}</SessionBootstrap>
+            </ErrorBoundary>
+            <LanguagePreferenceGate />
+            <Toaster />
+          </BrowserRouter>
+        </ThemeProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

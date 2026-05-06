@@ -1,7 +1,8 @@
 import { Button } from '../buttons/button';
+import { translate } from '../../i18n/i18n';
 
 export function ErrorState({
-  title = 'Unable to load data',
+  title = translate('common.error', 'Unable to load data'),
   description,
   onRetry,
 }: {
@@ -13,7 +14,7 @@ export function ErrorState({
     <div className="ui-state ui-state--error">
       <h3>{title}</h3>
       <p>{description}</p>
-      {onRetry ? <Button onClick={onRetry}>Retry</Button> : null}
+      {onRetry ? <Button onClick={onRetry}>{translate('common.retry')}</Button> : null}
     </div>
   );
 }

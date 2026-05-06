@@ -28,7 +28,7 @@ export function AcademicPage() {
   const user = useAuthStore(state => state.user);
   const capabilities = getRoleCapabilities(user?.role);
   const queryClient = useQueryClient();
-  const [selectedUserId, setSelectedUserId] = useState(user?.id ?? '');
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>('present');
   const [gradeSubject, setGradeSubject] = useState('');
   const [gradeScore, setGradeScore] = useState(100);
@@ -38,6 +38,7 @@ export function AcademicPage() {
   const [deleteGrade, setDeleteGrade] = useState<GradeEntry | null>(null);
 
   const canSelectUser = capabilities.academic.manageAttendance || capabilities.academic.manageGrades || capabilities.academic.manageHomework;
+  const canLookupUserSchedule = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'panda';
   const usersQuery = useQuery({
     queryKey: ['academic-users'],
     queryFn: () => usersApi.getStudents({ limit: 100, sortBy: 'username', sortOrder: 'asc' }),
@@ -63,7 +64,7 @@ export function AcademicPage() {
   const scheduleQuery = useQuery({
     queryKey: ['schedule-user', effectiveUserId],
     queryFn: () => scheduleApi.getByUser(effectiveUserId),
-    enabled: !!effectiveUserId && canSelectUser,
+    enabled: !!effectiveUserId && canLookupUserSchedule,
   });
 
   const selectedUser = useMemo(
@@ -232,7 +233,9 @@ export function AcademicPage() {
               cell: (item: GradeEntry) => (
                 <div className="inline-actions">
                   <Button size="sm" variant="secondary" onClick={() => gradesApi.update(item.id, item.score).then(() => invalidate())}>Save</Button>
-                  <Button size="sm" variant="danger" onClick={() => setDeleteGrade(item)}>Delete</Button>
+                  {capabilities.academic.deleteGrades ? (
+                    <Button size="sm" variant="danger" onClick={() => setDeleteGrade(item)}>Delete</Button>
+                  ) : null}
                 </div>
               ),
             }] : []),
@@ -260,7 +263,7 @@ export function AcademicPage() {
             {
               key: 'actions',
               header: 'Actions',
-              cell: item => item.completed ? null : <Button size="sm" variant="secondary" onClick={() => completeHomework.mutate(item.id)}>Complete</Button>,
+              cell: item => item.completed || user?.role === 'student' ? null : <Button size="sm" variant="secondary" onClick={() => completeHomework.mutate(item.id)}>Complete</Button>,
             },
           ]}
         />
@@ -284,7 +287,7 @@ export function AcademicPage() {
         </Card>
       ) : null}
 
-      {canSelectUser ? (
+      {canLookupUserSchedule ? (
         <TableShell title="User schedule lookup" description="Uses `/schedule/user/:id`, separate from student `/schedule/me`.">
           <DataTable
             rows={schedules}

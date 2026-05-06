@@ -1,5 +1,6 @@
 import { KeyboardEvent, PropsWithChildren, useEffect, useId, useRef } from 'react';
 import { Button } from '../buttons/button';
+import { translate } from '../../i18n/i18n';
 
 interface ModalShellProps extends PropsWithChildren {
   title: string;
@@ -167,7 +168,7 @@ export function ModalShell({
             ) : null}
           </div>
           <Button type="button" variant="ghost" onClick={onClose} disabled={closeDisabled}>
-            Close
+            {translate('common.close')}
           </Button>
         </header>
         <div className="ui-modal__content">{children}</div>

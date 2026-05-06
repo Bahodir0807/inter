@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '../../features/auth/ui/login-form';
 import { useAuthStore } from '../../features/auth/model/auth-store';
+import { useI18n } from '../../shared/i18n/i18n';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (user) {
@@ -18,24 +20,24 @@ export function LoginPage() {
       <div className="login-page__panel">
         <span className="eyebrow">Ibrat CRM</span>
         <div className="login-page__headline">
-          <h2>Run daily center work from one place.</h2>
-          <p>People, courses, groups, schedule, rooms, and payments stay connected.</p>
+          <h2>{t('login.title')}</h2>
+          <p>{t('login.description')}</p>
         </div>
         <div className="login-page__highlights">
           <div className="login-page__highlight">
-            <strong>People</strong>
-            <span>Accounts, roles, and groups stay together.</span>
+            <strong>{t('login.people')}</strong>
+            <span>{t('login.peopleHint')}</span>
           </div>
           <div className="login-page__highlight">
-            <strong>Schedule</strong>
-            <span>Courses, rooms, teachers, and groups stay linked.</span>
+            <strong>{t('login.schedule')}</strong>
+            <span>{t('login.scheduleHint')}</span>
           </div>
           <div className="login-page__highlight">
-            <strong>Payments</strong>
-            <span>Each payment stays tied to the right student and course.</span>
+            <strong>{t('login.payments')}</strong>
+            <span>{t('login.paymentsHint')}</span>
           </div>
         </div>
-        <p className="login-page__note">Built for daily work.</p>
+        <p className="login-page__note">{t('login.note')}</p>
       </div>
       <div className="login-page__form-shell">
         <LoginForm />

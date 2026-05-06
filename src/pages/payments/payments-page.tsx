@@ -25,6 +25,7 @@ import { PaymentFormModal } from './payment-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
 import { useDebouncedValue } from '../../shared/hooks/use-debounced-value';
 import { useUrlState } from '../../shared/hooks/use-url-state';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const pageSize = 8;
 const statusToneMap: Record<PaymentStatus, 'success' | 'warning' | 'danger'> = {
@@ -32,18 +33,13 @@ const statusToneMap: Record<PaymentStatus, 'success' | 'warning' | 'danger'> = {
   pending: 'warning',
   cancelled: 'danger',
 };
-const statusLabelMap: Record<PaymentStatus, string> = {
-  confirmed: 'Confirmed',
-  pending: 'Pending',
-  cancelled: 'Cancelled',
-};
-
 function getPaymentCourse(payment: Payment) {
   return payment.course ?? payment.courseId;
 }
 
 export function PaymentsPage() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   const user = useAuthStore(state => state.user);
   const isAdminLike = !!user && paymentsManagerRoles.includes(user.role);
   const urlState = useUrlState();
@@ -156,7 +152,7 @@ export function PaymentsPage() {
   const toolbarFilters = [
     ...(isAdminLike && studentFilter !== 'all' ? [`Student: ${selectedStudentLabel}`] : []),
     ...(isAdminLike && courseFilter !== 'all' ? [`Course: ${selectedCourseLabel}`] : []),
-    ...(statusFilter !== 'all' ? [`Status: ${statusLabelMap[statusFilter]}`] : []),
+    ...(statusFilter !== 'all' ? [`Status: ${t(`paymentStatus.${statusFilter}`)}`] : []),
     ...(sortDirection === 'asc' ? ['Order: Oldest first'] : []),
   ];
 
@@ -180,7 +176,7 @@ export function PaymentsPage() {
           <span className="cell-meta cell-meta--strong">{formatDate(item.paidAt)}</span>
           <div className="cell-badges">
             <Badge tone={statusToneMap[item.status]}>
-              {statusLabelMap[item.status]}
+              {t(`paymentStatus.${item.status}`)}
             </Badge>
           </div>
         </div>

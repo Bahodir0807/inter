@@ -4,6 +4,7 @@ import { navigationItems } from '../../app/router/navigation';
 import { cn } from '../../shared/lib/cn';
 import { getRoleDisplayName } from '../../shared/lib/entity-display';
 import { AppIcon } from '../../shared/ui/icons/app-icon';
+import { useI18n } from '../../shared/i18n/i18n';
 
 export function Sidebar({
   role,
@@ -15,6 +16,7 @@ export function Sidebar({
   onNavigate?: () => void;
 }) {
   const items = navigationItems.filter(item => item.roles.includes(role));
+  const { t } = useI18n();
 
   return (
     <aside id="app-sidebar" className={cn('app-sidebar', open && 'app-sidebar--open')}>
@@ -24,11 +26,11 @@ export function Sidebar({
         </span>
         <div className="app-sidebar__brand-copy">
           <strong>Ibrat CRM</strong>
-          <p>Daily operations across people, learning, schedule, and payments.</p>
+          <p>{t('shell.brandHint')}</p>
         </div>
       </div>
       <div className="app-sidebar__section">
-        <span className="app-sidebar__section-label">Workspace</span>
+        <span className="app-sidebar__section-label">{t('common.workspace')}</span>
         <nav className="app-sidebar__nav">
           {items.map(item => (
             <NavLink
@@ -40,13 +42,13 @@ export function Sidebar({
               <span className="app-sidebar__icon" aria-hidden="true">
                 <AppIcon name={item.icon} />
               </span>
-              <span className="app-sidebar__label">{item.label}</span>
+              <span className="app-sidebar__label">{t(item.labelKey, item.label)}</span>
             </NavLink>
           ))}
         </nav>
       </div>
       <div className="app-sidebar__footer">
-        <span className="subtle">Current role</span>
+        <span className="subtle">{t('common.currentRole')}</span>
         <strong>{getRoleDisplayName(role)}</strong>
       </div>
     </aside>

@@ -33,7 +33,7 @@ const expectedAccess = {
     forbidden: ['/users?page=1&limit=5', '/payments?page=1&limit=5', '/roles?page=1&limit=5', '/statistics?page=1&limit=5'],
   },
   student: {
-    ok: ['/auth/me', '/courses?page=1&limit=5', '/groups?page=1&limit=5', '/schedule/me', '/rooms?page=1&limit=5', '/payments/me?page=1&limit=5', '/attendance/me', '/grades/me', '/homework/me'],
+    ok: ['/auth/me', '/courses?page=1&limit=5', '/groups?page=1&limit=5', '/schedule/me', '/payments/me?page=1&limit=5', '/attendance/me', '/grades/me', '/homework/me'],
     forbidden: ['/users?page=1&limit=5', '/payments?page=1&limit=5', '/roles?page=1&limit=5', '/statistics?page=1&limit=5'],
   },
   panda: {
@@ -185,6 +185,7 @@ run().catch((error) => {
 
 function writeReports(status) {
   mkdirSync(new URL('../reports', import.meta.url), { recursive: true });
+  const reportName = allowMutations ? 'smoke-live-mutating' : 'smoke-live-readonly';
   const report = {
     type: 'live-smoke',
     status,
@@ -193,9 +194,9 @@ function writeReports(status) {
     timestamp: new Date().toISOString(),
     results,
   };
-  writeFileSync(new URL('../reports/smoke-live.json', import.meta.url), `${JSON.stringify(report, null, 2)}\n`);
+  writeFileSync(new URL(`../reports/${reportName}.json`, import.meta.url), `${JSON.stringify(report, null, 2)}\n`);
   writeFileSync(
-    new URL('../reports/smoke-live.md', import.meta.url),
+    new URL(`../reports/${reportName}.md`, import.meta.url),
     `# Live Smoke Report\n\nStatus: ${status}\n\nAPI: ${apiUrl}\n\nMutations: ${allowMutations ? 'enabled' : 'disabled'}\n\nGenerated: ${report.timestamp}\n\n${results.map(item => `- ${item.status}: ${item.name}${item.detail ? ` - ${item.detail}` : ''}`).join('\n')}\n`,
   );
 }

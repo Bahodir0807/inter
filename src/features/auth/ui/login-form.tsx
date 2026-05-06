@@ -4,12 +4,14 @@ import { Button } from '../../../shared/ui/buttons/button';
 import { Input } from '../../../shared/ui/forms/input';
 import { toast } from '../../../shared/ui/feedback/toaster';
 import { useAuthStore } from '../model/auth-store';
+import { useI18n } from '../../../shared/i18n/i18n';
 
 export function LoginForm() {
   const navigate = useNavigate();
   const login = useAuthStore(state => state.login);
   const isLoading = useAuthStore(state => state.isLoading);
   const error = useAuthStore(state => state.error);
+  const { t } = useI18n();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -18,10 +20,10 @@ export function LoginForm() {
 
     try {
       await login({ username, password });
-      toast.success('Signed in successfully');
+      toast.success(t('login.success'));
       navigate('/app/dashboard', { replace: true });
     } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : 'Login failed';
+      const message = submitError instanceof Error ? submitError.message : t('login.failed');
       toast.error(message);
     }
   }
@@ -30,9 +32,9 @@ export function LoginForm() {
     <div className="login-card">
       <form className="login-form" onSubmit={handleSubmit}>
         <div className="login-form__header">
-          <span className="eyebrow">Sign in</span>
-          <h1>Welcome back</h1>
-          <p>Use your CRM account to continue.</p>
+          <span className="eyebrow">{t('login.signIn')}</span>
+          <h1>{t('login.welcome')}</h1>
+          <p>{t('login.useAccount')}</p>
         </div>
 
         {error ? <div className="banner banner--error">{error}</div> : null}
@@ -41,7 +43,7 @@ export function LoginForm() {
           <Input
             autoComplete="username"
             disabled={isLoading}
-            label="Username"
+            label={t('login.username')}
             name="username"
             onChange={event => setUsername(event.target.value)}
             required
@@ -51,7 +53,7 @@ export function LoginForm() {
           <Input
             autoComplete="current-password"
             disabled={isLoading}
-            label="Password"
+            label={t('login.password')}
             name="password"
             onChange={event => setPassword(event.target.value)}
             required
@@ -61,7 +63,7 @@ export function LoginForm() {
         </div>
 
         <Button disabled={isLoading} fullWidth type="submit">
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading ? t('login.signingIn') : t('login.signIn')}
         </Button>
       </form>
     </div>

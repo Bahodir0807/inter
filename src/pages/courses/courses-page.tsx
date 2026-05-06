@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { coursesApi, Course, CourseFormValues } from '../../entities/course/api';
 import { usersApi } from '../../entities/user/api';
-import { adminLikeRoles, teachingRoles } from '../../app/router/navigation';
+import { adminLikeRoles } from '../../app/router/navigation';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { PageLayout } from '../../widgets/page/page-layout';
 import { LoadingState } from '../../shared/ui/feedback/loading-state';
@@ -28,8 +28,8 @@ const pageSize = 8;
 export function CoursesPage() {
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore(state => state.user);
-  const canManage = !!sessionUser && teachingRoles.includes(sessionUser.role);
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
+  const canManage = isAdminLike;
   const isTeacher = sessionUser?.role === 'teacher';
   const isStudent = sessionUser?.role === 'student';
 
