@@ -565,3 +565,23 @@ Frontend:
 - No browser-level role walkthrough was run in this pass because local QA backend/Mongo was not started.
 - Frontend lint is a typecheck alias until ESLint is configured.
 - Live mutating smoke remains blocked without explicit QA/local DB confirmation.
+
+## Production Readiness Status
+
+### Static QA: PASSED
+- `npm run typecheck`: Passed
+- `npm run build`: Passed
+- `npm run smoke:static`: Passed
+
+### Live QA: NOT EXECUTED
+- Live role walkthrough requires a running QA backend with seeded users.
+- Before declaring production-ready, run:
+  ```bash
+  npm run qa:up
+  npm run qa:seed
+  npm run qa:local:smoke
+  ```
+- If live QA does not pass, frontend is **NOT PRODUCTION READY**.
+
+### Verdict: BLOCKED
+Static QA passes. **Live QA must pass before production deployment.**

@@ -45,6 +45,14 @@ function SessionBootstrap({ children }: PropsWithChildren) {
   useEffect(() => {
     initObservability();
     void bootstrap();
+
+    const handleAuthExpired = () => {
+      queryClient.clear();
+      void bootstrap();
+    };
+
+    window.addEventListener('ibrat:auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('ibrat:auth-expired', handleAuthExpired);
   }, [bootstrap]);
 
   return <>{children}</>;

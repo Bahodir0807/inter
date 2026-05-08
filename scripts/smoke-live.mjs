@@ -1,29 +1,50 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-const apiUrl = (process.env.SMOKE_API_URL ?? process.env.VITE_API_URL ?? 'https://b.sultonoway.uz').replace(/\/$/, '');
-const password = process.env.SMOKE_PASSWORD ?? 'ChangeMe123!';
-const allowMutations = process.env.SMOKE_MUTATE === 'true';
+const apiUrl = process.env.SMOKE_API_BASE_URL;
+const allowMutations = process.env.SMOKE_ALLOW_MUTATION === 'true';
+
+const requiredEnvVars = [
+  'SMOKE_API_BASE_URL',
+  'SMOKE_OWNER_USERNAME', 'SMOKE_OWNER_PASSWORD',
+  'SMOKE_ADMIN_USERNAME', 'SMOKE_ADMIN_PASSWORD',
+  'SMOKE_TEACHER_USERNAME', 'SMOKE_TEACHER_PASSWORD',
+  'SMOKE_STUDENT_USERNAME', 'SMOKE_STUDENT_PASSWORD',
+  'SMOKE_PANDA_USERNAME', 'SMOKE_PANDA_PASSWORD',
+];
+
+const sensitiveFields = [
+  'password', 'hashedPassword', 'refreshToken', 'accessToken', 'token',
+  'email', 'phoneNumber', 'telegramId', '_id', '__v', 'deletedAt',
+];
 
 const credentials = {
+  owner: {
+    username: process.env.SMOKE_OWNER_USERNAME,
+    password: process.env.SMOKE_OWNER_PASSWORD,
+  },
   admin: {
-    username: process.env.SMOKE_ADMIN_USERNAME ?? 'branch_admin',
-    password: process.env.SMOKE_ADMIN_PASSWORD ?? password,
+    username: process.env.SMOKE_ADMIN_USERNAME,
+    password: process.env.SMOKE_ADMIN_PASSWORD,
   },
   teacher: {
-    username: process.env.SMOKE_TEACHER_USERNAME ?? 'teacher',
-    password: process.env.SMOKE_TEACHER_PASSWORD ?? password,
+    username: process.env.SMOKE_TEACHER_USERNAME,
+    password: process.env.SMOKE_TEACHER_PASSWORD,
   },
   student: {
-    username: process.env.SMOKE_STUDENT_USERNAME ?? 'student',
-    password: process.env.SMOKE_STUDENT_PASSWORD ?? password,
+    username: process.env.SMOKE_STUDENT_USERNAME,
+    password: process.env.SMOKE_STUDENT_PASSWORD,
   },
   panda: {
-    username: process.env.SMOKE_PANDA_USERNAME ?? 'panda',
-    password: process.env.SMOKE_PANDA_PASSWORD ?? password,
+    username: process.env.SMOKE_PANDA_USERNAME,
+    password: process.env.SMOKE_PANDA_PASSWORD,
   },
 };
 
 const expectedAccess = {
+  owner: {
+    ok: ['/auth/me', '/users?page=1&limit=5', '/courses?page=1&limit=5', '/groups?page=1&limit=5', '/schedule?page=1&limit=5', '/rooms?page=1&limit=5', '/payments?page=1&limit=5', '/roles?page=1&limit=5', '/statistics?page=1&limit=5', '/phone-request/pending?page=1&limit=5'],
+    forbidden: ['/attendance/me', '/grades/me', '/homework/me'],
+  },
   admin: {
     ok: ['/auth/me', '/users?page=1&limit=5', '/courses?page=1&limit=5', '/groups?page=1&limit=5', '/schedule?page=1&limit=5', '/rooms?page=1&limit=5', '/payments?page=1&limit=5', '/roles?page=1&limit=5', '/statistics?page=1&limit=5', '/phone-request/pending?page=1&limit=5'],
     forbidden: ['/attendance/me', '/grades/me', '/homework/me'],
@@ -78,6 +99,10 @@ async function login(role) {
     method: 'POST',
     body: JSON.stringify(credentials[role]),
   });
+  if (result.status === 401) {
+    record(`${role} login failed`, 'failed', `401 Unauthorized - check credentials for ${role}`);
+    return null;
+  }
   assert(result.status === 201 || result.status === 200, `${role} login failed: ${result.status} ${JSON.stringify(result.body)}`);
   const payload = result.body?.data ?? result.body;
   assert(payload?.token, `${role} login did not return token`);
@@ -92,6 +117,10 @@ async function expectOk(role, token, path) {
     if (path.includes('page=') && meta?.pagination) {
       assert(typeof meta.pagination.page === 'number', `${path} missing numeric pagination.page`);
     }
+  }
+  // Check for DTO leaks in teacher/student responses
+  if (['teacher', 'student'].includes(role)) {
+    checkDtoLeaks(role, path, result.body);
   }
 }
 
@@ -147,29 +176,107 @@ async function expiredTokenCheck() {
   record('expired token returns 401', 'passed');
 }
 
+function findSensitiveFieldsInObject(obj, path = '', visited = new Set()) {
+  if (!obj || typeof obj !== 'object' || visited.has(obj)) {
+    return [];
+  }
+  visited.add(obj);
+  const leaks = [];
+  
+  for (const [key, value] of Object.entries(obj)) {
+    const currentPath = path ? `${path}.${key}` : key;
+    
+    if (sensitiveFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
+      leaks.push(currentPath);
+    }
+    
+    if (value && typeof value === 'object') {
+      leaks.push(...findSensitiveFieldsInObject(value, currentPath, visited));
+    }
+  }
+  
+  return leaks;
+}
+
+function checkDtoLeaks(role, path, responseBody) {
+  const data = responseBody?.data ?? responseBody;
+  if (!data) return;
+  
+  const leaks = findSensitiveFieldsInObject(data);
+  if (leaks.length > 0) {
+    throw new Error(`${role} response from ${path} contains sensitive fields: ${leaks.join(', ')}`);
+  }
+}
+
+async function checkHealth() {
+  try {
+    const result = await request('/health');
+    if (result.status < 200 || result.status >= 300) {
+      throw new Error(`/health returned ${result.status}`);
+    }
+    record('backend health check', 'passed');
+    return true;
+  } catch (error) {
+    record('backend health check', 'failed', error.message);
+    return false;
+  }
+}
+
 async function run() {
+  // Validate required environment variables
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  if (missingVars.length > 0) {
+    throw new Error(`Missing required environment variables: ${missingVars.join(', ')}\nCopy .env.smoke.example to .env.smoke and fill in the values.`);
+  }
+
+  if (!apiUrl) {
+    throw new Error('SMOKE_API_BASE_URL is required');
+  }
+
   console.log(`Smoke API: ${apiUrl}`);
+  
+  // Check backend health before running tests
+  const healthOk = await checkHealth();
+  if (!healthOk) {
+    throw new Error('QA backend is not running or not reachable');
+  }
+
   await expiredTokenCheck();
   const tokens = {};
+  let anyLoginFailed = false;
+  
   for (const role of Object.keys(credentials)) {
-    tokens[role] = await login(role);
-    for (const path of expectedAccess[role].ok) {
-      await expectOk(role, tokens[role], path);
-      record(`${role} OK ${path}`, 'passed');
+    const token = await login(role);
+    if (token) {
+      tokens[role] = token;
+      for (const path of expectedAccess[role].ok) {
+        await expectOk(role, tokens[role], path);
+        record(`${role} OK ${path}`, 'passed');
+      }
+      for (const path of expectedAccess[role].forbidden) {
+        await expectForbidden(role, tokens[role], path);
+        record(`${role} forbidden ${path}`, 'passed');
+      }
+      console.log(`${role}: auth, allowed endpoints, forbidden endpoints OK`);
+    } else {
+      anyLoginFailed = true;
+      console.log(`${role}: login failed, skipping tests`);
     }
-    for (const path of expectedAccess[role].forbidden) {
-      await expectForbidden(role, tokens[role], path);
-      record(`${role} forbidden ${path}`, 'passed');
-    }
-    console.log(`${role}: auth, allowed endpoints, forbidden endpoints OK`);
+  }
+
+  if (anyLoginFailed) {
+    throw new Error('Live QA blocked by credentials - one or more role logins failed');
   }
 
   if (allowMutations) {
-    await roomsCrud(tokens.admin);
+    if (apiUrl.includes('sultonoway.uz') || apiUrl.includes('production')) {
+      throw new Error('Mutations not allowed against production. Set SMOKE_ALLOW_MUTATION=true only for QA environments.');
+    }
+    await roomsCrud(tokens.owner ?? tokens.admin);
     record('rooms CRUD', 'passed');
     console.log('rooms: create/search/update/getById/delete OK');
   } else {
-    console.log('rooms: CRUD skipped; set SMOKE_MUTATE=true to run mutating checks');
+    console.log('rooms: CRUD skipped; set SMOKE_ALLOW_MUTATION=true to run mutating checks (only for QA)');
   }
   await paymentsFilters(tokens.admin);
   record('payments filters/pagination', 'passed');
@@ -177,9 +284,18 @@ async function run() {
 }
 
 run().catch((error) => {
-  record('live smoke failed', 'failed', error.message);
-  writeReports('failed');
-  console.error(error.message);
+  const errorMsg = error.message;
+  let verdict = 'failed';
+  
+  if (errorMsg.includes('not running or not reachable')) {
+    verdict = 'blocked: backend unreachable';
+  } else if (errorMsg.includes('blocked by credentials')) {
+    verdict = 'blocked: credentials';
+  }
+  
+  record('live smoke verdict', verdict, errorMsg);
+  writeReports(verdict);
+  console.error(`\nLive QA Result: ${verdict}\n${errorMsg}`);
   process.exit(1);
 });
 
@@ -204,5 +320,6 @@ function writeReports(status) {
 process.on('beforeExit', (code) => {
   if (code === 0) {
     writeReports('passed');
+    console.log('\nLive QA Result: passed\nAll role tests completed successfully.');
   }
 });

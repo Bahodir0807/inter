@@ -1,8 +1,10 @@
-const fallbackApiUrl = 'https://b.sultonoway.uz';
 const fallbackEnvironment = 'prod';
 
 function normalizeApiUrl(value: string | undefined) {
-  const url = value?.trim() || fallbackApiUrl;
+  const url = value?.trim();
+  if (!url) {
+    throw new Error('Missing required environment variable VITE_API_URL');
+  }
   return url.replace(/\/+$/, '');
 }
 

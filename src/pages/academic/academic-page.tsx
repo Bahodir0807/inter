@@ -20,9 +20,13 @@ import { Textarea } from '../../shared/ui/forms/textarea';
 import { Badge } from '../../shared/ui/badges/badge';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
 import { getRoleCapabilities } from '../../shared/lib/capabilities';
-import { formatDate } from '../../shared/lib/date';
-import { getUserDisplayName } from '../../shared/lib/entity-display';
+import { formatDate, formatDateTime } from '../../shared/lib/date';
+import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { toast } from '../../shared/ui/feedback/toaster';
+
+function toDateInputValue(value: Date | string) {
+  return new Date(value).toISOString().slice(0, 10);
+}
 
 export function AcademicPage() {
   const user = useAuthStore(state => state.user);
@@ -30,6 +34,8 @@ export function AcademicPage() {
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState('');
   const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>('present');
+  const [attendanceDate, setAttendanceDate] = useState(() => toDateInputValue(new Date()));
+  const [selectedScheduleId, setSelectedScheduleId] = useState('');
   const [gradeSubject, setGradeSubject] = useState('');
   const [gradeScore, setGradeScore] = useState(100);
   const [homeworkTasks, setHomeworkTasks] = useState('');
@@ -62,9 +68,9 @@ export function AcademicPage() {
     enabled: !!effectiveUserId,
   });
   const scheduleQuery = useQuery({
-    queryKey: ['schedule-user', effectiveUserId],
-    queryFn: () => scheduleApi.getByUser(effectiveUserId),
-    enabled: !!effectiveUserId && canLookupUserSchedule,
+    queryKey: ['schedule-user', effectiveUserId, user?.role],
+    queryFn: () => (canLookupUserSchedule ? scheduleApi.getByUser(effectiveUserId) : scheduleApi.getMine()),
+    enabled: !!effectiveUserId && (canLookupUserSchedule || user?.role === 'teacher'),
   });
 
   const selectedUser = useMemo(
@@ -81,11 +87,16 @@ export function AcademicPage() {
   };
 
   const markAttendance = useMutation({
-    mutationFn: () => attendanceApi.mark({
-      userId: effectiveUserId,
-      date: new Date().toISOString(),
-      status: attendanceStatus,
-    }),
+    mutationFn: () => {
+      const selectedSchedule = scheduleQuery.data?.find(item => item.id === selectedScheduleId);
+
+      return attendanceApi.mark({
+        userId: effectiveUserId,
+        scheduleId: selectedScheduleId || undefined,
+        date: selectedSchedule?.date ?? `${attendanceDate}T00:00:00.000Z`,
+        status: attendanceStatus,
+      });
+    },
     onSuccess: async () => {
       await invalidate();
       toast.success('Attendance marked');
@@ -156,7 +167,13 @@ export function AcademicPage() {
   const attendance = attendanceQuery.data ?? [];
   const grades = gradesQuery.data ?? [];
   const homework = homeworkQuery.data ?? [];
-  const schedules = scheduleQuery.data ?? [];
+  const schedules = (scheduleQuery.data ?? []).filter(item => {
+    if (!effectiveUserId || canLookupUserSchedule) {
+      return true;
+    }
+
+    return (item.students ?? []).some(student => (typeof student === 'string' ? student : student.id) === effectiveUserId);
+  });
 
   return (
     <PageLayout
@@ -168,7 +185,14 @@ export function AcademicPage() {
         <div className="stack">
           <span className="eyebrow">Scope</span>
           {canSelectUser ? (
-            <Select value={effectiveUserId} onChange={event => setSelectedUserId(event.target.value)} label="Student">
+            <Select
+              value={effectiveUserId}
+              onChange={event => {
+                setSelectedUserId(event.target.value);
+                setSelectedScheduleId('');
+              }}
+              label="Student"
+            >
               <option value="">Select student</option>
               {(usersQuery.data ?? []).map(item => (
                 <option key={item.id} value={item.id}>{getUserDisplayName(item)}</option>
@@ -184,13 +208,42 @@ export function AcademicPage() {
       {capabilities.academic.manageAttendance ? (
         <Card>
           <div className="detail-grid">
+            <Input
+              label="Attendance date"
+              type="date"
+              value={attendanceDate}
+              onChange={event => {
+                setAttendanceDate(event.target.value);
+                setSelectedScheduleId('');
+              }}
+            />
+            <Select
+              label="Schedule"
+              value={selectedScheduleId}
+              onChange={event => {
+                const scheduleId = event.target.value;
+                setSelectedScheduleId(scheduleId);
+                const selectedSchedule = schedules.find(item => item.id === scheduleId);
+                if (selectedSchedule?.date) {
+                  setAttendanceDate(toDateInputValue(selectedSchedule.date));
+                }
+              }}
+              hint={schedules.length > 0 ? 'Select a lesson to avoid ambiguous attendance records.' : 'No linked lessons found for this student/date scope.'}
+            >
+              <option value="">Auto-detect by date</option>
+              {schedules.map(item => (
+                <option key={item.id} value={item.id}>
+                  {formatDateTime(item.timeStart)} - {getCourseDisplayName(item.course)}
+                </option>
+              ))}
+            </Select>
             <Select label="Attendance status" value={attendanceStatus} onChange={event => setAttendanceStatus(event.target.value as AttendanceStatus)}>
               <option value="present">Present</option>
               <option value="absent">Absent</option>
               <option value="late">Late</option>
               <option value="excused">Excused</option>
             </Select>
-            <Button disabled={!effectiveUserId || markAttendance.isPending} onClick={() => markAttendance.mutate()}>
+            <Button disabled={!effectiveUserId || !attendanceDate || markAttendance.isPending} onClick={() => markAttendance.mutate()}>
               Mark attendance
             </Button>
           </div>

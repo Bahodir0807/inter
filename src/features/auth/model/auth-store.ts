@@ -22,13 +22,13 @@ function persistSession(payload: any) {
   }
 
   if (refreshToken) {
-    localStorage.setItem('refreshToken', refreshToken);
+    sessionStorage.setItem('refreshToken', refreshToken);
   }
 }
 
 function clearSession() {
   localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
+  sessionStorage.removeItem('refreshToken');
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = sessionStorage.getItem('refreshToken');
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken);

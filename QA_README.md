@@ -59,36 +59,101 @@ Seed users:
 
 ## Smoke Tests
 
-Static checks:
+### QA Status Definitions
+
+**Static QA** validates frontend role routing and endpoint guards without requiring a running backend:
+- `npm run smoke:static` - Pass/fail on code alone
+
+**Live QA** validates role endpoint access and data isolation against a running backend:
+- `npm run smoke:live` - Requires running backend and valid credentials
+- Must pass before production deployment
+
+### Setup Credentials
+
+Copy `.env.smoke.example` to `.env.smoke` and fill in the required values:
+
+```bash
+cp .env.smoke.example .env.smoke
+```
+
+For QA environment, use the seeded users listed above.
+
+For staging/live readonly checks, obtain credentials from the environment or team.
+
+**Never hardcode production credentials in code or commit real credentials.**
+
+### Static Checks (No Backend Required)
 
 ```bash
 npm run smoke:static
 ```
 
+Result: Pass or fail on frontend code validation only.
+
+### Live Checks (Requires Running Backend)
+
+Before running live smoke, ensure the QA backend is running and seeded.
+
+Load environment variables from `.env.smoke`:
+
+```bash
+# Linux/Mac
+source .env.smoke
+npm run smoke:live
+
+# Windows PowerShell
+. .\.env.smoke
+npm run smoke:live
+```
+
+Or set inline:
+
 Read-only live checks against QA:
 
 ```bash
-$env:SMOKE_API_URL="http://localhost:3000"; npm run smoke:live
+$env:SMOKE_API_BASE_URL="http://localhost:3000"; npm run smoke:live
 ```
 
 Mutating CRUD checks against QA only:
 
 ```bash
-$env:SMOKE_API_URL="http://localhost:3000"; $env:SMOKE_MUTATE="true"; npm run smoke:live
+$env:SMOKE_API_BASE_URL="http://localhost:3000"; $env:SMOKE_ALLOW_MUTATION="true"; npm run smoke:live
 ```
+
+Read-only checks against staging/live:
+
+```bash
+$env:SMOKE_API_BASE_URL="https://staging-api.example.com"; npm run smoke:live
+```
+
+**WARNING: Never set `SMOKE_ALLOW_MUTATION=true` against production or staging. This will perform destructive operations.**
+
+#### Live Smoke Results
+
+The smoke test will report one of:
+- `passed` - All role tests passed, data isolation verified, DTO leak checks passed.
+- `failed` - One or more role tests failed. See report for details.
+- `blocked: backend unreachable` - Backend is not running or not reachable at the configured URL.
+- `blocked: credentials` - One or more role credentials are invalid (401). Check credentials and backend users.
+
+If credentials are missing, the smoke test will fail with a clear message listing required env vars.
 
 Reports are written to:
 
 - `reports/smoke-static.json`
 - `reports/smoke-static.md`
-- `reports/smoke-live.json`
-- `reports/smoke-live.md`
+- `reports/smoke-live-readonly.json`
+- `reports/smoke-live-readonly.md`
+- `reports/smoke-live-mutating.json`
+- `reports/smoke-live-mutating.md`
 
 ## Production Safety
 
-Do not set `SMOKE_MUTATE=true` against production.
+Do not set `SMOKE_ALLOW_MUTATION=true` against production or staging.
 
 Backend seed refuses production/staging writes unless `SEED_ALLOW_PRODUCTION=true`. In this QA compose setup, that flag is scoped only to the isolated `seed` service and local `ibrat_qa` database.
+
+Smoke tests will refuse mutations against URLs containing 'sultonoway.uz' or 'production' as an extra safeguard.
 
 ## Option 2: Non-Docker Local QA
 

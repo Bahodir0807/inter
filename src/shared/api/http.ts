@@ -50,6 +50,8 @@ function getErrorMessage(error: unknown) {
 
   if (status === 401) return 'Your session has expired. Please sign in again.';
   if (status === 403) return 'You do not have access to this action.';
+  if (status === 404) return 'The requested record was not found.';
+  if (status && status >= 500) return 'Server error. Please try again later or contact support.';
   if (status === 429) return 'Too many requests. Please wait and try again.';
 
   return error.message || 'Request failed';
@@ -58,12 +60,13 @@ function getErrorMessage(error: unknown) {
 export const http = axios.create({
   baseURL: env.apiUrl,
   withCredentials: false,
+  timeout: 30000, // 30 second timeout to prevent indefinite hangs
 });
 
 let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken() {
-  const refreshToken = localStorage.getItem('refreshToken');
+  const refreshToken = sessionStorage.getItem('refreshToken');
   if (!refreshToken) {
     return null;
   }
@@ -81,7 +84,7 @@ async function refreshAccessToken() {
           localStorage.setItem('token', nextAccessToken);
         }
         if (payload.refreshToken) {
-          localStorage.setItem('refreshToken', payload.refreshToken);
+          sessionStorage.setItem('refreshToken', payload.refreshToken);
         }
         return nextAccessToken;
       })
@@ -125,7 +128,10 @@ http.interceptors.response.use(
       }
 
       localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('refreshToken');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ibrat:auth-expired'));
+      }
     }
 
     error.message = getErrorMessage(error);

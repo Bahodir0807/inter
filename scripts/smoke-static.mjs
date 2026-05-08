@@ -59,7 +59,7 @@ check('teacher courses use server scope', courses.includes("coursesApi.getAll(is
 check('teacher cannot delete grades in UI', academic.includes('capabilities.academic.deleteGrades'), 'grade delete action must have a separate admin-like capability');
 check('staff academic scope starts empty', academic.includes("const [selectedUserId, setSelectedUserId] = useState('')"), 'staff academic queries must wait for explicit student selection');
 check('student homework completion hidden', academic.includes("item.completed || user?.role === 'student'"), 'student homework mutation action must be hidden');
-check('teacher avoids user schedule lookup', academic.includes('canLookupUserSchedule') && academic.includes('enabled: !!effectiveUserId && canLookupUserSchedule'), 'teacher academic view must not call /schedule/user/:id');
+check('teacher avoids user schedule lookup', academic.includes('canLookupUserSchedule ? scheduleApi.getByUser(effectiveUserId) : scheduleApi.getMine()') && academic.includes("enabled: !!effectiveUserId && (canLookupUserSchedule || user?.role === 'teacher')"), 'teacher academic view must use /schedule/me instead of /schedule/user/:id');
 check('teacher notifications disabled', capabilities.includes('sendNotifications: false'), 'teacher notification mutation capability must be disabled');
 
 check('http preserves envelope meta', http.includes('response.apiMeta = unwrapped.meta'), 'http client must preserve envelope meta');
