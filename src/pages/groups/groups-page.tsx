@@ -42,8 +42,9 @@ export function GroupsPage() {
   const [deleteCandidate, setDeleteCandidate] = useState<Group | null>(null);
 
   const groupsQuery = useQuery({
-    queryKey: ['groups'],
-    queryFn: () => groupsApi.getAll(),
+    queryKey: ['groups', isTeacher ? sessionUser?.id : 'all'],
+    queryFn: () => groupsApi.getAll(isTeacher && sessionUser ? { teacherId: sessionUser.id } : undefined),
+    enabled: !!sessionUser,
   });
 
   const coursesQuery = useQuery({

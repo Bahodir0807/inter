@@ -29,9 +29,9 @@ export function LoginForm() {
   }
 
   return (
-    <div className="login-card">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <div className="login-form__header">
+    <div className="login-card auth-panel">
+      <form className="login-form auth-form" onSubmit={handleSubmit}>
+        <div className="login-form__header auth-form__header">
           <span className="eyebrow">{t('login.signIn')}</span>
           <h1>{t('login.welcome')}</h1>
           <p>{t('login.useAccount')}</p>

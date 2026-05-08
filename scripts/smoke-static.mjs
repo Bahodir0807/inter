@@ -36,9 +36,8 @@ const indexHtml = read('index.html');
 
 check('admin-like includes panda', navigation.includes("export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda']"), 'adminLikeRoles must include panda');
 check('payment managers include panda', navigation.includes("export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda']"), 'paymentsManagerRoles must include panda');
-check('rooms route for all app roles', navigation.includes("roles: allAppRoles, element: <RoomsPage />"), 'rooms route must be available to all app roles');
-check('groups route for all app roles', navigation.includes("roles: allAppRoles, element: <GroupsPage />"), 'groups route must be available to all app roles');
-check('student rooms capability', capabilities.includes('rooms: true'), 'student capabilities must allow rooms route');
+check('student blocked from management routes', navigation.includes("roles: teacherWorkspaceRoles, element: <CoursesPage />") && navigation.includes("roles: teacherWorkspaceRoles, element: <GroupsPage />") && navigation.includes("roles: teacherWorkspaceRoles, element: <SchedulePage />") && navigation.includes("roles: adminLikeRoles, element: <RoomsPage />"), 'student must not have management route access');
+check('student management capabilities disabled', capabilities.includes('courses: false') && capabilities.includes('groups: false') && capabilities.includes('schedule: false') && capabilities.includes('rooms: false'), 'student capabilities must block management routes');
 check('admin tools capability', capabilities.includes('adminTools: true'), 'admin-like capabilities must allow admin tools');
 
 check('dashboard guards student-only endpoints', dashboard.includes('const [homework, grades, attendance, payments] = isStudent'), 'dashboard must guard student-only endpoints by role');
@@ -55,6 +54,8 @@ check('payments status filter', payments.includes("status: statusFilter === 'all
 check('teacher cannot manage course UI', courses.includes('const canManage = isAdminLike'), 'course management actions must be admin-like only');
 check('teacher cannot manage group UI', groups.includes('const canManage = isAdminLike'), 'group management actions must be admin-like only');
 check('teacher cannot manage schedule UI', schedule.includes('const canManage = isAdminLike'), 'schedule management actions must be admin-like only');
+check('teacher groups use server scope', groups.includes("groupsApi.getAll(isTeacher && sessionUser ? { teacherId: sessionUser.id } : undefined)"), 'teacher groups view must request teacher-scoped data');
+check('teacher courses use server scope', courses.includes("coursesApi.getAll(isTeacher && sessionUser ? { teacherId: sessionUser.id } : undefined)"), 'teacher courses view must request teacher-scoped data');
 check('teacher cannot delete grades in UI', academic.includes('capabilities.academic.deleteGrades'), 'grade delete action must have a separate admin-like capability');
 check('staff academic scope starts empty', academic.includes("const [selectedUserId, setSelectedUserId] = useState('')"), 'staff academic queries must wait for explicit student selection');
 check('student homework completion hidden', academic.includes("item.completed || user?.role === 'student'"), 'student homework mutation action must be hidden');

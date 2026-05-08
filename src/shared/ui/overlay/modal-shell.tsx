@@ -146,10 +146,10 @@ export function ModalShell({
   }
 
   return (
-    <div className="ui-modal-backdrop" role="presentation" onClick={handleBackdropClick}>
+    <div className="ui-modal-backdrop modal-backdrop" role="presentation" onClick={handleBackdropClick}>
       <div
         ref={dialogRef}
-        className="ui-modal"
+        className="ui-modal modal-card"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -158,7 +158,7 @@ export function ModalShell({
         onClick={event => event.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <header className="ui-modal__header">
+        <header className="ui-modal__header modal-card__header">
           <div className="stack">
             <h3 id={titleId}>{title}</h3>
             {description ? (
@@ -171,7 +171,7 @@ export function ModalShell({
             {translate('common.close')}
           </Button>
         </header>
-        <div className="ui-modal__content">{children}</div>
+        <div className="ui-modal__content modal-card__content modal-card__body">{children}</div>
       </div>
     </div>
   );

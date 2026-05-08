@@ -42,8 +42,9 @@ export function CoursesPage() {
   const [deleteCandidate, setDeleteCandidate] = useState<Course | null>(null);
 
   const coursesQuery = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => coursesApi.getAll(),
+    queryKey: ['courses', isTeacher ? sessionUser?.id : 'all'],
+    queryFn: () => coursesApi.getAll(isTeacher && sessionUser ? { teacherId: sessionUser.id } : undefined),
+    enabled: !!sessionUser,
   });
 
   const usersQuery = useQuery({

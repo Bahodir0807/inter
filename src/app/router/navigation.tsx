@@ -28,14 +28,15 @@ export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda'];
 export const teachingRoles: Role[] = ['teacher', 'admin', 'owner', 'panda'];
 export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda'];
 const allAppRoles: Role[] = ['student', 'teacher', 'admin', 'owner', 'panda'];
+const teacherWorkspaceRoles: Role[] = ['teacher', ...adminLikeRoles];
 
 export const appRoutes: AppRouteConfig[] = [
   { path: '/app/dashboard', label: 'Dashboard', labelKey: 'nav.dashboard', shortLabel: 'DB', icon: 'dashboard', roles: allAppRoles, element: <DashboardPage />, nav: true },
   { path: '/app/users', label: 'Users', labelKey: 'nav.users', shortLabel: 'US', icon: 'users', roles: ['teacher', 'admin', 'owner', 'panda'], element: <UsersPage />, nav: true },
-  { path: '/app/courses', label: 'Courses', labelKey: 'nav.courses', shortLabel: 'CR', icon: 'courses', roles: allAppRoles, element: <CoursesPage />, nav: true },
-  { path: '/app/groups', label: 'Groups', labelKey: 'nav.groups', shortLabel: 'GR', icon: 'groups', roles: allAppRoles, element: <GroupsPage />, nav: true },
-  { path: '/app/schedule', label: 'Schedule', labelKey: 'nav.schedule', shortLabel: 'SC', icon: 'schedule', roles: allAppRoles, element: <SchedulePage />, nav: true },
-  { path: '/app/rooms', label: 'Rooms', labelKey: 'nav.rooms', shortLabel: 'RM', icon: 'rooms', roles: allAppRoles, element: <RoomsPage />, nav: true },
+  { path: '/app/courses', label: 'Courses', labelKey: 'nav.courses', shortLabel: 'CR', icon: 'courses', roles: teacherWorkspaceRoles, element: <CoursesPage />, nav: true },
+  { path: '/app/groups', label: 'Groups', labelKey: 'nav.groups', shortLabel: 'GR', icon: 'groups', roles: teacherWorkspaceRoles, element: <GroupsPage />, nav: true },
+  { path: '/app/schedule', label: 'Schedule', labelKey: 'nav.schedule', shortLabel: 'SC', icon: 'schedule', roles: teacherWorkspaceRoles, element: <SchedulePage />, nav: true },
+  { path: '/app/rooms', label: 'Rooms', labelKey: 'nav.rooms', shortLabel: 'RM', icon: 'rooms', roles: adminLikeRoles, element: <RoomsPage />, nav: true },
   { path: '/app/payments', label: 'Payments', labelKey: 'nav.payments', shortLabel: 'PY', icon: 'payments', roles: ['student', ...paymentsManagerRoles], element: <PaymentsPage />, nav: true },
   { path: '/app/academic', label: 'Academic', labelKey: 'nav.academic', shortLabel: 'AC', icon: 'courses', roles: allAppRoles, element: <AcademicPage />, nav: true },
   { path: '/app/admin-tools', label: 'Admin tools', labelKey: 'nav.adminTools', shortLabel: 'AT', icon: 'users', roles: adminLikeRoles, element: <AdminToolsPage />, nav: true },
