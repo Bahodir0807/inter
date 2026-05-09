@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { EmptyState } from '../feedback/empty-state';
+import { translate } from '../../i18n/i18n';
 
 export interface Column<T> {
   key: string;
@@ -22,8 +23,8 @@ export function DataTable<T>({
   columns,
   rows,
   getRowKey,
-  emptyTitle = 'No results',
-  emptyDescription = 'Try another search or clear a filter.',
+  emptyTitle = translate('common.noResultsFound'),
+  emptyDescription = translate('common.tryAnotherSearch'),
 }: DataTableProps<T>) {
   return (
     <table className="data-table">

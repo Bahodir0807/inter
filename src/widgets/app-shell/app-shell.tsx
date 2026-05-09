@@ -3,9 +3,11 @@ import { useAuthStore } from '../../features/auth/model/auth-store';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 import { cn } from '../../shared/lib/cn';
+import { useI18n } from '../../shared/i18n/i18n';
 
 export function AppShell({ children }: PropsWithChildren) {
   const user = useAuthStore(state => state.user);
+  const { t } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export function AppShell({ children }: PropsWithChildren) {
     <div className="app-shell">
       <button
         type="button"
-        aria-label="Close sidebar"
+        aria-label={t('common.closeSidebar')}
         className={cn('app-shell__backdrop', sidebarOpen && 'app-shell__backdrop--visible')}
         onClick={() => setSidebarOpen(false)}
       />

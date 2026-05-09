@@ -14,6 +14,7 @@ import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
   name: z.string().min(1, 'Enter a group name'),
@@ -48,6 +49,7 @@ export function GroupFormModal({
   onClose: () => void;
   onSubmit: (values: GroupFormValues) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     watch,
@@ -106,30 +108,30 @@ export function GroupFormModal({
         closeOnBackdrop={!loading}
         closeOnEscape={!loading}
         closeDisabled={loading}
-        title={group ? 'Edit group' : 'Create group'}
-        description="Configure the cohort, assign the teacher, and manage the student roster in one flow."
+        title={group ? t('group.editGroup') : t('group.createGroup')}
+        description={t('group.formDescription')}
       >
         <form className="modal-form" onSubmit={handleSubmit(async values => onSubmit(values))}>
           <FormSection
-            title="Core setup"
-            description="Define the group identity first so operators immediately understand which cohort they are editing."
+            title={t('group.formSection.coreTitle')}
+            description={t('group.formSection.coreDescription')}
           >
             <Input
-              label="Group name"
-              hint="Use the phrasing your team already recognizes in schedules and attendance."
-              placeholder="For example: Evening IELTS A1"
+              label={t('group.field.name')}
+              hint={t('group.field.nameHint')}
+              placeholder={t('group.field.namePlaceholder')}
               error={errors.name?.message}
               fieldClassName="ui-field--primary"
               {...register('name')}
             />
             <div className="detail-grid">
               <Select
-                label="Course"
-                hint="Pre-filled when only one course is available."
+                label={t('dashboard.table.course')}
+                hint={t('group.field.courseHint')}
                 error={errors.course?.message}
                 {...register('course')}
               >
-                <option value="">Select course</option>
+                <option value="">{t('payments.selectCourse')}</option>
                 {courses.map(course => (
                   <option key={course.id} value={course.id}>
                     {getCourseDisplayName(course)}
@@ -140,20 +142,20 @@ export function GroupFormModal({
                 <>
                   <input type="hidden" {...register('teacher')} />
                   <Input
-                    label="Teacher"
-                    hint="This group stays assigned to your account."
-                    value={teacherLabel || 'Current teacher'}
+                    label={t('dashboard.table.teacher')}
+                    hint={t('group.field.teacherHintLocked')}
+                    value={teacherLabel || t('course.field.currentTeacher')}
                     readOnly
                   />
                 </>
               ) : (
                 <Select
-                  label="Teacher"
-                  hint="Defaults to the current teacher context when available."
+                  label={t('dashboard.table.teacher')}
+                  hint={t('group.field.teacherHint')}
                   error={errors.teacher?.message}
                   {...register('teacher')}
                 >
-                  <option value="">Select teacher</option>
+                  <option value="">{t('group.selectTeacher')}</option>
                   {teachers.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
                       {getUserDisplayName(teacher)}
@@ -164,12 +166,12 @@ export function GroupFormModal({
             </div>
           </FormSection>
           <FormSection
-            title="Roster"
-            description="Add students if the cohort is already formed. You can keep this empty and update it later."
+            title={t('group.formSection.rosterTitle')}
+            description={t('group.formSection.rosterDescription')}
           >
             <CheckboxGroup
-              label={`Students${selectedStudents.length ? ` (${selectedStudents.length})` : ''}`}
-              hint="Selected students become part of the group roster right away."
+              label={t('course.field.studentsLabel', { count: selectedStudents.length })}
+              hint={t('group.field.studentsHint')}
               options={students.map(student => ({
                 value: student.id,
                 label: getUserDisplayName(student),
@@ -181,14 +183,14 @@ export function GroupFormModal({
           </FormSection>
           <div className="form-actions">
             <span className="subtle">
-              {isDirty ? 'Changes are ready to save.' : group ? 'Adjust the cohort setup only where needed.' : 'Name the cohort first, then connect course and teacher.'}
+              {isDirty ? t('common.changesReadyToSave') : group ? t('group.formHint.edit') : t('group.formHint.create')}
             </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || (!!group && !isDirty)}>
-                {loading ? 'Saving...' : group ? 'Save changes' : 'Create group'}
+                {loading ? t('common.saving') : group ? t('common.saveChanges') : t('group.createGroup')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -196,10 +198,10 @@ export function GroupFormModal({
       </ModalShell>
       <ConfirmModal
         open={closeGuard.confirmOpen}
-        title="Discard changes?"
-        description="You have unsaved changes in this form. Discard them and close the modal?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t('common.discardChangesTitle')}
+        description={t('common.discardChangesDescription')}
+        confirmLabel={t('common.discardChangesConfirm')}
+        cancelLabel={t('common.keepEditing')}
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

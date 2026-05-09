@@ -10,6 +10,7 @@ import { Input } from '../../shared/ui/forms/input';
 import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
   firstName: z.string().optional(),
@@ -34,6 +35,7 @@ export function ProfileFormModal({
   onClose: () => void;
   onSubmit: (values: ProfileSelfServiceValues) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     reset,
@@ -82,17 +84,17 @@ export function ProfileFormModal({
         closeOnBackdrop={!loading}
         closeOnEscape={!loading}
         closeDisabled={loading}
-        title="Edit profile"
-        description="Update the contact details you manage yourself. Login access, role, and Telegram linkage stay admin-managed."
+        title={t('profile.editButton')}
+        description={t('profile.formDescription')}
       >
         <form className="modal-form" onSubmit={handleSubmit(async values => onSubmit(values))}>
           <FormSection
-            title="Personal details"
-            description="These details appear across the workspace wherever your profile is referenced."
+            title={t('profile.personalDetails')}
+            description={t('profile.personalDetailsDescription')}
           >
             <div className="detail-grid">
               <Input
-                label="First name"
+                label={t('users.field.firstName')}
                 placeholder="Aziza"
                 autoComplete="given-name"
                 error={errors.firstName?.message}
@@ -100,7 +102,7 @@ export function ProfileFormModal({
                 {...register('firstName')}
               />
               <Input
-                label="Last name"
+                label={t('users.field.lastName')}
                 placeholder="Karimova"
                 autoComplete="family-name"
                 error={errors.lastName?.message}
@@ -110,12 +112,12 @@ export function ProfileFormModal({
             </div>
           </FormSection>
           <FormSection
-            title="Contact details"
-            description="Keep these up to date so reminders, receipts, and team follow-ups reach the right place."
+            title={t('dashboard.contactDetails')}
+            description={t('profile.contactDetailsDescription')}
           >
             <div className="detail-grid">
               <Input
-                label="Email"
+                label={t('profile.email')}
                 type="email"
                 placeholder="name@example.com"
                 autoComplete="email"
@@ -123,14 +125,14 @@ export function ProfileFormModal({
                 {...register('email')}
               />
               <Input
-                label="Phone"
+                label={t('profile.phone')}
                 placeholder="+998 90 123 45 67"
                 autoComplete="tel"
                 error={errors.phoneNumber?.message}
                 {...register('phoneNumber')}
               />
               <Input
-                label="Avatar URL"
+                label={t('users.field.avatarUrl')}
                 placeholder="https://example.com/avatar.jpg"
                 autoComplete="url"
                 error={errors.avatarUrl?.message}
@@ -142,15 +144,15 @@ export function ProfileFormModal({
           <div className="form-actions">
             <span className="subtle">
               {isDirty
-                ? 'Changes are ready to save.'
-                : 'Update only the details you want other operators to see and use.'}
+                ? t('common.changesReadyToSave')
+                : t('profile.formHint')}
             </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || !isDirty}>
-                {loading ? 'Saving...' : 'Save profile'}
+                {loading ? t('common.saving') : t('profile.saveProfile')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -158,10 +160,10 @@ export function ProfileFormModal({
       </ModalShell>
       <ConfirmModal
         open={closeGuard.confirmOpen}
-        title="Discard changes?"
-        description="You have unsaved profile changes. Discard them and close the modal?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t('common.discardChangesTitle')}
+        description={t('profile.discardDescription')}
+        confirmLabel={t('common.discardChangesConfirm')}
+        cancelLabel={t('common.keepEditing')}
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

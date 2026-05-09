@@ -13,7 +13,7 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
   const logout = useAuthStore(state => state.logout);
   const { language, setLanguage, t } = useI18n();
   const { theme, setTheme } = useTheme();
-  const userName = getUserDisplayName(user) || 'CRM user';
+  const userName = getUserDisplayName(user) || t('common.crmUser');
   const initials = userName
     .split(' ')
     .filter(Boolean)

@@ -157,7 +157,7 @@ export function UsersPage() {
                 <div className="cell-badges">
                   <Badge tone="info">{getRoleDisplayName(item.role)}</Badge>
                   <Badge tone={item.isActive ? 'success' : 'warning'}>
-                    {item.isActive ? 'Active' : 'Inactive'}
+                    {item.isActive ? t('common.active') : t('common.inactive')}
                   </Badge>
                 </div>
                 <span className="cell-meta">

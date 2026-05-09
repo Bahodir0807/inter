@@ -30,11 +30,13 @@ import { paginate, sortBy, SortDirection } from '../../shared/lib/table';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { ScheduleFormModal } from './schedule-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const pageSize = 8;
 
 export function SchedulePage() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   const sessionUser = useAuthStore(state => state.user);
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
   const canManage = isAdminLike;
@@ -75,7 +77,7 @@ export function SchedulePage() {
     mutationFn: (payload: ScheduleFormValues) => scheduleApi.create(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['schedule'] });
-      toast.success('Lesson created');
+      toast.success(t('schedule.lessonCreated'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -85,7 +87,7 @@ export function SchedulePage() {
     mutationFn: ({ id, payload }: { id: string; payload: ScheduleFormValues }) => scheduleApi.update(id, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['schedule'] });
-      toast.success('Lesson updated');
+      toast.success(t('schedule.lessonUpdated'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -95,7 +97,7 @@ export function SchedulePage() {
     mutationFn: (id: string) => scheduleApi.remove(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['schedule'] });
-      toast.success('Lesson deleted');
+      toast.success(t('schedule.lessonDeleted'));
     },
     onError: error => toast.error(error.message),
   });
@@ -153,13 +155,13 @@ export function SchedulePage() {
     groupFilter === 'all' ? '' : getGroupDisplayName((support?.groups ?? []).find(group => group.id === groupFilter));
 
   const toolbarFilters = [
-    ...(isAdminLike && teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
-    ...(canManage && groupFilter !== 'all' ? [`Group: ${selectedGroupLabel}`] : []),
-    ...(sortDirection === 'desc' ? ['Order: Latest first'] : []),
+    ...(isAdminLike && teacherFilter !== 'all' ? [t('schedule.filterTeacherValue', { teacher: selectedTeacherLabel })] : []),
+    ...(canManage && groupFilter !== 'all' ? [t('schedule.filterGroupValue', { group: selectedGroupLabel })] : []),
+    ...(sortDirection === 'desc' ? [t('schedule.sortOrderDesc')] : []),
   ];
 
   if (scheduleQuery.isLoading) {
-    return <LoadingState label="Loading schedule..." />;
+    return <LoadingState label={t('schedule.loading')} />;
   }
 
   if (scheduleQuery.error) {
@@ -173,41 +175,41 @@ export function SchedulePage() {
   const columns: Column<ScheduleItem>[] = [
     {
       key: 'session',
-      header: 'Session',
+      header: t('schedule.session'),
       className: 'data-table__cell--primary',
       cell: item => (
         <div className="cell-stack cell-stack--primary cell-stack--relation">
           <span className="cell-title">{getCourseDisplayName(item.course)}</span>
           <span className="cell-meta cell-meta--strong">{formatDateTime(item.timeStart)}</span>
-          <span className="cell-meta">Ends {formatDateTime(item.timeEnd)}</span>
+          <span className="cell-meta">{t('schedule.endsAt', { time: formatDateTime(item.timeEnd) })}</span>
         </div>
       ),
     },
     {
       key: 'assignment',
-      header: 'Assignment',
+      header: t('schedule.assignment'),
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
           <span className="cell-title">{getRoomDisplayName(item.room)}</span>
-          <span className="cell-meta">{item.group ? getGroupDisplayName(item.group) : 'No group linked'}</span>
+          <span className="cell-meta">{item.group ? getGroupDisplayName(item.group) : t('schedule.noGroupLinked')}</span>
         </div>
       ),
     },
     {
       key: 'people',
-      header: canManage ? 'People' : 'Teacher',
+      header: canManage ? t('schedule.people') : t('dashboard.table.teacher'),
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
           <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
           {canManage ? (
             <>
-              <span className="cell-meta">{item.students?.length ?? 0} students linked</span>
+              <span className="cell-meta">{t('schedule.studentsLinked', { count: item.students?.length ?? 0 })}</span>
               <span className="cell-meta">{getUserListSummary(item.students)}</span>
             </>
           ) : (
-            <span className="cell-meta">Assigned teacher</span>
+            <span className="cell-meta">{t('schedule.assignedTeacher')}</span>
           )}
         </div>
       ),
@@ -216,17 +218,17 @@ export function SchedulePage() {
       ? [
           {
             key: 'actions',
-            header: 'Actions',
+            header: t('common.actions'),
             className: 'data-table__cell--actions',
             headClassName: 'data-table__head--actions',
             cell: (item: ScheduleItem) => (
               <div className="row-actions">
                 <Button size="sm" variant="secondary" onClick={() => { setSelectedItem(item); setFormOpen(true); }}>
-                  Edit
+                  {t('common.edit')}
                 </Button>
                 {isAdminLike ? (
                   <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                    Delete
+                    {t('common.delete')}
                   </Button>
                 ) : null}
               </div>
@@ -238,40 +240,40 @@ export function SchedulePage() {
 
   return (
     <PageLayout
-      eyebrow="Operations"
-      title="Schedule"
+      eyebrow={t('schedule.eyebrow')}
+      title={t('schedule.title')}
       description={
         isAdminLike
-          ? 'Lessons, rooms, groups, teachers, and students.'
+          ? t('schedule.description.admin')
           : isTeacher
-            ? 'Your lessons, rooms, groups, and attendance.'
-            : 'Your lesson schedule.'
+            ? t('schedule.description.teacher')
+            : t('schedule.description.student')
       }
-      actions={canManage ? <Button onClick={() => { setSelectedItem(null); setFormOpen(true); }}>New lesson</Button> : undefined}
+      actions={canManage ? <Button onClick={() => { setSelectedItem(null); setFormOpen(true); }}>{t('schedule.newLesson')}</Button> : undefined}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
-          <span className="subtle">Visible lessons</span>
+          <span className="subtle">{t('schedule.visibleLessons')}</span>
           <strong>{filteredItems.length}</strong>
-          <span className="subtle">After filters and search</span>
+          <span className="subtle">{t('users.afterFilters')}</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">{canManage ? 'Linked groups' : 'Assigned rooms'}</span>
+          <span className="subtle">{canManage ? t('schedule.linkedGroups') : t('schedule.assignedRooms')}</span>
           <strong>{canManage ? linkedGroups : assignedRooms}</strong>
           <span className="subtle">
-            {canManage ? 'Lessons already attached to a cohort' : 'Lessons with a room assigned'}
+            {canManage ? t('schedule.linkedGroupsMeta') : t('schedule.assignedRoomsMeta')}
           </span>
         </Card>
       </div>
       {visibleItems.length === 0 ? (
         <EmptyState
-          title={isStudent ? 'No lessons scheduled' : 'No lessons yet'}
-          description={canManage ? 'Planned lessons will appear here.' : 'Your upcoming lessons will appear here.'}
+          title={isStudent ? t('schedule.emptyTitle.student') : t('schedule.emptyTitle.manage')}
+          description={canManage ? t('schedule.emptyDescription.manage') : t('schedule.emptyDescription.student')}
         />
       ) : (
         <TableShell
-          title="Lesson plan"
-          description={canManage ? 'Time, room, group, teacher, and students.' : 'Time, room, and teacher.'}
+          title={t('schedule.lessonPlan')}
+          description={canManage ? t('schedule.lessonPlanDescription.manage') : t('schedule.lessonPlanDescription.student')}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -280,21 +282,21 @@ export function SchedulePage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder={canManage ? 'Search by course, room, teacher, or group' : 'Search by course, room, or teacher'}
-            resultsLabel={`${filteredItems.length} result${filteredItems.length === 1 ? '' : 's'}`}
+            searchPlaceholder={canManage ? t('schedule.searchPlaceholder.manage') : t('schedule.searchPlaceholder.student')}
+            resultsLabel={t('common.resultsLabel', { count: filteredItems.length })}
             activeFilters={toolbarFilters}
             filters={
               <>
                 {isAdminLike ? (
                   <Select
-                    aria-label="Filter lessons by teacher"
+                    aria-label={t('schedule.filterTeacher')}
                     value={teacherFilter}
                     onChange={event => {
                       setTeacherFilter(event.target.value);
                       setPage(1);
                     }}
                   >
-                    <option value="all">All teachers</option>
+                    <option value="all">{t('schedule.optionAllTeachers')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher.id} value={teacher.id}>
                         {getUserDisplayName(teacher)}
@@ -304,14 +306,14 @@ export function SchedulePage() {
                 ) : null}
                 {canManage ? (
                   <Select
-                    aria-label="Filter lessons by group"
+                    aria-label={t('schedule.filterGroup')}
                     value={groupFilter}
                     onChange={event => {
                       setGroupFilter(event.target.value);
                       setPage(1);
                     }}
                   >
-                    <option value="all">All groups</option>
+                    <option value="all">{t('schedule.optionAllGroups')}</option>
                     {(support?.groups ?? []).map(group => (
                       <option key={group.id} value={group.id}>
                         {getGroupDisplayName(group)}
@@ -320,23 +322,23 @@ export function SchedulePage() {
                   </Select>
                 ) : null}
                 <Select
-                  aria-label="Sort lessons"
+                  aria-label={t('schedule.sortLabel')}
                   value={sortDirection}
                   onChange={event => {
                     setSortDirection(event.target.value as SortDirection);
                     setPage(1);
                   }}
                 >
-                  <option value="asc">Soonest first</option>
-                  <option value="desc">Latest first</option>
+                  <option value="asc">{t('schedule.optionSoonestFirst')}</option>
+                  <option value="desc">{t('schedule.optionLatestFirst')}</option>
                 </Select>
               </>
             }
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No lessons found"
-            emptyDescription={canManage ? 'Try another search or clear a filter.' : 'Try another search.'}
+            emptyTitle={t('schedule.emptyTitle')}
+            emptyDescription={canManage ? t('common.tryAnotherSearch') : t('common.trySearch')}
             columns={columns}
             rows={pagedItems}
           />
@@ -366,14 +368,19 @@ export function SchedulePage() {
       />
       <ConfirmModal
         open={!!deleteCandidate}
-        title="Delete lesson?"
+        title={t('schedule.deleteLessonTitle')}
         description={
           deleteCandidate
-            ? `This will permanently remove the lesson for ${getCourseDisplayName(deleteCandidate.course)} in ${getRoomDisplayName(deleteCandidate.room)} on ${formatDateTime(deleteCandidate.timeStart)}${deleteCandidate.group ? ` for group ${getGroupDisplayName(deleteCandidate.group)}` : ''}. This action cannot be undone.`
+            ? t('schedule.deleteLessonDescriptionLong', {
+                course: getCourseDisplayName(deleteCandidate.course),
+                room: getRoomDisplayName(deleteCandidate.room),
+                time: formatDateTime(deleteCandidate.timeStart),
+                group: deleteCandidate.group ? getGroupDisplayName(deleteCandidate.group) : t('schedule.noGroupLinked'),
+              })
             : ''
         }
-        confirmLabel="Delete lesson"
-        cancelLabel="Keep lesson"
+        confirmLabel={t('schedule.deleteLessonConfirm')}
+        cancelLabel={t('schedule.keepLesson')}
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

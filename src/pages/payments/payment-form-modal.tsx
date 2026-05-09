@@ -13,6 +13,7 @@ import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
   student: z.string().min(1, 'Select a student'),
@@ -57,6 +58,7 @@ export function PaymentFormModal({
   onClose: () => void;
   onSubmit: (values: PaymentFormValues) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     reset,
@@ -101,8 +103,8 @@ export function PaymentFormModal({
         closeOnBackdrop={!loading}
         closeOnEscape={!loading}
         closeDisabled={loading}
-        title="Create payment"
-        description="Link the payment to a student and course so the record is immediately traceable."
+        title={t('payments.createPayment')}
+        description={t('payments.formDescription')}
       >
         <form
           className="modal-form"
@@ -113,18 +115,18 @@ export function PaymentFormModal({
             }))}
         >
           <FormSection
-            title="Payment record"
-            description="Tie the payment to the right learner and course first so the ledger stays traceable."
+            title={t('payments.formSection.recordTitle')}
+            description={t('payments.formSection.recordDescription')}
           >
             <div className="detail-grid">
               <Select
-                label="Student"
-                hint="Pre-selected when only one learner is available in this context."
+                label={t('academic.student')}
+                hint={t('payments.field.studentHint')}
                 error={errors.student?.message}
                 fieldClassName="ui-field--primary"
                 {...register('student')}
               >
-                <option value="">Select student</option>
+                <option value="">{t('academic.selectStudent')}</option>
                 {students.map(student => (
                   <option key={student.id} value={student.id}>
                     {getUserDisplayName(student)}
@@ -132,12 +134,12 @@ export function PaymentFormModal({
                 ))}
               </Select>
               <Select
-                label="Course"
-                hint="Pre-selected when the payment is created from a single course context."
+                label={t('dashboard.table.course')}
+                hint={t('payments.field.courseHint')}
                 error={errors.courseId?.message}
                 {...register('courseId')}
               >
-                <option value="">Select course</option>
+                <option value="">{t('payments.selectCourse')}</option>
                 {courses.map(course => (
                   <option key={course.id} value={course.id}>
                     {getCourseDisplayName(course)}
@@ -147,19 +149,19 @@ export function PaymentFormModal({
             </div>
           </FormSection>
           <FormSection
-            title="Timing"
-            description="The payment time defaults to now so operators only touch it when they are backfilling an older transaction."
+            title={t('payments.formSection.timingTitle')}
+            description={t('payments.formSection.timingDescription')}
           >
             <Input
-              label="Method"
-              hint="Optional backend field for payment channel or note."
-              placeholder="cash, card, transfer"
+              label={t('payments.method')}
+              hint={t('payments.methodHint')}
+              placeholder={t('payments.methodPlaceholder')}
               error={errors.method?.message}
               {...register('method')}
             />
             <Input
-              label="Paid at"
-              hint="Change this only if the payment was recorded earlier."
+              label={t('payments.paidAt')}
+              hint={t('payments.paidAtHint')}
               type="datetime-local"
               error={errors.paidAt?.message}
               {...register('paidAt')}
@@ -167,14 +169,14 @@ export function PaymentFormModal({
           </FormSection>
           <div className="form-actions">
             <span className="subtle">
-              {isDirty ? 'Changes are ready to save.' : 'Confirm the learner and course, then save the ledger entry.'}
+              {isDirty ? t('common.changesReadyToSave') : t('payments.formHint.create')}
             </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid}>
-                {loading ? 'Saving...' : 'Create payment'}
+                {loading ? t('common.saving') : t('payments.createPayment')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -182,10 +184,10 @@ export function PaymentFormModal({
       </ModalShell>
       <ConfirmModal
         open={closeGuard.confirmOpen}
-        title="Discard changes?"
-        description="You have unsaved changes in this form. Discard them and close the modal?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t('common.discardChangesTitle')}
+        description={t('common.discardChangesDescription')}
+        confirmLabel={t('common.discardChangesConfirm')}
+        cancelLabel={t('common.keepEditing')}
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

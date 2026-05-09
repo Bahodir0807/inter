@@ -11,6 +11,7 @@ import { Textarea } from '../../shared/ui/forms/textarea';
 import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const roomTypeOptions: Array<{ value: Room['type']; label: string }> = [
   { value: 'classroom', label: 'Classroom' },
@@ -43,6 +44,7 @@ export function RoomFormModal({
   onClose: () => void;
   onSubmit: (values: RoomFormValues) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     reset,
@@ -91,8 +93,8 @@ export function RoomFormModal({
         closeOnBackdrop={!loading}
         closeOnEscape={!loading}
         closeDisabled={loading}
-        title={room ? 'Edit room' : 'Create room'}
-        description="Keep classroom operations accurate by updating the room profile, capacity, and availability in one place."
+        title={room ? t('rooms.editRoom') : t('rooms.createRoom')}
+        description={t('rooms.formDescription')}
       >
         <form
           className="modal-form"
@@ -103,52 +105,52 @@ export function RoomFormModal({
             }))}
         >
           <FormSection
-            title="Room details"
-            description="Use the same naming and type conventions your team already relies on in schedules and operations."
+            title={t('rooms.formSection.detailsTitle')}
+            description={t('rooms.formSection.detailsDescription')}
           >
             <Input
-              label="Room name"
-              placeholder="For example: Room 204"
-              hint="Shown in schedules, filters, and room references."
+              label={t('rooms.field.name')}
+              placeholder={t('rooms.field.namePlaceholder')}
+              hint={t('rooms.field.nameHint')}
               error={errors.name?.message}
               fieldClassName="ui-field--primary"
               {...register('name')}
             />
             <div className="detail-grid">
               <Input
-                label="Capacity"
+                label={t('rooms.capacity')}
                 type="number"
                 placeholder="20"
-                hint="Used to assess whether the room fits the group size."
+                hint={t('rooms.field.capacityHint')}
                 error={errors.capacity?.message}
                 {...register('capacity')}
               />
               <Select
-                label="Type"
-                hint="Helps operators quickly distinguish learning and non-learning spaces."
+                label={t('rooms.type')}
+                hint={t('rooms.field.typeHint')}
                 error={errors.type?.message}
                 {...register('type')}
               >
                 {roomTypeOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(`roomType.${option.value}`)}
                   </option>
                 ))}
               </Select>
               <Select
-                label="Availability"
-                hint="Unavailable rooms stay visible but are clearly marked for operators."
+                label={t('rooms.availability')}
+                hint={t('rooms.field.availabilityHint')}
                 error={errors.isAvailable?.message}
                 {...register('isAvailable')}
               >
-                <option value="true">Available</option>
-                <option value="false">Unavailable</option>
+                <option value="true">{t('common.available')}</option>
+                <option value="false">{t('common.unavailable')}</option>
               </Select>
             </div>
             <Textarea
-              label="Description"
-              hint="Add a practical note only if it helps the team make scheduling decisions faster."
-              placeholder="For example: projector installed, second floor, quieter space for exams"
+              label={t('course.field.description')}
+              hint={t('rooms.field.descriptionHint')}
+              placeholder={t('rooms.field.descriptionPlaceholder')}
               error={errors.description?.message}
               {...register('description')}
             />
@@ -156,17 +158,17 @@ export function RoomFormModal({
           <div className="form-actions">
             <span className="subtle">
               {isDirty
-                ? 'Changes are ready to save.'
+                ? t('common.changesReadyToSave')
                 : room
-                  ? 'Update availability, capacity, or notes only where needed.'
-                  : 'Start with the room identity, then confirm type and availability.'}
+                  ? t('rooms.formHint.edit')
+                  : t('rooms.formHint.create')}
             </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || (!!room && !isDirty)}>
-                {loading ? 'Saving...' : room ? 'Save changes' : 'Create room'}
+                {loading ? t('common.saving') : room ? t('common.saveChanges') : t('rooms.createRoom')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -174,10 +176,10 @@ export function RoomFormModal({
       </ModalShell>
       <ConfirmModal
         open={closeGuard.confirmOpen}
-        title="Discard changes?"
-        description="You have unsaved changes in this form. Discard them and close the modal?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t('common.discardChangesTitle')}
+        description={t('common.discardChangesDescription')}
+        confirmLabel={t('common.discardChangesConfirm')}
+        cancelLabel={t('common.keepEditing')}
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

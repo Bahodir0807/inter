@@ -1,5 +1,6 @@
 import { Button } from '../buttons/button';
 import { ModalShell } from './modal-shell';
+import { translate } from '../../i18n/i18n';
 
 interface ConfirmModalProps {
   open: boolean;
@@ -17,8 +18,8 @@ export function ConfirmModal({
   open,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel = translate('common.confirm'),
+  cancelLabel = translate('common.cancel'),
   tone = 'primary',
   loading = false,
   onConfirm,
@@ -45,7 +46,7 @@ export function ConfirmModal({
             onClick={() => void onConfirm()}
             disabled={loading}
           >
-            {loading ? 'Working...' : confirmLabel}
+            {loading ? translate('common.working') : confirmLabel}
           </Button>
         </div>
       </div>

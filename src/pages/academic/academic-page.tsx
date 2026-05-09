@@ -232,7 +232,7 @@ export function AcademicPage() {
               }}
               hint={schedules.length > 0 ? t('academic.scheduleHint') : t('academic.scheduleLookupDescription')}
             >
-              <option value="">Auto-detect by date</option>
+              <option value="">{t('academic.autoDetectByDate')}</option>
               {schedules.map(item => (
                 <option key={item.id} value={item.id}>
                   {formatDateTime(item.timeStart)} - {getCourseDisplayName(item.course)}
@@ -287,9 +287,9 @@ export function AcademicPage() {
               header: t('common.actions'),
               cell: (item: GradeEntry) => (
                 <div className="inline-actions">
-                  <Button size="sm" variant="secondary" onClick={() => gradesApi.update(item.id, item.score).then(() => invalidate())}>Save</Button>
+                  <Button size="sm" variant="secondary" onClick={() => gradesApi.update(item.id, item.score).then(() => invalidate())}>{t('common.save')}</Button>
                   {capabilities.academic.deleteGrades ? (
-                    <Button size="sm" variant="danger" onClick={() => setDeleteGrade(item)}>Delete</Button>
+                    <Button size="sm" variant="danger" onClick={() => setDeleteGrade(item)}>{t('common.delete')}</Button>
                   ) : null}
                 </div>
               ),
@@ -317,8 +317,8 @@ export function AcademicPage() {
             { key: 'completed', header: t('common.status'), cell: item => <Badge tone={item.completed ? 'success' : 'warning'}>{item.completed ? t('common.complete') : t('common.open')}</Badge> },
             {
               key: 'actions',
-              header: 'Actions',
-              cell: item => item.completed || user?.role === 'student' ? null : <Button size="sm" variant="secondary" onClick={() => completeHomework.mutate(item.id)}>Complete</Button>,
+              header: t('common.actions'),
+              cell: item => item.completed || user?.role === 'student' ? null : <Button size="sm" variant="secondary" onClick={() => completeHomework.mutate(item.id)}>{t('common.complete')}</Button>,
             },
           ]}
         />
@@ -336,7 +336,7 @@ export function AcademicPage() {
             </Select>
             <Textarea label={t('academic.message')} value={notificationMessage} onChange={event => setNotificationMessage(event.target.value)} />
             <Button disabled={!effectiveUserId || !notificationMessage.trim() || sendNotification.isPending} onClick={() => sendNotification.mutate()}>
-              Send notification
+              {t('academic.sendNotification')}
             </Button>
           </div>
         </Card>
@@ -348,8 +348,8 @@ export function AcademicPage() {
             rows={schedules}
             getRowKey={item => item.id}
             columns={[
-              { key: 'date', header: 'Date', cell: item => formatDate(item.date) },
-              { key: 'time', header: 'Time', cell: item => `${formatDate(item.timeStart)} - ${formatDate(item.timeEnd)}` },
+              { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
+              { key: 'time', header: t('academic.time'), cell: item => `${formatDate(item.timeStart)} - ${formatDate(item.timeEnd)}` },
             ]}
           />
         </TableShell>

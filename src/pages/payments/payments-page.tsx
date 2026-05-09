@@ -115,7 +115,7 @@ export function PaymentsPage() {
     mutationFn: (payload: PaymentFormValues) => paymentsApi.create(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
-      toast.success('Payment created');
+      toast.success(t('payments.created'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -125,7 +125,7 @@ export function PaymentsPage() {
     mutationFn: (id: string) => paymentsApi.confirm(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
-      toast.success('Payment confirmed');
+      toast.success(t('payments.confirmed'));
     },
     onError: error => toast.error(error.message),
   });
@@ -134,7 +134,7 @@ export function PaymentsPage() {
     mutationFn: (id: string) => paymentsApi.remove(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
-      toast.success('Payment deleted');
+      toast.success(t('payments.deleted'));
     },
     onError: error => toast.error(error.message),
   });
@@ -150,14 +150,14 @@ export function PaymentsPage() {
     courseFilter === 'all' ? '' : getCourseDisplayName(courses.find(course => course.id === courseFilter));
 
   const toolbarFilters = [
-    ...(isAdminLike && studentFilter !== 'all' ? [`Student: ${selectedStudentLabel}`] : []),
-    ...(isAdminLike && courseFilter !== 'all' ? [`Course: ${selectedCourseLabel}`] : []),
-    ...(statusFilter !== 'all' ? [`Status: ${t(`paymentStatus.${statusFilter}`)}`] : []),
-    ...(sortDirection === 'asc' ? ['Order: Oldest first'] : []),
+    ...(isAdminLike && studentFilter !== 'all' ? [t('payments.filterStudent', { student: selectedStudentLabel })] : []),
+    ...(isAdminLike && courseFilter !== 'all' ? [t('payments.filterCourse', { course: selectedCourseLabel })] : []),
+    ...(statusFilter !== 'all' ? [t('payments.filterStatus', { status: t(`paymentStatus.${statusFilter}`) })] : []),
+    ...(sortDirection === 'asc' ? [t('payments.orderOldestFirst')] : []),
   ];
 
   if (paymentsQuery.isLoading) {
-    return <LoadingState label="Loading payments..." />;
+    return <LoadingState label={t('payments.loading')} />;
   }
 
   if (paymentsQuery.error) {
@@ -168,7 +168,7 @@ export function PaymentsPage() {
   const columns: Column<Payment>[] = [
     {
       key: 'payment',
-      header: 'Payment',
+      header: t('payments.payment'),
       className: 'data-table__cell--primary',
       cell: item => (
         <div className="cell-stack cell-stack--primary cell-stack--relation">
@@ -186,12 +186,12 @@ export function PaymentsPage() {
       ? [
           {
             key: 'student',
-            header: 'Student',
+            header: t('academic.student'),
             className: 'data-table__cell--relation',
             cell: (item: Payment) => (
               <div className="cell-stack cell-stack--relation">
                 <span className="cell-title">{getUserDisplayName(item.student)}</span>
-                <span className="cell-meta">Linked payer</span>
+                <span className="cell-meta">{t('payments.linkedPayer')}</span>
               </div>
             ),
           },
@@ -199,12 +199,12 @@ export function PaymentsPage() {
       : []),
     {
       key: 'course',
-      header: 'Course',
+      header: t('dashboard.table.course'),
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
           <span className="cell-title">{getCourseDisplayName(getPaymentCourse(item))}</span>
-          <span className="cell-meta">{isAdminLike ? 'Linked offer' : 'Covered course'}</span>
+          <span className="cell-meta">{isAdminLike ? t('payments.linkedOffer') : t('payments.coveredCourse')}</span>
         </div>
       ),
     },
@@ -212,7 +212,7 @@ export function PaymentsPage() {
       ? [
           {
             key: 'actions',
-            header: 'Actions',
+            header: t('common.actions'),
             className: 'data-table__cell--actions',
             headClassName: 'data-table__head--actions',
             cell: (item: Payment) => (
@@ -220,21 +220,21 @@ export function PaymentsPage() {
                 {item.status === 'pending' && (
                   <>
                     <Button size="sm" variant="secondary" onClick={() => setConfirmCandidate(item)}>
-                      Confirm
+                      {t('common.confirm')}
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                      Delete
+                      {t('common.delete')}
                     </Button>
                   </>
                 )}
                 {item.status === 'cancelled' && (
                   <Button size="sm" variant="ghost" disabled>
-                    Cancelled
+                    {t('paymentStatus.cancelled')}
                   </Button>
                 )}
                 {item.status === 'confirmed' && (
                   <Button size="sm" variant="ghost" disabled>
-                    Confirmed
+                    {t('paymentStatus.confirmed')}
                   </Button>
                 )}
               </div>
@@ -246,40 +246,40 @@ export function PaymentsPage() {
 
   return (
     <PageLayout
-      eyebrow="Finance"
-      title="Payments"
+      eyebrow={t('payments.eyebrow')}
+      title={t('payments.title')}
       description={
         isAdminLike
-          ? 'Payments linked to students and courses.'
-          : 'Your payments and confirmation status.'
+          ? t('payments.description.admin')
+          : t('payments.description.student')
       }
-      actions={isAdminLike ? <Button onClick={() => setFormOpen(true)}>New payment</Button> : undefined}
+      actions={isAdminLike ? <Button onClick={() => setFormOpen(true)}>{t('payments.newPayment')}</Button> : undefined}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
-          <span className="subtle">Visible payments</span>
+          <span className="subtle">{t('payments.visiblePayments')}</span>
           <strong>{pagination?.total ?? payments.length}</strong>
-          <span className="subtle">After filters and search</span>
+          <span className="subtle">{t('users.afterFilters')}</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">Confirmed</span>
+          <span className="subtle">{t('dashboard.metric.confirmed')}</span>
           <strong>{confirmedPayments}</strong>
-          <span className="subtle">Marked as verified</span>
+          <span className="subtle">{t('payments.markedVerified')}</span>
         </Card>
       </div>
       {payments.length === 0 ? (
         <EmptyState
-          title="No payments yet"
+          title={t('dashboard.noPaymentsYet')}
           description={
             isAdminLike
-              ? 'Payment records will appear here after the first entry.'
-              : 'Your payments will appear here after the first record is added.'
+              ? t('payments.recordsAppearAdmin')
+              : t('payments.recordsAppearStudent')
           }
         />
       ) : (
         <TableShell
-          title="Payment ledger"
-          description={isAdminLike ? 'Student, course, amount, and status.' : 'Course, amount, and status.'}
+          title={t('payments.ledgerTitle')}
+          description={isAdminLike ? t('payments.ledgerDescription.admin') : t('payments.ledgerDescription.student')}
           actions={<Pagination page={pagination?.page ?? page} totalPages={pagination?.totalPages ?? 1} onChange={setPage} />}
         >
           <TableToolbar
@@ -287,20 +287,20 @@ export function PaymentsPage() {
             onSearchChange={value => {
               setSearch(value);
             }}
-            searchPlaceholder={isAdminLike ? 'Search by student, course, or amount' : 'Search by course or amount'}
-            resultsLabel={`${pagination?.total ?? payments.length} result${(pagination?.total ?? payments.length) === 1 ? '' : 's'}`}
+            searchPlaceholder={isAdminLike ? t('payments.searchPlaceholder.admin') : t('payments.searchPlaceholder.student')}
+            resultsLabel={t('common.resultsLabel', { count: pagination?.total ?? payments.length })}
             activeFilters={toolbarFilters}
             filters={
               isAdminLike ? (
                 <>
                   <Select
-                    aria-label="Filter payments by student"
+                    aria-label={t('payments.filterByStudent')}
                     value={studentFilter}
                     onChange={event => {
                       setStudentFilter(event.target.value);
                     }}
                   >
-                    <option value="all">All students</option>
+                    <option value="all">{t('payments.allStudents')}</option>
                     {students.map(student => (
                       <option key={student.id} value={student.id}>
                         {getUserDisplayName(student)}
@@ -308,25 +308,25 @@ export function PaymentsPage() {
                     ))}
                   </Select>
                   <Select
-                    aria-label="Filter payments by status"
+                    aria-label={t('payments.filterByStatus')}
                     value={statusFilter}
                     onChange={event => {
                       setStatusFilter(event.target.value as 'all' | PaymentStatus);
                     }}
                   >
-                    <option value="all">All statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="all">{t('payments.allStatuses')}</option>
+                    <option value="pending">{t('paymentStatus.pending')}</option>
+                    <option value="confirmed">{t('paymentStatus.confirmed')}</option>
+                    <option value="cancelled">{t('paymentStatus.cancelled')}</option>
                   </Select>
                   <Select
-                    aria-label="Filter payments by course"
+                    aria-label={t('payments.filterByCourse')}
                     value={courseFilter}
                     onChange={event => {
                       setCourseFilter(event.target.value);
                     }}
                   >
-                    <option value="all">All courses</option>
+                    <option value="all">{t('payments.allCourses')}</option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
                         {getCourseDisplayName(course)}
@@ -334,34 +334,34 @@ export function PaymentsPage() {
                     ))}
                   </Select>
                   <Select
-                    aria-label="Sort payments"
+                    aria-label={t('payments.sortPayments')}
                     value={sortDirection}
                     onChange={event => {
                       setSortDirection(event.target.value as SortDirection);
                     }}
                   >
-                    <option value="desc">Newest first</option>
-                    <option value="asc">Oldest first</option>
+                    <option value="desc">{t('payments.newestFirst')}</option>
+                    <option value="asc">{t('payments.oldestFirst')}</option>
                   </Select>
                 </>
               ) : (
                 <Select
-                  aria-label="Sort payments"
+                  aria-label={t('payments.sortPayments')}
                   value={sortDirection}
                   onChange={event => {
                     setSortDirection(event.target.value as SortDirection);
                   }}
                 >
-                  <option value="desc">Newest first</option>
-                  <option value="asc">Oldest first</option>
+                  <option value="desc">{t('payments.newestFirst')}</option>
+                  <option value="asc">{t('payments.oldestFirst')}</option>
                 </Select>
               )
             }
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No payments found"
-            emptyDescription={isAdminLike ? 'Try another search or clear a filter.' : 'Try another search.'}
+            emptyTitle={t('payments.noPaymentsFound')}
+            emptyDescription={isAdminLike ? t('common.tryAnotherSearch') : t('common.trySearch')}
             columns={columns}
             rows={payments}
           />
@@ -380,14 +380,14 @@ export function PaymentsPage() {
       />
       <ConfirmModal
         open={!!confirmCandidate}
-        title="Confirm payment?"
+        title={t('payments.confirmPaymentTitle')}
         description={
           confirmCandidate
-            ? `Mark the payment of ${formatMoney(confirmCandidate.amount)} for ${getUserDisplayName(confirmCandidate.student)} on ${getCourseDisplayName(getPaymentCourse(confirmCandidate))} as confirmed?`
+            ? t('payments.confirmPaymentDescription', { amount: formatMoney(confirmCandidate.amount), student: getUserDisplayName(confirmCandidate.student), course: getCourseDisplayName(getPaymentCourse(confirmCandidate)) })
             : ''
         }
-        confirmLabel="Confirm payment"
-        cancelLabel="Keep pending"
+        confirmLabel={t('payments.confirmPaymentConfirm')}
+        cancelLabel={t('payments.keepPending')}
         loading={confirmMutation.isPending}
         onClose={() => setConfirmCandidate(null)}
         onConfirm={async () => {
@@ -401,14 +401,14 @@ export function PaymentsPage() {
       />
       <ConfirmModal
         open={!!deleteCandidate}
-        title="Delete payment?"
+        title={t('payments.deletePaymentTitle')}
         description={
           deleteCandidate
-            ? `This will permanently remove the payment of ${formatMoney(deleteCandidate.amount)} for ${getUserDisplayName(deleteCandidate.student)} on ${getCourseDisplayName(getPaymentCourse(deleteCandidate))} from the ledger. Paid at: ${formatDate(deleteCandidate.paidAt)}. This action cannot be undone.`
+            ? t('payments.deletePaymentDescription', { amount: formatMoney(deleteCandidate.amount), student: getUserDisplayName(deleteCandidate.student), course: getCourseDisplayName(getPaymentCourse(deleteCandidate)), paidAt: formatDate(deleteCandidate.paidAt) })
             : ''
         }
-        confirmLabel="Delete payment"
-        cancelLabel="Keep payment"
+        confirmLabel={t('payments.deletePaymentConfirm')}
+        cancelLabel={t('payments.keepPayment')}
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

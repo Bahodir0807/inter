@@ -10,6 +10,8 @@ import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { AppUser, roleOptions } from '../../shared/types/auth';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
+import { getRoleDisplayName } from '../../shared/lib/entity-display';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const createSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
@@ -37,6 +39,7 @@ interface UserFormModalProps {
 }
 
 export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: UserFormModalProps) {
+  const { t } = useI18n();
   const schema = mode === 'create' ? createSchema : editSchema;
   const {
     register,
@@ -94,8 +97,8 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
         closeOnBackdrop={!loading}
         closeOnEscape={!loading}
         closeDisabled={loading}
-        title={mode === 'create' ? 'Create user' : 'Edit user'}
-        description="Manage account details, role, and profile fields without leaving the registry."
+        title={mode === 'create' ? t('common.createUser') : t('users.editUser')}
+        description={t('users.formDescription')}
       >
         <form
           className="modal-form"
@@ -104,13 +107,13 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
           })}
         >
           <FormSection
-            title="Account"
-            description="Start with the login identity and access level. These fields define how the user enters the system."
+            title={t('users.formSection.accountTitle')}
+            description={t('users.formSection.accountDescription')}
           >
             <Input
-              label="Username"
-              hint="Used for sign in and internal search."
-              placeholder="For example: aziza.student"
+              label={t('profile.username')}
+              hint={t('users.field.usernameHint')}
+              placeholder={t('users.field.usernamePlaceholder')}
               autoComplete="username"
               error={errors.username?.message}
               fieldClassName="ui-field--primary"
@@ -118,54 +121,54 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
             />
             <div className="detail-grid">
               <Input
-                label={mode === 'create' ? 'Password' : 'New password'}
+                label={mode === 'create' ? t('login.password') : t('profile.newPassword')}
                 hint={
                   mode === 'create'
-                    ? 'Set a temporary password the user can change later.'
-                    : 'Password is required when updating the account.'
+                    ? t('users.field.passwordHintCreate')
+                    : t('users.field.passwordHintEdit')
                 }
                 type="password"
-                placeholder={mode === 'create' ? 'Set a temporary password' : 'Enter a new password'}
+                placeholder={mode === 'create' ? t('users.field.passwordPlaceholderCreate') : t('users.field.passwordPlaceholderEdit')}
                 autoComplete="new-password"
                 error={errors.password?.message}
                 {...register('password')}
               />
               <Select
-                label="Role"
-                hint="Controls the screens and actions available after sign in."
+                label={t('users.detailRole')}
+                hint={t('users.field.roleHint')}
                 error={errors.role?.message}
                 {...register('role')}
               >
                 {roleOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {getRoleDisplayName(option.value)}
                   </option>
                 ))}
               </Select>
             </div>
           </FormSection>
           <FormSection
-            title="Profile"
-            description="Add the details operators use most often when they scan the directory or need to contact the user."
+            title={t('profile.title')}
+            description={t('users.formSection.profileDescription')}
           >
             <div className="detail-grid">
               <Input
-                label="First name"
+                label={t('users.field.firstName')}
                 placeholder="Aziza"
                 autoComplete="given-name"
                 error={errors.firstName?.message}
                 {...register('firstName')}
               />
               <Input
-                label="Last name"
+                label={t('users.field.lastName')}
                 placeholder="Karimova"
                 autoComplete="family-name"
                 error={errors.lastName?.message}
                 {...register('lastName')}
               />
               <Input
-                label="Email"
-                hint="Useful for receipts, reminders, and account recovery."
+                label={t('profile.email')}
+                hint={t('users.field.emailHint')}
                 type="email"
                 placeholder="name@example.com"
                 autoComplete="email"
@@ -173,8 +176,8 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
                 {...register('email')}
               />
               <Input
-                label="Phone"
-                hint="Shown in tables and quick contact flows."
+                label={t('profile.phone')}
+                hint={t('users.field.phoneHint')}
                 placeholder="+998 90 123 45 67"
                 autoComplete="tel"
                 error={errors.phoneNumber?.message}
@@ -183,21 +186,21 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
             </div>
           </FormSection>
           <FormSection
-            title="Additional links"
-            description="These fields are optional and only help when your team needs richer profile context."
+            title={t('users.formSection.linksTitle')}
+            description={t('users.formSection.linksDescription')}
           >
             <div className="detail-grid">
               <Input
-                label="Telegram ID"
-                hint="Numeric ID or handle used by your team."
+                label={t('users.field.telegramId')}
+                hint={t('users.field.telegramHint')}
                 placeholder="@aziza_karimova or 123456789"
                 error={errors.telegramId?.message}
                 fieldClassName="ui-field--quiet"
                 {...register('telegramId')}
               />
               <Input
-                label="Avatar URL"
-                hint="Public image URL used in user cards and profile references."
+                label={t('users.field.avatarUrl')}
+                hint={t('users.field.avatarHint')}
                 placeholder="https://example.com/avatar.jpg"
                 autoComplete="url"
                 error={errors.avatarUrl?.message}
@@ -208,14 +211,14 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
           </FormSection>
           <div className="form-actions">
             <span className="subtle">
-              {isDirty ? 'Changes are ready to save.' : mode === 'edit' ? 'Update the fields you want to change.' : 'Start with account access, then add profile details.'}
+              {isDirty ? t('common.changesReadyToSave') : mode === 'edit' ? t('users.formHint.edit') : t('common.startWithAccountDetails')}
             </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || (mode === 'edit' && !isDirty)}>
-                {loading ? 'Saving...' : mode === 'create' ? 'Create user' : 'Save changes'}
+                {loading ? t('common.saving') : mode === 'create' ? t('common.createUser') : t('common.saveChanges')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -223,10 +226,10 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
       </ModalShell>
       <ConfirmModal
         open={closeGuard.confirmOpen}
-        title="Discard changes?"
-        description="You have unsaved changes in this form. Discard them and close the modal?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t('common.discardChangesTitle')}
+        description={t('common.discardChangesDescription')}
+        confirmLabel={t('common.discardChangesConfirm')}
+        cancelLabel={t('common.keepEditing')}
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

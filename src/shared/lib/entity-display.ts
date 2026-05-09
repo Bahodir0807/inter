@@ -41,13 +41,13 @@ export function getUserListSummary(users?: Array<AppUser | string> | null, limit
 export function getRoomTypeDisplayName(roomType?: Room['type'] | null) {
   switch (roomType) {
     case 'classroom':
-      return 'Classroom';
+      return translate('roomType.classroom', 'Classroom');
     case 'lab':
-      return 'Lab';
+      return translate('roomType.lab', 'Lab');
     case 'office':
-      return 'Office';
+      return translate('roomType.office', 'Office');
     case 'meeting':
-      return 'Meeting room';
+      return translate('roomType.meeting', 'Meeting room');
     default:
       return '-';
   }

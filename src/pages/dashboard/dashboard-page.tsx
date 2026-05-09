@@ -158,7 +158,7 @@ function getCourseTeacherName(course?: Course | string | null) {
   return getUserDisplayName(course.teacherId);
 }
 
-function renderLessons(items: ScheduleItem[], emptyTitle: string, emptyDescription: string) {
+function renderLessons(items: ScheduleItem[], emptyTitle: string, emptyDescription: string, todayLabel: string) {
   if (items.length === 0) {
     return <CompactEmpty title={emptyTitle} description={emptyDescription} />;
   }
@@ -171,7 +171,7 @@ function renderLessons(items: ScheduleItem[], emptyTitle: string, emptyDescripti
           title={getCourseDisplayName(item.course)}
           meta={`${formatDateTime(item.timeStart)} - ${getRoomDisplayName(item.room)}`}
           detail={`${getUserDisplayName(item.teacher)} · ${getGroupDisplayName(item.group)}`}
-          badge={isToday(item.timeStart) ? 'Today' : formatDate(item.timeStart)}
+          badge={isToday(item.timeStart) ? todayLabel : formatDate(item.timeStart)}
           tone={isToday(item.timeStart) ? 'info' : 'neutral'}
         />
       ))}
@@ -179,7 +179,12 @@ function renderLessons(items: ScheduleItem[], emptyTitle: string, emptyDescripti
   );
 }
 
-function renderPayments(items: Payment[], emptyTitle: string, emptyDescription: string) {
+function renderPayments(
+  items: Payment[],
+  emptyTitle: string,
+  emptyDescription: string,
+  labels: { noPaymentDate: string; pending: string; confirmed: string; cancelled: string },
+) {
   if (items.length === 0) {
     return <CompactEmpty title={emptyTitle} description={emptyDescription} />;
   }
@@ -191,8 +196,8 @@ function renderPayments(items: Payment[], emptyTitle: string, emptyDescription: 
           key={item.id}
           title={getUserDisplayName(item.student)}
           meta={`${getCourseDisplayName(item.course ?? item.courseId)} · ${formatMoney(item.amount)}`}
-          detail={item.paidAt ? formatDateTime(item.paidAt) : 'No payment date'}
-          badge={item.status}
+          detail={item.paidAt ? formatDateTime(item.paidAt) : labels.noPaymentDate}
+          badge={labels[item.status]}
           tone={item.status === 'confirmed' ? 'success' : item.status === 'pending' ? 'warning' : 'danger'}
         />
       ))}
@@ -203,6 +208,12 @@ function renderPayments(items: Payment[], emptyTitle: string, emptyDescription: 
 export function DashboardPage() {
   const user = useAuthStore(state => state.user);
   const { t } = useI18n();
+  const paymentLabels = {
+    noPaymentDate: t('dashboard.noPaymentDate'),
+    pending: t('paymentStatus.pending'),
+    confirmed: t('paymentStatus.confirmed'),
+    cancelled: t('paymentStatus.cancelled'),
+  };
   const isOwnerAdmin = !!user && paymentsManagerRoles.includes(user.role);
   const isPanda = user?.role === 'panda';
   const isStudent = user?.role === 'student';
@@ -294,60 +305,60 @@ export function DashboardPage() {
       .sort((a, b) => b.lessons - a.lessons)
       .slice(0, 5);
     const academicAlerts = [
-      ...data.courses.filter(course => !course.teacherId).map(course => `${course.name}: no teacher assigned`),
-      ...data.groups.filter(group => group.students.length === 0).map(group => `${group.name}: empty roster`),
-      ...pendingPayments.slice(0, 4).map(payment => `${getUserDisplayName(payment.student)}: payment pending`),
-      ...data.users.filter(item => !item.isActive).slice(0, 3).map(item => `${getUserDisplayName(item)}: inactive account`),
+      ...data.courses.filter(course => !course.teacherId).map(course => t('dashboard.alert.noTeacher', { name: course.name })),
+      ...data.groups.filter(group => group.students.length === 0).map(group => t('dashboard.alert.emptyRoster', { name: group.name })),
+      ...pendingPayments.slice(0, 4).map(payment => t('dashboard.alert.paymentPending', { name: getUserDisplayName(payment.student) })),
+      ...data.users.filter(item => !item.isActive).slice(0, 3).map(item => t('dashboard.alert.inactiveAccount', { name: getUserDisplayName(item) })),
     ].slice(0, 7);
 
     return (
       <PageLayout
         eyebrow={t('dashboard.overview')}
         title={t('dashboard.title')}
-        description={t('dashboard.description', 'Operational CRM workspace for today lessons, payments, groups, and academic follow-up.')}
+        description={t('dashboard.description')}
         variant="feature"
       >
         <div className="dashboard-grid dashboard-grid--overview">
-          <MetricCard tone="hero" label="Needs attention" value={pendingPayments.length + academicAlerts.length} hint="Open payment and academic items" />
-          <MetricCard label={t('dashboard.metric.lessons')} value={todayLessons.length} hint="Scheduled for today" />
+          <MetricCard tone="hero" label={t('dashboard.needsAttention')} value={pendingPayments.length + academicAlerts.length} hint={t('dashboard.openPaymentAcademicItems')} />
+          <MetricCard label={t('dashboard.metric.lessons')} value={todayLessons.length} hint={t('dashboard.scheduledForToday')} />
           <MetricCard label={t('dashboard.metric.groups')} value={activeGroups.length} hint={t('dashboard.metric.activeGroups')} />
-          <MetricCard tone="accent" label={t('dashboard.metric.payments')} value={formatMoney(data.payments.reduce((sum, item) => sum + item.amount, 0))} hint={`${pendingPayments.length} pending`} />
+          <MetricCard tone="accent" label={t('dashboard.metric.payments')} value={formatMoney(data.payments.reduce((sum, item) => sum + item.amount, 0))} hint={t('dashboard.pendingCount', { count: pendingPayments.length })} />
         </div>
 
         <div className="ops-layout">
-          <OpsPanel className="ops-panel--primary" eyebrow={t('dashboard.today')} title="Attention queue">
+          <OpsPanel className="ops-panel--primary" eyebrow={t('dashboard.today')} title={t('dashboard.attentionQueue')}>
             <div className="attention-strip">
-              <div><strong>{todayLessons.length}</strong><span>lessons today</span></div>
-              <div><strong>{pendingPayments.length}</strong><span>pending payments</span></div>
-              <div><strong>{data.groups.filter(group => group.students.length === 0).length}</strong><span>empty groups</span></div>
-              <div><strong>{data.courses.filter(course => !course.teacherId).length}</strong><span>courses without teacher</span></div>
+              <div><strong>{todayLessons.length}</strong><span>{t('dashboard.lessonsToday')}</span></div>
+              <div><strong>{pendingPayments.length}</strong><span>{t('dashboard.pendingPayments')}</span></div>
+              <div><strong>{data.groups.filter(group => group.students.length === 0).length}</strong><span>{t('dashboard.emptyGroups')}</span></div>
+              <div><strong>{data.courses.filter(course => !course.teacherId).length}</strong><span>{t('dashboard.coursesWithoutTeacher')}</span></div>
             </div>
           </OpsPanel>
 
-          <OpsPanel title="Quick actions">
+          <OpsPanel title={t('dashboard.quickActions')}>
             <div className="quick-actions">
-              <QuickAction to="/app/schedule" icon="schedule" label="Plan lessons" meta="Open schedule" />
-              <QuickAction to="/app/payments" icon="payments" label="Review payments" meta="Confirm pending records" />
-              <QuickAction to="/app/groups" icon="groups" label="Check groups" meta="Rosters and teachers" />
-              <QuickAction to="/app/academic" icon="courses" label="Academic follow-up" meta="Attendance, homework, grades" />
+              <QuickAction to="/app/schedule" icon="schedule" label={t('dashboard.action.planLessons')} meta={t('dashboard.action.openSchedule')} />
+              <QuickAction to="/app/payments" icon="payments" label={t('dashboard.action.reviewPayments')} meta={t('dashboard.action.confirmPendingRecords')} />
+              <QuickAction to="/app/groups" icon="groups" label={t('dashboard.action.checkGroups')} meta={t('dashboard.action.rostersAndTeachers')} />
+              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.academicFollowUp')} meta={t('dashboard.action.academicMeta')} />
             </div>
           </OpsPanel>
 
-          <OpsPanel title="Upcoming lessons">
-            {renderLessons(upcomingLessons, 'No upcoming lessons', 'Scheduled lessons will appear here.')}
+          <OpsPanel title={t('dashboard.upcomingLessons')}>
+            {renderLessons(upcomingLessons, t('dashboard.noUpcomingLessons'), t('dashboard.scheduledLessonsAppear'), t('dashboard.today'))}
           </OpsPanel>
 
-          <OpsPanel title="Pending payments">
-            {renderPayments(pendingPayments.slice(0, 5), 'No pending payments', 'Problem payments will appear here.')}
+          <OpsPanel title={t('dashboard.pendingPaymentsTitle')}>
+            {renderPayments(pendingPayments.slice(0, 5), t('dashboard.noPendingPayments'), t('dashboard.problemPaymentsAppear'), paymentLabels)}
           </OpsPanel>
 
-          <OpsPanel title="Recent payments">
-            {renderPayments(recentPayments, 'No payments yet', 'Recent payment activity will appear here.')}
+          <OpsPanel title={t('dashboard.recentPayments')}>
+            {renderPayments(recentPayments, t('dashboard.noPaymentsYet'), t('dashboard.recentPaymentActivity'), paymentLabels)}
           </OpsPanel>
 
-          <OpsPanel title="Active groups">
+          <OpsPanel title={t('dashboard.activeGroups')}>
             {activeGroups.length === 0 ? (
-              <CompactEmpty title="No active groups" description="Groups with students will appear here." />
+              <CompactEmpty title={t('dashboard.noActiveGroups')} description={t('dashboard.groupsWithStudentsAppear')} />
             ) : (
               <ul className="ops-list">
                 {activeGroups.slice(0, 5).map(group => (
@@ -356,7 +367,7 @@ export function DashboardPage() {
                     title={group.name}
                     meta={`${getCourseDisplayName(group.course)} · ${getUserDisplayName(group.teacher)}`}
                     detail={getUserListSummary(group.students, 3)}
-                    badge={`${group.students.length} students`}
+                    badge={t('dashboard.studentsCount', { count: group.students.length })}
                     tone="info"
                   />
                 ))}
@@ -364,16 +375,16 @@ export function DashboardPage() {
             )}
           </OpsPanel>
 
-          <OpsPanel title="Teacher workload">
+          <OpsPanel title={t('dashboard.teacherWorkload')}>
             {teacherWorkload.length === 0 ? (
-              <CompactEmpty title="No teachers yet" description="Teacher workload appears when teachers are assigned." />
+              <CompactEmpty title={t('dashboard.noTeachersYet')} description={t('dashboard.teacherWorkloadAppears')} />
             ) : (
               <ul className="workload-list">
                 {teacherWorkload.map(item => (
                   <li key={item.teacher.id}>
                     <div className="cell-stack">
                       <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
-                      <span className="cell-meta">{item.groups} groups · {item.lessons} lessons</span>
+                      <span className="cell-meta">{t('dashboard.workloadSummary', { groups: item.groups, lessons: item.lessons })}</span>
                     </div>
                     <div className="workload-meter"><span style={{ width: `${Math.min(100, item.lessons * 12)}%` }} /></div>
                   </li>
@@ -382,13 +393,13 @@ export function DashboardPage() {
             )}
           </OpsPanel>
 
-          <OpsPanel title="Academic alerts">
+          <OpsPanel title={t('dashboard.academicAlerts')}>
             {academicAlerts.length === 0 ? (
-              <CompactEmpty title="No alerts" description="Courses, groups, and accounts look complete." />
+              <CompactEmpty title={t('dashboard.noAlerts')} description={t('dashboard.noAlertsDescription')} />
             ) : (
               <ul className="ops-list">
                 {academicAlerts.map(alert => (
-                  <ListItem key={alert} title={alert} badge="Check" tone="warning" />
+                  <ListItem key={alert} title={alert} badge={t('dashboard.check')} tone="warning" />
                 ))}
               </ul>
             )}
@@ -408,19 +419,19 @@ export function DashboardPage() {
         <div className="dashboard-grid">
           <MetricCard tone="hero" label={t('dashboard.metric.people')} value={data.users.length} hint={t('dashboard.metric.visibleUsers')} />
           <MetricCard tone="accent" label={t('dashboard.metric.students')} value={students.length} hint={t('dashboard.metric.studentAccounts')} />
-          <MetricCard tone="warning" label="Attention" value={inactive.length} hint="Inactive visible accounts" />
+          <MetricCard tone="warning" label={t('dashboard.attention')} value={inactive.length} hint={t('dashboard.inactiveVisibleAccounts')} />
         </div>
         <div className="ops-layout ops-layout--two">
           <OpsPanel title={t('dashboard.scopeTitle')}>
             <p className="subtle">{t('dashboard.scopeCopy')}</p>
           </OpsPanel>
-          <OpsPanel title="Visible students">
+          <OpsPanel title={t('dashboard.visibleStudents')}>
             {students.length === 0 ? (
-              <CompactEmpty title="No students" description="Student accounts will appear here." />
+              <CompactEmpty title={t('dashboard.noStudents')} description={t('dashboard.studentAccountsAppear')} />
             ) : (
               <ul className="ops-list">
                 {students.slice(0, 6).map(student => (
-                  <ListItem key={student.id} title={getUserDisplayName(student)} meta={student.phoneNumber || student.email || student.username} badge={student.isActive ? 'Active' : 'Inactive'} tone={student.isActive ? 'success' : 'warning'} />
+                  <ListItem key={student.id} title={getUserDisplayName(student)} meta={student.phoneNumber || student.email || student.username} badge={student.isActive ? t('common.active') : t('common.inactive')} tone={student.isActive ? 'success' : 'warning'} />
                 ))}
               </ul>
             )}
@@ -450,38 +461,38 @@ export function DashboardPage() {
 
   if (isTeacher) {
     return (
-      <PageLayout eyebrow="Teacher workspace" title={t('dashboard.title')} description="Today lessons, own groups, and academic shortcuts." variant="feature">
+      <PageLayout eyebrow={t('dashboard.teacherWorkspace')} title={t('dashboard.title')} description={t('dashboard.teacherDescription')} variant="feature">
         <div className="dashboard-grid">
-          <MetricCard tone="hero" label="Today lessons" value={todayLessons.length} hint="Lessons requiring attendance" />
-          <MetricCard label="Own groups" value={data.teacherGroups.length} hint="Teacher-scoped rosters" />
-          <MetricCard tone="accent" label="Students" value={data.teacherGroups.reduce((sum, group) => sum + group.students.length, 0)} hint="Across own groups" />
-          <MetricCard tone="quiet" label="Upcoming" value={upcomingLessons.length} hint="Visible schedule items" />
+          <MetricCard tone="hero" label={t('dashboard.todayLessons')} value={todayLessons.length} hint={t('dashboard.lessonsRequiringAttendance')} />
+          <MetricCard label={t('dashboard.ownGroups')} value={data.teacherGroups.length} hint={t('dashboard.teacherScopedRosters')} />
+          <MetricCard tone="accent" label={t('dashboard.students')} value={data.teacherGroups.reduce((sum, group) => sum + group.students.length, 0)} hint={t('dashboard.acrossOwnGroups')} />
+          <MetricCard tone="quiet" label={t('dashboard.upcoming')} value={upcomingLessons.length} hint={t('dashboard.visibleScheduleItems')} />
         </div>
         <div className="ops-layout ops-layout--teacher">
-          <OpsPanel className="ops-panel--primary" eyebrow={t('dashboard.today')} title="Today lessons">
-            {renderLessons(todayLessons, 'No lessons today', 'Your scheduled lessons for today will appear here.')}
+          <OpsPanel className="ops-panel--primary" eyebrow={t('dashboard.today')} title={t('dashboard.todayLessons')}>
+            {renderLessons(todayLessons, t('dashboard.noLessonsToday'), t('dashboard.teacherTodayLessonsAppear'), t('dashboard.today'))}
           </OpsPanel>
-          <OpsPanel title="Academic shortcuts">
+          <OpsPanel title={t('dashboard.academicShortcuts')}>
             <div className="quick-actions">
-              <QuickAction to="/app/academic" icon="courses" label="Mark attendance" meta="Open attendance workspace" />
-              <QuickAction to="/app/academic" icon="courses" label="Assign homework" meta="Use student scope" />
-              <QuickAction to="/app/academic" icon="courses" label="Record grades" meta="Update progress" />
-              <QuickAction to="/app/schedule" icon="schedule" label="Open schedule" meta="Review lesson plan" />
+              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.markAttendance')} meta={t('dashboard.action.openAttendanceWorkspace')} />
+              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.assignHomework')} meta={t('dashboard.action.useStudentScope')} />
+              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.recordGrades')} meta={t('dashboard.action.updateProgress')} />
+              <QuickAction to="/app/schedule" icon="schedule" label={t('dashboard.action.openSchedule')} meta={t('dashboard.action.reviewLessonPlan')} />
             </div>
           </OpsPanel>
-          <OpsPanel title="Own groups">
+          <OpsPanel title={t('dashboard.ownGroups')}>
             {data.teacherGroups.length === 0 ? (
-              <CompactEmpty title="No groups assigned" description="Assigned groups will appear here." />
+              <CompactEmpty title={t('dashboard.noGroupsAssigned')} description={t('dashboard.assignedGroupsAppear')} />
             ) : (
               <ul className="ops-list">
                 {data.teacherGroups.slice(0, 6).map(group => (
-                  <ListItem key={group.id} title={group.name} meta={getCourseDisplayName(group.course)} detail={getUserListSummary(group.students, 3)} badge={`${group.students.length} students`} tone="info" />
+                  <ListItem key={group.id} title={group.name} meta={getCourseDisplayName(group.course)} detail={getUserListSummary(group.students, 3)} badge={t('dashboard.studentsCount', { count: group.students.length })} tone="info" />
                 ))}
               </ul>
             )}
           </OpsPanel>
-          <OpsPanel title="Upcoming lessons">
-            {renderLessons(upcomingLessons.slice(0, 5), 'No upcoming lessons', 'Future lessons will appear here.')}
+          <OpsPanel title={t('dashboard.upcomingLessons')}>
+            {renderLessons(upcomingLessons.slice(0, 5), t('dashboard.noUpcomingLessons'), t('dashboard.futureLessonsAppear'), t('dashboard.today'))}
           </OpsPanel>
         </div>
       </PageLayout>
@@ -491,41 +502,41 @@ export function DashboardPage() {
   return (
     <PageLayout eyebrow={t('dashboard.myWorkspace')} title={t('dashboard.title')} description={t('dashboard.myDescription')} variant="feature">
       <div className="dashboard-grid">
-        <MetricCard tone="hero" label="Next lesson" value={nextLesson ? formatDate(nextLesson.timeStart) : '-'} hint={nextLesson ? getCourseDisplayName(nextLesson.course) : 'No scheduled lesson'} />
-        <MetricCard label={t('dashboard.metric.homework')} value={openHomework.length} hint="Open assignments" />
+        <MetricCard tone="hero" label={t('dashboard.nextLesson')} value={nextLesson ? formatDate(nextLesson.timeStart) : '-'} hint={nextLesson ? getCourseDisplayName(nextLesson.course) : t('dashboard.noScheduledLesson')} />
+        <MetricCard label={t('dashboard.metric.homework')} value={openHomework.length} hint={t('dashboard.openAssignments')} />
         <MetricCard label={t('dashboard.metric.grades')} value={latestGrade ? latestGrade.score : data.grades.length} hint={latestGrade ? latestGrade.subject : t('dashboard.metric.recordedGrades')} />
-        <MetricCard tone={pendingStudentPayments.length > 0 ? 'warning' : 'accent'} label={t('dashboard.metric.payments')} value={pendingStudentPayments.length} hint="Pending payment records" />
+        <MetricCard tone={pendingStudentPayments.length > 0 ? 'warning' : 'accent'} label={t('dashboard.metric.payments')} value={pendingStudentPayments.length} hint={t('dashboard.pendingPaymentRecords')} />
       </div>
       <div className="ops-layout ops-layout--student">
-        <OpsPanel className="ops-panel--primary" title="Next lesson">
+        <OpsPanel className="ops-panel--primary" title={t('dashboard.nextLesson')}>
           {nextLesson ? (
             <ul className="ops-list">
               <ListItem
                 title={getCourseDisplayName(nextLesson.course)}
                 meta={`${formatDateTime(nextLesson.timeStart)} - ${getRoomDisplayName(nextLesson.room)}`}
                 detail={`${getUserDisplayName(nextLesson.teacher)} · ${getGroupDisplayName(nextLesson.group)}`}
-                badge="Upcoming"
+                badge={t('dashboard.upcoming')}
                 tone="info"
               />
             </ul>
           ) : (
-            <CompactEmpty title="No next lesson" description="Your next lesson will appear after it is scheduled." />
+            <CompactEmpty title={t('dashboard.noNextLesson')} description={t('dashboard.nextLessonAppear')} />
           )}
         </OpsPanel>
-        <OpsPanel title="Homework">
+        <OpsPanel title={t('dashboard.metric.homework')}>
           {data.homework.length === 0 ? (
-            <CompactEmpty title="No homework" description="Assigned homework will appear here." />
+            <CompactEmpty title={t('dashboard.noHomework')} description={t('dashboard.assignedHomeworkAppear')} />
           ) : (
             <ul className="ops-list">
               {data.homework.slice(0, 5).map(item => (
-                <ListItem key={item.id} title={item.tasks.join(', ')} meta={formatDate(item.date)} badge={item.completed ? 'Done' : 'Open'} tone={item.completed ? 'success' : 'warning'} />
+                <ListItem key={item.id} title={item.tasks.join(', ')} meta={formatDate(item.date)} badge={item.completed ? t('dashboard.done') : t('common.open')} tone={item.completed ? 'success' : 'warning'} />
               ))}
             </ul>
           )}
         </OpsPanel>
-        <OpsPanel title="Grades">
+        <OpsPanel title={t('dashboard.metric.grades')}>
           {data.grades.length === 0 ? (
-            <CompactEmpty title="No grades" description="Recorded grades will appear here." />
+            <CompactEmpty title={t('dashboard.noGrades')} description={t('dashboard.recordedGradesAppear')} />
           ) : (
             <ul className="ops-list">
               {data.grades.slice(0, 5).map(item => (
@@ -534,22 +545,22 @@ export function DashboardPage() {
             </ul>
           )}
         </OpsPanel>
-        <OpsPanel title="Payment status">
-          {renderPayments(data.payments.slice(0, 5), 'No payments', 'Your payment records will appear here.')}
+        <OpsPanel title={t('dashboard.paymentStatus')}>
+          {renderPayments(data.payments.slice(0, 5), t('dashboard.noPayments'), t('dashboard.paymentRecordsAppear'), paymentLabels)}
         </OpsPanel>
-        <OpsPanel title="Teacher and group">
+        <OpsPanel title={t('dashboard.teacherAndGroup')}>
           <div className="student-context">
-            <div><span>Teacher</span><strong>{getUserDisplayName(nextLesson?.teacher)}</strong></div>
-            <div><span>Group</span><strong>{getGroupDisplayName(nextLesson?.group)}</strong></div>
-            <div><span>Course teacher</span><strong>{getCourseTeacherName(nextLesson?.course)}</strong></div>
-            <div><span>Attendance</span><strong>{attendanceSummary}</strong></div>
+            <div><span>{t('dashboard.teacher')}</span><strong>{getUserDisplayName(nextLesson?.teacher)}</strong></div>
+            <div><span>{t('dashboard.group')}</span><strong>{getGroupDisplayName(nextLesson?.group)}</strong></div>
+            <div><span>{t('dashboard.courseTeacher')}</span><strong>{getCourseTeacherName(nextLesson?.course)}</strong></div>
+            <div><span>{t('dashboard.metric.attendance')}</span><strong>{attendanceSummary}</strong></div>
           </div>
         </OpsPanel>
-        <OpsPanel title="Shortcuts">
+        <OpsPanel title={t('dashboard.shortcuts')}>
           <div className="quick-actions">
-            <QuickAction to="/app/academic" icon="courses" label="Academic records" meta="Homework and grades" />
-            <QuickAction to="/app/payments" icon="payments" label="Payments" meta="Review status" />
-            <QuickAction to="/app/profile" icon="profile" label="Profile" meta="Contact details" />
+            <QuickAction to="/app/academic" icon="courses" label={t('dashboard.academicRecords')} meta={t('dashboard.homeworkAndGrades')} />
+            <QuickAction to="/app/payments" icon="payments" label={t('dashboard.metric.payments')} meta={t('dashboard.reviewStatus')} />
+            <QuickAction to="/app/profile" icon="profile" label={t('nav.profile')} meta={t('dashboard.contactDetails')} />
           </div>
         </OpsPanel>
       </div>

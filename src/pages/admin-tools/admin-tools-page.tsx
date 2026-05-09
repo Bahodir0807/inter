@@ -18,6 +18,7 @@ import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
 import { formatDate } from '../../shared/lib/date';
 import { toast } from '../../shared/ui/feedback/toaster';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const pageSize = 10;
 
@@ -30,6 +31,7 @@ function parseMetadata(value: string) {
 
 export function AdminToolsPage() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [roleName, setRoleName] = useState('');
@@ -62,7 +64,7 @@ export function AdminToolsPage() {
       await queryClient.invalidateQueries({ queryKey: ['roles'] });
       setRoleName('');
       setPermissions('');
-      toast.success('Role created');
+      toast.success(t('adminTools.roleCreated'));
     },
     onError: error => toast.error(error.message),
   });
@@ -77,7 +79,7 @@ export function AdminToolsPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['statistics'] });
       setStatMetadata('');
-      toast.success('Statistic created');
+      toast.success(t('adminTools.statisticCreated'));
     },
     onError: error => toast.error(error.message),
   });
@@ -86,13 +88,13 @@ export function AdminToolsPage() {
     mutationFn: ({ id, status }: { id: string; status: Exclude<PhoneRequestStatus, 'pending'> }) => phoneRequestsApi.handle(id, status),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['phone-requests'] });
-      toast.success('Phone request updated');
+      toast.success(t('adminTools.phoneRequestUpdated'));
     },
     onError: error => toast.error(error.message),
   });
 
   if (rolesQuery.isLoading || statisticsQuery.isLoading || phoneQuery.isLoading) {
-    return <LoadingState label="Loading admin tools..." />;
+    return <LoadingState label={t('adminTools.loading')} />;
   }
 
   const error = rolesQuery.error ?? statisticsQuery.error ?? phoneQuery.error;
@@ -106,9 +108,9 @@ export function AdminToolsPage() {
 
   return (
     <PageLayout
-      eyebrow="Admin"
-      title="Backend tools"
-      description="Roles, permissions, statistics, and phone requests backed by admin-only endpoints."
+      eyebrow={t('nav.adminTools')}
+      title={t('adminTools.title')}
+      description={t('adminTools.description')}
     >
       <TableToolbar
         search={search}
@@ -116,42 +118,42 @@ export function AdminToolsPage() {
           setSearch(value);
           setPage(1);
         }}
-        searchPlaceholder="Search admin records"
-        resultsLabel="Server-side search"
+        searchPlaceholder={t('adminTools.searchPlaceholder')}
+        resultsLabel={t('adminTools.serverSideSearch')}
         filters={(
           <Select value={phoneStatus} onChange={event => setPhoneStatus(event.target.value as 'all' | PhoneRequestStatus)}>
-            <option value="pending">Pending phones</option>
-            <option value="approved">Approved phones</option>
-            <option value="rejected">Rejected phones</option>
-            <option value="all">Any phone status</option>
+            <option value="pending">{t('adminTools.pendingPhones')}</option>
+            <option value="approved">{t('adminTools.approvedPhones')}</option>
+            <option value="rejected">{t('adminTools.rejectedPhones')}</option>
+            <option value="all">{t('adminTools.anyPhoneStatus')}</option>
           </Select>
         )}
       />
 
       <Card>
         <div className="detail-grid">
-          <Input label="Role name" value={roleName} onChange={event => setRoleName(event.target.value)} />
-          <Textarea label="Permissions" value={permissions} onChange={event => setPermissions(event.target.value)} placeholder="One permission per line" />
+          <Input label={t('adminTools.roleName')} value={roleName} onChange={event => setRoleName(event.target.value)} />
+          <Textarea label={t('adminTools.permissions')} value={permissions} onChange={event => setPermissions(event.target.value)} placeholder={t('adminTools.permissionsPlaceholder')} />
           <Button disabled={!roleName || !permissions.trim() || createRole.isPending} onClick={() => createRole.mutate()}>
-            Create role
+            {t('adminTools.createRole')}
           </Button>
         </div>
       </Card>
 
-      <TableShell title="Roles" description="Uses `/roles`, `/roles/:name`, and role permission arrays from backend.">
+      <TableShell title={t('adminTools.roles')} description={t('adminTools.rolesDescription')}>
         <DataTable
           rows={rolesQuery.data?.items ?? []}
           getRowKey={item => item.name}
           columns={[
-            { key: 'name', header: 'Name', cell: item => item.name },
-            { key: 'permissions', header: 'Permissions', cell: item => item.permissions.join(', ') },
+            { key: 'name', header: t('users.detailName'), cell: item => item.name },
+            { key: 'permissions', header: t('adminTools.permissions'), cell: item => item.permissions.join(', ') },
             {
               key: 'actions',
-              header: 'Actions',
+              header: t('common.actions'),
               cell: item => (
                 <div className="inline-actions">
-                  <Button size="sm" variant="secondary" onClick={() => rolesApi.getOne(item.name).then(() => toast.info('Role loaded'))}>Get by name</Button>
-                  <Button size="sm" variant="danger" onClick={() => rolesApi.remove(item.name).then(() => queryClient.invalidateQueries({ queryKey: ['roles'] }))}>Delete</Button>
+                  <Button size="sm" variant="secondary" onClick={() => rolesApi.getOne(item.name).then(() => toast.info(t('adminTools.roleLoaded')))}>{t('adminTools.getByName')}</Button>
+                  <Button size="sm" variant="danger" onClick={() => rolesApi.remove(item.name).then(() => queryClient.invalidateQueries({ queryKey: ['roles'] }))}>{t('common.delete')}</Button>
                 </div>
               ),
             },
@@ -162,31 +164,31 @@ export function AdminToolsPage() {
 
       <Card>
         <div className="detail-grid">
-          <Input label="Statistic type" value={statType} onChange={event => setStatType(event.target.value)} />
-          <Input label="Value" type="number" value={statValue} onChange={event => setStatValue(Number(event.target.value))} />
-          <Textarea label="Metadata JSON" value={statMetadata} onChange={event => setStatMetadata(event.target.value)} placeholder='{"source":"manual"}' />
+          <Input label={t('adminTools.statisticType')} value={statType} onChange={event => setStatType(event.target.value)} />
+          <Input label={t('adminTools.value')} type="number" value={statValue} onChange={event => setStatValue(Number(event.target.value))} />
+          <Textarea label={t('adminTools.metadataJson')} value={statMetadata} onChange={event => setStatMetadata(event.target.value)} placeholder='{"source":"manual"}' />
           <Button disabled={!statType || createStatistic.isPending} onClick={() => createStatistic.mutate()}>
-            Create statistic
+            {t('adminTools.createStatistic')}
           </Button>
         </div>
       </Card>
 
-      <TableShell title="Statistics" description="Uses `/statistics`, `/statistics/:type`, patch and delete endpoints.">
+      <TableShell title={t('adminTools.statistics')} description={t('adminTools.statisticsDescription')}>
         <DataTable
           rows={statisticsQuery.data?.items ?? []}
           getRowKey={item => item.id}
           columns={[
-            { key: 'date', header: 'Date', cell: item => formatDate(item.date) },
-            { key: 'type', header: 'Type', cell: item => item.type },
-            { key: 'value', header: 'Value', cell: item => item.value },
-            { key: 'metadata', header: 'Metadata', cell: item => JSON.stringify(item.metadata ?? {}) },
+            { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
+            { key: 'type', header: t('adminTools.type'), cell: item => item.type },
+            { key: 'value', header: t('adminTools.value'), cell: item => item.value },
+            { key: 'metadata', header: t('adminTools.metadata'), cell: item => JSON.stringify(item.metadata ?? {}) },
             {
               key: 'actions',
-              header: 'Actions',
+              header: t('common.actions'),
               cell: item => (
                 <div className="inline-actions">
-                  <Button size="sm" variant="secondary" onClick={() => statisticsApi.update(item.id, { value: item.value }).then(() => toast.success('Statistic updated'))}>Patch</Button>
-                  <Button size="sm" variant="danger" onClick={() => statisticsApi.remove(item.id).then(() => queryClient.invalidateQueries({ queryKey: ['statistics'] }))}>Delete</Button>
+                  <Button size="sm" variant="secondary" onClick={() => statisticsApi.update(item.id, { value: item.value }).then(() => toast.success(t('adminTools.statisticUpdated')))}>{t('adminTools.patch')}</Button>
+                  <Button size="sm" variant="danger" onClick={() => statisticsApi.remove(item.id).then(() => queryClient.invalidateQueries({ queryKey: ['statistics'] }))}>{t('common.delete')}</Button>
                 </div>
               ),
             },
@@ -194,22 +196,22 @@ export function AdminToolsPage() {
         />
       </TableShell>
 
-      <TableShell title="Phone requests" description="Admin handling for pending public phone requests.">
+      <TableShell title={t('adminTools.phoneRequests')} description={t('adminTools.phoneRequestsDescription')}>
         <DataTable
           rows={phoneQuery.data?.items ?? []}
           getRowKey={item => item.id}
           columns={[
-            { key: 'name', header: 'Name', cell: item => item.name },
-            { key: 'phone', header: 'Phone', cell: item => item.phone },
+            { key: 'name', header: t('users.detailName'), cell: item => item.name },
+            { key: 'phone', header: t('profile.phone'), cell: item => item.phone },
             { key: 'telegram', header: 'Telegram', cell: item => item.telegramId },
-            { key: 'status', header: 'Status', cell: item => <Badge tone={item.status === 'approved' ? 'success' : item.status === 'rejected' ? 'danger' : 'warning'}>{item.status}</Badge> },
+            { key: 'status', header: t('common.status'), cell: item => <Badge tone={item.status === 'approved' ? 'success' : item.status === 'rejected' ? 'danger' : 'warning'}>{t(`phoneStatus.${item.status}`)}</Badge> },
             {
               key: 'actions',
-              header: 'Actions',
+              header: t('common.actions'),
               cell: item => item.status === 'pending' ? (
                 <div className="inline-actions">
-                  <Button size="sm" variant="secondary" onClick={() => handlePhone.mutate({ id: item.id, status: 'approved' })}>Approve</Button>
-                  <Button size="sm" variant="danger" onClick={() => handlePhone.mutate({ id: item.id, status: 'rejected' })}>Reject</Button>
+                  <Button size="sm" variant="secondary" onClick={() => handlePhone.mutate({ id: item.id, status: 'approved' })}>{t('adminTools.approve')}</Button>
+                  <Button size="sm" variant="danger" onClick={() => handlePhone.mutate({ id: item.id, status: 'rejected' })}>{t('adminTools.reject')}</Button>
                 </div>
               ) : null,
             },

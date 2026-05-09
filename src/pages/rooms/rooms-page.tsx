@@ -21,9 +21,11 @@ import { useAuthStore } from '../../features/auth/model/auth-store';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { useDebouncedValue } from '../../shared/hooks/use-debounced-value';
 import { useUrlState } from '../../shared/hooks/use-url-state';
+import { useI18n } from '../../shared/i18n/i18n';
 
 export function RoomsPage() {
   const user = useAuthStore(state => state.user);
+  const { t } = useI18n();
   const capabilities = getRoleCapabilities(user?.role);
   const queryClient = useQueryClient();
   const urlState = useUrlState();
@@ -77,7 +79,7 @@ export function RoomsPage() {
     ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      toast.success(editingRoom ? 'Room updated' : 'Room created');
+      toast.success(editingRoom ? t('rooms.updated') : t('rooms.created'));
       setFormOpen(false);
       setEditingRoom(null);
     },
@@ -88,14 +90,14 @@ export function RoomsPage() {
     mutationFn: (room: Room) => roomsApi.remove(room.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      toast.success('Room deleted');
+      toast.success(t('rooms.deleted'));
       setDeleteRoom(null);
     },
     onError: error => toast.error(error.message),
   });
 
   if (query.isLoading) {
-    return <LoadingState label="Loading rooms..." />;
+    return <LoadingState label={t('rooms.loading')} />;
   }
 
   if (query.error) {
@@ -107,53 +109,53 @@ export function RoomsPage() {
 
   return (
     <PageLayout
-      eyebrow="Infrastructure"
-      title="Rooms"
-      description="Rooms, type, capacity, and availability."
+      eyebrow={t('rooms.eyebrow')}
+      title={t('rooms.title')}
+      description={t('rooms.description')}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
-          <span className="subtle">Visible rooms</span>
+          <span className="subtle">{t('rooms.visibleRooms')}</span>
           <strong>{pagination?.total ?? rooms.length}</strong>
-          <span className="subtle">Loaded from the backend</span>
+          <span className="subtle">{t('rooms.loadedFromBackend')}</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">Available now</span>
+          <span className="subtle">{t('rooms.availableNow')}</span>
           <strong>{rooms.filter(room => room.isAvailable).length}</strong>
-          <span className="subtle">Marked as available</span>
+          <span className="subtle">{t('rooms.markedAvailable')}</span>
         </Card>
       </div>
       {rooms.length === 0 ? (
-        <EmptyState title="No rooms yet" description="Rooms will appear here when they are available." />
+        <EmptyState title={t('rooms.noRoomsYet')} description={t('rooms.noRoomsDescription')} />
       ) : (
         <TableShell
-          title="Room inventory"
-          description="Type, capacity, and availability."
+          title={t('rooms.inventoryTitle')}
+          description={t('rooms.inventoryDescription')}
           actions={(
             <TableToolbar
               search={search}
               onSearchChange={(value) => {
                 setSearch(value);
               }}
-              searchPlaceholder="Search rooms"
-              resultsLabel={`${pagination?.total ?? rooms.length} rooms`}
+              searchPlaceholder={t('rooms.searchPlaceholder')}
+              resultsLabel={t('rooms.resultsLabel', { count: pagination?.total ?? rooms.length })}
               activeFilters={[
-                type ? `Type: ${getRoomTypeDisplayName(type as Room['type'])}` : '',
-                availability ? `Availability: ${availability === 'true' ? 'Available' : 'Unavailable'}` : '',
+                type ? t('rooms.filterType', { type: getRoomTypeDisplayName(type as Room['type']) }) : '',
+                availability ? t('rooms.filterAvailability', { availability: availability === 'true' ? t('common.available') : t('common.unavailable') }) : '',
               ].filter(Boolean)}
               filters={(
                 <>
-                  <Select value={type} onChange={event => setType(event.target.value as '' | Room['type'])} aria-label="Room type">
-                    <option value="">All types</option>
-                    <option value="classroom">Classroom</option>
-                    <option value="lab">Lab</option>
-                    <option value="office">Office</option>
-                    <option value="meeting">Meeting</option>
+                  <Select value={type} onChange={event => setType(event.target.value as '' | Room['type'])} aria-label={t('rooms.roomType')}>
+                    <option value="">{t('rooms.allTypes')}</option>
+                    <option value="classroom">{t('roomType.classroom')}</option>
+                    <option value="lab">{t('roomType.lab')}</option>
+                    <option value="office">{t('roomType.office')}</option>
+                    <option value="meeting">{t('roomType.meeting')}</option>
                   </Select>
-                  <Select value={availability} onChange={event => setAvailability(event.target.value)} aria-label="Availability">
-                    <option value="">Any availability</option>
-                    <option value="true">Available</option>
-                    <option value="false">Unavailable</option>
+                  <Select value={availability} onChange={event => setAvailability(event.target.value)} aria-label={t('rooms.availability')}>
+                    <option value="">{t('rooms.anyAvailability')}</option>
+                    <option value="true">{t('common.available')}</option>
+                    <option value="false">{t('common.unavailable')}</option>
                   </Select>
                 </>
               )}
@@ -166,7 +168,7 @@ export function RoomsPage() {
                     setFormOpen(true);
                   }}
                 >
-                  Create room
+                  {t('rooms.createRoom')}
                 </Button>
               ) : null}
             />
@@ -177,43 +179,43 @@ export function RoomsPage() {
             columns={[
               {
                 key: 'room',
-                header: 'Room',
+                header: t('rooms.room'),
                 className: 'data-table__cell--primary',
                 cell: item => (
                   <div className="cell-stack cell-stack--primary cell-stack--relation">
                     <span className="cell-title">{item.name}</span>
-                    <span className="cell-meta">{item.description || 'No room notes provided'}</span>
+                    <span className="cell-meta">{item.description || t('rooms.noNotes')}</span>
                   </div>
                 ),
               },
               {
                 key: 'type',
-                header: 'Type',
+                header: t('rooms.type'),
                 cell: item => <Badge tone="info">{getRoomTypeDisplayName(item.type)}</Badge>,
               },
               {
                 key: 'capacity',
-                header: 'Capacity',
+                header: t('rooms.capacity'),
                 className: 'data-table__cell--relation',
                 cell: item => (
                   <div className="cell-stack cell-stack--relation">
                     <span className="cell-title">{item.capacity}</span>
-                    <span className="cell-meta">Seats available</span>
+                    <span className="cell-meta">{t('rooms.seatsAvailable')}</span>
                   </div>
                 ),
               },
               {
                 key: 'availability',
-                header: 'Availability',
+                header: t('rooms.availability'),
                 cell: item => (
                   <Badge tone={item.isAvailable ? 'success' : 'warning'}>
-                    {item.isAvailable ? 'Available' : 'Unavailable'}
+                    {item.isAvailable ? t('common.available') : t('common.unavailable')}
                   </Badge>
                 ),
               },
               ...(capabilities.rooms.manage ? [{
                 key: 'actions',
-                header: 'Actions',
+                header: t('common.actions'),
                 className: 'data-table__cell--actions',
                 cell: (item: Room) => (
                   <div className="inline-actions">
@@ -226,7 +228,7 @@ export function RoomsPage() {
                         setFormOpen(true);
                       }}
                     >
-                      Edit
+                      {t('common.edit')}
                     </Button>
                     <Button
                       type="button"
@@ -234,15 +236,15 @@ export function RoomsPage() {
                       variant="danger"
                       onClick={() => setDeleteRoom(item)}
                     >
-                      Delete
+                      {t('common.delete')}
                     </Button>
                   </div>
                 ),
               }] : []),
             ]}
             rows={rooms}
-            emptyTitle="No rooms found"
-            emptyDescription="Try refreshing the list or clearing the current view."
+            emptyTitle={t('rooms.noRoomsFound')}
+            emptyDescription={t('rooms.noRoomsFoundDescription')}
           />
           <Pagination
             page={pagination?.page ?? page}
@@ -265,9 +267,9 @@ export function RoomsPage() {
       />
       <ConfirmModal
         open={!!deleteRoom}
-        title="Delete room?"
-        description={deleteRoom ? `${deleteRoom.name} will be removed from room inventory.` : ''}
-        confirmLabel="Delete room"
+        title={t('rooms.deleteRoomTitle')}
+        description={deleteRoom ? t('rooms.deleteRoomDescription', { room: deleteRoom.name }) : ''}
+        confirmLabel={t('rooms.deleteRoomConfirm')}
         tone="danger"
         loading={deleteMutation.isPending}
         onClose={() => setDeleteRoom(null)}

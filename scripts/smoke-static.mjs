@@ -33,6 +33,12 @@ const themeProvider = read('src/shared/theme/theme.tsx');
 const languageGate = read('src/shared/i18n/language-preference.tsx');
 const topbar = read('src/widgets/app-shell/topbar.tsx');
 const indexHtml = read('index.html');
+const dashboardPage = read('src/pages/dashboard/dashboard-page.tsx');
+const usersPage = read('src/pages/users/users-page.tsx');
+const roomsPage = read('src/pages/rooms/rooms-page.tsx');
+const paymentsPage = read('src/pages/payments/payments-page.tsx');
+const schedulePage = read('src/pages/schedule/schedule-page.tsx');
+const adminToolsPage = read('src/pages/admin-tools/admin-tools-page.tsx');
 
 check('admin-like includes panda', navigation.includes("export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda']"), 'adminLikeRoles must include panda');
 check('payment managers include panda', navigation.includes("export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda']"), 'paymentsManagerRoles must include panda');
@@ -69,7 +75,7 @@ check('http avoids custom request-id header for production CORS compatibility', 
 check('favicon is declared', indexHtml.includes('rel="icon"') && indexHtml.includes('/favicon.svg'), 'index.html must declare favicon');
 
 check('theme tokens use requested light background', css.includes('--color-bg: #f8fafc'), 'light theme must define requested background token');
-check('theme tokens use requested dark background', css.includes("--color-bg: #020617"), 'dark theme must define requested background token');
+check('theme tokens use requested dark background', css.includes("--color-bg: #0B1220"), 'dark theme must define requested background token');
 check('theme uses data-theme dark selector', css.includes(":root[data-theme='dark']"), 'dark theme must apply globally through data-theme');
 check('theme persists to localStorage', themeProvider.includes("window.localStorage.setItem(themeStorageKey, theme)"), 'theme selection must persist');
 check('default theme is light', themeProvider.includes("return stored === 'dark' ? 'dark' : 'light'"), 'default theme must be light');
@@ -84,6 +90,108 @@ check('topbar language switcher exists', topbar.includes('setLanguage') && topba
 check('topbar theme switcher exists', topbar.includes('setTheme') && topbar.includes('theme.dark'), 'topbar must include theme switcher');
 check('payment status labels translated', i18n.includes('paymentStatus.pending') && i18n.includes('paymentStatus.confirmed') && i18n.includes('paymentStatus.cancelled'), 'payment status display labels must be translated');
 check('role labels translated', i18n.includes('roles.owner') && i18n.includes('roles.teacher') && i18n.includes('roles.student') && i18n.includes('roles.panda'), 'role display labels must be translated');
+
+const forbiddenRussianEnglishLabels = [
+  'Users',
+  'Courses',
+  'Groups',
+  'Schedule',
+  'Payments',
+  'Profile',
+  'Admin',
+  'Today',
+  'Overview',
+  'Search',
+  'All roles',
+  'Name A-Z',
+  'Actions',
+  'View',
+  'Edit',
+  'Delete',
+  'User directory',
+  'Roles, status, and contact details',
+  'Telegram not linked',
+  'No contact details yet',
+  'All accounts',
+  'All records',
+  'Current role',
+];
+
+const ruBlock = i18n.slice(i18n.indexOf('  ru: {'), i18n.indexOf('  uz: {'));
+for (const label of forbiddenRussianEnglishLabels) {
+  check(
+    `ru visible label translated: ${label}`,
+    !ruBlock.includes(`: '${label}'`) && !ruBlock.includes(`: "${label}"`),
+    `Russian translations must not expose English label "${label}"`,
+  );
+}
+
+const visibleUiSources = [
+  dashboardPage,
+  usersPage,
+  roomsPage,
+  paymentsPage,
+  schedulePage,
+  adminToolsPage,
+  topbar,
+].join('\n');
+
+const rawVisibleEnglishLabels = [
+  '"Users"',
+  '"Courses"',
+  '"Groups"',
+  '"Schedule"',
+  '"Payments"',
+  '"Profile"',
+  '"Admin"',
+  '"Today"',
+  '"Overview"',
+  '"Search"',
+  '"All roles"',
+  '"Name A-Z"',
+  '"Actions"',
+  '"View"',
+  '"Edit"',
+  '"Delete"',
+  '"User directory"',
+  '"Roles, status, and contact details"',
+  '"Telegram not linked"',
+  '"No contact details yet"',
+  '"All accounts"',
+  '"All records"',
+  '"Current role"',
+  "'Users'",
+  "'Courses'",
+  "'Groups'",
+  "'Schedule'",
+  "'Payments'",
+  "'Profile'",
+  "'Admin'",
+  "'Today'",
+  "'Overview'",
+  "'Search'",
+  "'All roles'",
+  "'Name A-Z'",
+  "'Actions'",
+  "'View'",
+  "'Edit'",
+  "'Delete'",
+  "'User directory'",
+  "'Roles, status, and contact details'",
+  "'Telegram not linked'",
+  "'No contact details yet'",
+  "'All accounts'",
+  "'All records'",
+  "'Current role'",
+];
+
+for (const literal of rawVisibleEnglishLabels) {
+  check(
+    `no raw visible English label ${literal}`,
+    !visibleUiSources.includes(literal),
+    `Use translation helpers instead of raw visible label ${literal}`,
+  );
+}
 
 mkdirSync(new URL('../reports', import.meta.url), { recursive: true });
 const report = {
