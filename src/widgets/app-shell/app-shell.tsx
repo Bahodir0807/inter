@@ -1,11 +1,12 @@
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 import { cn } from '../../shared/lib/cn';
 import { useI18n } from '../../shared/i18n/i18n';
 
-export function AppShell({ children }: PropsWithChildren) {
+export function AppShell() {
   const user = useAuthStore(state => state.user);
   const { t } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -53,7 +54,9 @@ export function AppShell({ children }: PropsWithChildren) {
       <Sidebar role={user.role} open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
       <div className="app-shell__main">
         <Topbar open={sidebarOpen} onMenuToggle={() => setSidebarOpen(current => !current)} />
-        <main className="app-shell__content">{children}</main>
+        <main className="app-shell__content">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

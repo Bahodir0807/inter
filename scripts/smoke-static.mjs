@@ -32,6 +32,10 @@ const i18nProvider = read('src/shared/i18n/i18n.tsx');
 const themeProvider = read('src/shared/theme/theme.tsx');
 const languageGate = read('src/shared/i18n/language-preference.tsx');
 const topbar = read('src/widgets/app-shell/topbar.tsx');
+const appRouter = read('src/app/router/app-router.tsx');
+const appShell = read('src/widgets/app-shell/app-shell.tsx');
+const protectedRoute = read('src/features/auth/ui/protected-route.tsx');
+const roleGate = read('src/features/auth/ui/role-gate.tsx');
 const indexHtml = read('index.html');
 const dashboardPage = read('src/pages/dashboard/dashboard-page.tsx');
 const usersPage = read('src/pages/users/users-page.tsx');
@@ -90,6 +94,12 @@ check('topbar language switcher exists', topbar.includes('setLanguage') && topba
 check('topbar theme switcher exists', topbar.includes('setTheme') && topbar.includes('theme.dark'), 'topbar must include theme switcher');
 check('payment status labels translated', i18n.includes('paymentStatus.pending') && i18n.includes('paymentStatus.confirmed') && i18n.includes('paymentStatus.cancelled'), 'payment status display labels must be translated');
 check('role labels translated', i18n.includes('roles.owner') && i18n.includes('roles.teacher') && i18n.includes('roles.student') && i18n.includes('roles.panda'), 'role display labels must be translated');
+
+check('app shell is nested route layout', appRouter.includes('path="/app" element={<AppShell />}') && appShell.includes('<Outlet />'), 'AppShell must be a persistent nested route layout that renders Outlet');
+check('app shell does not own nested Routes', !appShell.includes('<Routes') && !appRouter.includes('function AppLayout()'), 'AppShell must not recreate page Routes internally');
+check('authenticated app routes are protected before shell', appRouter.includes('<Route element={<ProtectedRoute roles={[\'student\', \'teacher\', \'admin\', \'owner\', \'panda\']} />}>') && appRouter.indexOf('<Route element={<ProtectedRoute') < appRouter.indexOf('path="/app" element={<AppShell />}'), 'ProtectedRoute must wrap authenticated AppShell routes');
+check('app route permissions still use RoleGate', appRouter.includes('<RoleGate roles={route.roles}>') && roleGate.includes('!roles.includes(user.role)') && protectedRoute.includes('return <Outlet />'), 'RoleGate and ProtectedRoute must preserve role access through nested outlets');
+check('sidebar and topbar mounted once in shell', (appShell.match(/<Sidebar/g) ?? []).length === 1 && (appShell.match(/<Topbar/g) ?? []).length === 1 && appShell.indexOf('<Sidebar') < appShell.indexOf('<Outlet />'), 'Sidebar and Topbar must be mounted once outside route content');
 
 const forbiddenRussianEnglishLabels = [
   'Users',

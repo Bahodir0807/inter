@@ -13,36 +13,29 @@ function RootRedirect() {
   return <Navigate to={user ? '/app/dashboard' : '/login'} replace />;
 }
 
-function AppLayout() {
-  return (
-    <AppShell>
-      <Routes>
-        {appRoutes.map(route => (
-          <Route
-            key={route.path}
-            path={route.path.replace('/app/', '')}
-            element={(
-              <RoleGate roles={route.roles}>
-                <Suspense fallback={<LoadingState label="Loading page..." />}>
-                  {route.element}
-                </Suspense>
-              </RoleGate>
-            )}
-          />
-        ))}
-        <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
-      </Routes>
-    </AppShell>
-  );
-}
-
 export function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute roles={['student', 'teacher', 'admin', 'owner', 'panda']} />}>
-        <Route path="/app/*" element={<AppLayout />} />
+        <Route path="/app" element={<AppShell />}>
+          <Route index element={<Navigate to="/app/dashboard" replace />} />
+          {appRoutes.map(route => (
+            <Route
+              key={route.path}
+              path={route.path.replace('/app/', '')}
+              element={(
+                <RoleGate roles={route.roles}>
+                  <Suspense fallback={<LoadingState label="Loading page..." />}>
+                    {route.element}
+                  </Suspense>
+                </RoleGate>
+              )}
+            />
+          ))}
+          <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
