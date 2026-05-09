@@ -5,6 +5,7 @@ import { coursesApi } from '../../entities/course/api';
 import { usersApi } from '../../entities/user/api';
 import { adminLikeRoles } from '../../app/router/navigation';
 import { useAuthStore } from '../../features/auth/model/auth-store';
+import { useI18n } from '../../shared/i18n/i18n';
 import { PageLayout } from '../../widgets/page/page-layout';
 import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
@@ -28,6 +29,7 @@ const pageSize = 8;
 export function GroupsPage() {
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore(state => state.user);
+  const { t } = useI18n();
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
   const canManage = isAdminLike;
   const isTeacher = sessionUser?.role === 'teacher';
@@ -63,7 +65,7 @@ export function GroupsPage() {
     mutationFn: (payload: GroupFormValues) => groupsApi.create(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['groups'] });
-      toast.success('Group created');
+      toast.success(t('common.saved'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -73,7 +75,7 @@ export function GroupsPage() {
     mutationFn: ({ id, payload }: { id: string; payload: GroupFormValues }) => groupsApi.update(id, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['groups'] });
-      toast.success('Group updated');
+      toast.success(t('common.updated'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -83,7 +85,7 @@ export function GroupsPage() {
     mutationFn: (id: string) => groupsApi.remove(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['groups'] });
-      toast.success('Group deleted');
+      toast.success(t('common.deleted'));
     },
     onError: error => toast.error(error.message),
   });
@@ -144,12 +146,12 @@ export function GroupsPage() {
     teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
 
   const toolbarFilters = [
-    ...(isAdminLike && teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
-    ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
+    ...(isAdminLike && teacherFilter !== 'all' ? [t('group.filterTeacherValue', { teacher: selectedTeacherLabel })] : []),
+    ...(sortDirection === 'desc' ? [t('common.sortOrderDesc')] : []),
   ];
 
   if (groupsQuery.isLoading) {
-    return <LoadingState label="Loading groups..." />;
+    return <LoadingState label={t('common.loading')} />;
   }
 
   if (groupsQuery.error) {
@@ -162,7 +164,7 @@ export function GroupsPage() {
   const columns: Column<Group>[] = [
     {
       key: 'group',
-      header: 'Group',
+      header: t('group.groupLabel'),
       className: 'data-table__cell--primary',
       cell: item => (
         <div className="cell-stack cell-stack--primary cell-stack--relation">
@@ -173,48 +175,48 @@ export function GroupsPage() {
     },
     {
       key: 'teacher',
-      header: 'Teacher',
+      header: t('group.teacherLabel'),
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
           <span className="cell-title">{getUserDisplayName(item.teacher)}</span>
-          <span className="cell-meta">{isAdminLike ? 'Responsible teacher' : 'Assigned to this roster'}</span>
+          <span className="cell-meta">{isAdminLike ? t('group.responsibleTeacher') : t('group.assignedRoster')}</span>
         </div>
       ),
     },
     {
       key: 'students',
-      header: 'Students',
+      header: t('group.studentsLabelHeader'),
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
-          <span className="cell-title">{item.students.length} students</span>
+          <span className="cell-title">{t('group.studentsCount', { count: item.students.length })}</span>
           <span className="cell-meta">{getUserListSummary(item.students)}</span>
         </div>
       ),
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('group.statusLabel'),
       cell: item => (
         <Badge tone={item.students.length > 0 ? 'success' : 'warning'}>
-          {item.students.length > 0 ? 'Active roster' : 'No students yet'}
+          {item.students.length > 0 ? t('group.activeRoster') : t('group.noStudentsYet')}
         </Badge>
       ),
     },
     ...(canManage ? [{
       key: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       className: 'data-table__cell--actions',
       headClassName: 'data-table__head--actions',
       cell: (item: Group) => (
         <div className="row-actions">
           <Button size="sm" variant="secondary" onClick={() => { setSelectedGroup(item); setFormOpen(true); }}>
-            Edit
+            {t('common.edit')}
           </Button>
           {isAdminLike ? (
             <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-              Delete
+              {t('common.delete')}
             </Button>
           ) : null}
         </div>
@@ -224,36 +226,36 @@ export function GroupsPage() {
 
   return (
     <PageLayout
-      eyebrow="Cohorts"
-      title="Groups"
-      description={isAdminLike ? 'Groups, teachers, and student rosters.' : 'Your groups and student rosters.'}
-      actions={canManage ? <Button onClick={() => { setSelectedGroup(null); setFormOpen(true); }}>New group</Button> : undefined}
+      eyebrow={t('group.eyebrow')}
+      title={t('group.title')}
+      description={isAdminLike ? t('group.description.admin') : t('group.description.student')}
+      actions={canManage ? <Button onClick={() => { setSelectedGroup(null); setFormOpen(true); }}>{t('group.newGroup')}</Button> : undefined}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
-          <span className="subtle">Visible groups</span>
+          <span className="subtle">{t('group.visibleGroups')}</span>
           <strong>{filteredGroups.length}</strong>
-          <span className="subtle">After filters and search</span>
+          <span className="subtle">{t('group.afterFilters')}</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">Linked students</span>
+          <span className="subtle">{t('group.linkedStudents')}</span>
           <strong>{totalLinkedStudents}</strong>
-          <span className="subtle">Across visible groups</span>
+          <span className="subtle">{t('group.linkedStudentsMeta')}</span>
         </Card>
       </div>
       {visibleGroups.length === 0 ? (
         <EmptyState
-          title={isTeacher ? 'No groups assigned' : 'No groups yet'}
+          title={isTeacher ? t('group.noGroupsAssigned') : t('group.noGroupsYet')}
           description={
             isAdminLike
-              ? 'Create the first group to start working with cohorts.'
-              : 'Groups assigned to you will appear here.'
+              ? t('group.noGroupsDescription.admin')
+              : t('group.noGroupsDescription.student')
           }
         />
       ) : (
         <TableShell
-          title="Group registry"
-          description={isAdminLike ? 'Group, course, teacher, and students.' : 'Group, course, and student roster.'}
+          title={t('group.registryTitle')}
+          description={isAdminLike ? t('group.registryDescription.admin') : t('group.registryDescription.student')}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -262,21 +264,21 @@ export function GroupsPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder={isAdminLike ? 'Search by group, course, or teacher' : 'Search by group or course'}
-            resultsLabel={`${filteredGroups.length} result${filteredGroups.length === 1 ? '' : 's'}`}
+            searchPlaceholder={isAdminLike ? t('common.searchByCourseRoomTeacherGroup') : t('common.searchByCourseRoomTeacher')}
+            resultsLabel={t('common.resultsLabel', { count: filteredGroups.length })}
             activeFilters={toolbarFilters}
             filters={
               <>
                 {isAdminLike ? (
                   <Select
-                    aria-label="Filter groups by teacher"
+                    aria-label={t('group.filterTeacherLabel')}
                     value={teacherFilter}
                     onChange={event => {
                       setTeacherFilter(event.target.value);
                       setPage(1);
                     }}
                   >
-                    <option value="all">All teachers</option>
+                    <option value="all">{t('common.allTeachers')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher.id} value={teacher.id}>
                         {getUserDisplayName(teacher)}
@@ -285,23 +287,23 @@ export function GroupsPage() {
                   </Select>
                 ) : null}
                 <Select
-                  aria-label="Sort groups"
+                  aria-label={t('group.sortLabel')}
                   value={sortDirection}
                   onChange={event => {
                     setSortDirection(event.target.value as SortDirection);
                     setPage(1);
                   }}
                 >
-                  <option value="asc">Name A-Z</option>
-                  <option value="desc">Name Z-A</option>
+                  <option value="asc">{t('common.sortNameAsc')}</option>
+                  <option value="desc">{t('common.sortNameDesc')}</option>
                 </Select>
               </>
             }
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No groups found"
-            emptyDescription={isAdminLike ? 'Try another search or clear the teacher filter.' : 'Try another search.'}
+            emptyTitle={t('group.emptyTitle')}
+            emptyDescription={isAdminLike ? t('group.emptyDescription.manage') : t('group.emptyDescription.student')}
             columns={columns}
             rows={pagedGroups}
           />
@@ -329,14 +331,18 @@ export function GroupsPage() {
       />
       <ConfirmModal
         open={!!deleteCandidate}
-        title="Delete group?"
+        title={t('group.deleteGroupTitle')}
         description={
           deleteCandidate
-            ? `This will permanently remove group "${deleteCandidate.name}" from the cohort registry. Course: ${getCourseDisplayName(deleteCandidate.course)}. Teacher: ${getUserDisplayName(deleteCandidate.teacher)}. This action cannot be undone.`
+            ? t('group.deleteGroupDescription', {
+                group: deleteCandidate.name,
+                course: getCourseDisplayName(deleteCandidate.course),
+                teacher: getUserDisplayName(deleteCandidate.teacher),
+              })
             : ''
         }
-        confirmLabel="Delete group"
-        cancelLabel="Keep group"
+        confirmLabel={t('group.deleteGroupConfirm')}
+        cancelLabel={t('group.keepGroup')}
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

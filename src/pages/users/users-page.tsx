@@ -22,12 +22,14 @@ import { toast } from '../../shared/ui/feedback/toaster';
 import { UserDetailModal } from './user-detail-modal';
 import { UserFormInput, UserFormModal } from './user-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const pageSize = 8;
 
 export function UsersPage() {
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore(state => state.user);
+  const { t } = useI18n();
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
 
   const [search, setSearch] = useState('');
@@ -50,7 +52,7 @@ export function UsersPage() {
     mutationFn: (payload: UserFormValues & { password: string }) => usersApi.create(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User created');
+      toast.success(t('common.saved'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -75,7 +77,7 @@ export function UsersPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User updated');
+      toast.success(t('common.updated'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -85,7 +87,7 @@ export function UsersPage() {
     mutationFn: (id: string) => usersApi.remove(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User deleted');
+      toast.success(t('common.deleted'));
     },
     onError: error => toast.error(error.message),
   });
@@ -116,13 +118,13 @@ export function UsersPage() {
 
   const toolbarFilters = [
     ...(isAdminLike && roleFilter !== 'all'
-      ? [`Role: ${roleOptions.find(option => option.value === roleFilter)?.label ?? roleFilter}`]
+      ? [t('users.filterRole', { role: roleOptions.find(option => option.value === roleFilter)?.label ?? roleFilter })]
       : []),
-    ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
+    ...(sortDirection === 'desc' ? [t('users.sortOrderDesc')] : []),
   ];
 
   if (query.isLoading) {
-    return <LoadingState label="Loading users..." />;
+    return <LoadingState label={t('common.loading')} />;
   }
 
   if (query.error) {
@@ -134,13 +136,13 @@ export function UsersPage() {
   const columns: Column<AppUser>[] = [
     {
       key: 'user',
-      header: 'User',
+      header: t('users.userLabel'),
       className: 'data-table__cell--primary',
       cell: item => (
         <div className="cell-stack cell-stack--primary cell-stack--relation">
           <span className="cell-title">{getUserDisplayName(item)}</span>
           {isAdminLike ? <span className="cell-meta cell-meta--strong">@{item.username}</span> : null}
-          <span className="cell-meta">{item.phoneNumber || item.email || 'No contact details yet'}</span>
+          <span className="cell-meta">{item.phoneNumber || item.email || t('users.noContactDetailsLabel')}</span>
         </div>
       ),
     },
@@ -148,7 +150,7 @@ export function UsersPage() {
       ? [
           {
             key: 'access',
-            header: 'Access',
+            header: t('users.accessLabel'),
             className: 'data-table__cell--relation',
             cell: (item: AppUser) => (
               <div className="cell-stack cell-stack--relation">
@@ -159,7 +161,7 @@ export function UsersPage() {
                   </Badge>
                 </div>
                 <span className="cell-meta">
-                  {item.telegramId ? `Telegram linked: ${item.telegramId}` : 'Telegram not linked'}
+                  {item.telegramId ? `${t('users.telegramLinked')}: ${item.telegramId}` : t('users.telegramNotLinked')}
                 </span>
               </div>
             ),
@@ -168,19 +170,19 @@ export function UsersPage() {
       : [
           {
             key: 'contact',
-            header: 'Contact',
+            header: t('users.contactLabel'),
             className: 'data-table__cell--relation',
             cell: (item: AppUser) => (
               <div className="cell-stack cell-stack--relation">
-                <span className="cell-title">{item.email || item.phoneNumber || 'No contact details yet'}</span>
+                <span className="cell-title">{item.email || item.phoneNumber || t('users.noContactDetailsLabel')}</span>
                 <span className="cell-meta">
                   {item.email && item.phoneNumber
                     ? item.phoneNumber
                     : item.email
-                      ? 'Email on file'
+                      ? t('users.emailOnFile')
                       : item.phoneNumber
-                        ? 'Phone on file'
-                        : 'No email or phone yet'}
+                        ? t('users.phoneOnFile')
+                        : t('users.noEmailOrPhone')}
                 </span>
               </div>
             ),
@@ -188,21 +190,21 @@ export function UsersPage() {
         ]),
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       className: 'data-table__cell--actions',
       headClassName: 'data-table__head--actions',
       cell: item => (
         <div className="row-actions">
           <Button size="sm" variant="ghost" onClick={() => openDetail(item)}>
-            View
+            {t('users.viewButton')}
           </Button>
           {isAdminLike ? (
             <>
               <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
-                Edit
+                {t('users.editButton')}
               </Button>
               <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                Delete
+                {t('users.deleteButton')}
               </Button>
             </>
           ) : null}
@@ -230,41 +232,41 @@ export function UsersPage() {
 
   return (
     <PageLayout
-      eyebrow="People"
-      title="Users"
+      eyebrow={t('users.eyebrow')}
+      title={t('users.title')}
       description={
         isAdminLike
-          ? 'Accounts, roles, and contact details.'
-          : 'Students and their contact details.'
+          ? t('users.description.admin')
+          : t('users.description.student')
       }
-      actions={isAdminLike ? <Button onClick={openCreate}>New user</Button> : undefined}
+      actions={isAdminLike ? <Button onClick={openCreate}>{t('users.newUser')}</Button> : undefined}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
-          <span className="subtle">Visible users</span>
+          <span className="subtle">{t('users.visibleUsers')}</span>
           <strong>{filteredUsers.length}</strong>
-          <span className="subtle">After filters and search</span>
+          <span className="subtle">{t('users.afterFilters')}</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">{isAdminLike ? 'Active accounts' : 'With contact info'}</span>
+          <span className="subtle">{isAdminLike ? t('users.activeAccounts') : t('users.withContactInfo')}</span>
           <strong>{isAdminLike ? users.filter(item => item.isActive).length : usersWithContact}</strong>
-          <span className="subtle">{isAdminLike ? 'Marked as active' : 'Students with phone or email'}</span>
+          <span className="subtle">{isAdminLike ? t('users.activeAccountsMeta') : t('users.withContactInfoMeta')}</span>
         </Card>
       </div>
 
       {users.length === 0 ? (
         <EmptyState
-          title={isAdminLike ? 'No users yet' : 'No students yet'}
+          title={isAdminLike ? t('users.noUsersYet') : t('users.noStudentsYet')}
           description={
             isAdminLike
-              ? 'User records will appear here when they are available.'
-              : 'Student records will appear here when they are available.'
+              ? t('users.noUsersFoundDescription.admin')
+              : t('users.noUsersFoundDescription.student')
           }
         />
       ) : (
         <TableShell
-          title="User directory"
-          description={isAdminLike ? 'Roles, status, and contact details.' : 'Student names and contact details.'}
+          title={t('users.userDirectory')}
+          description={isAdminLike ? t('users.directoryDescription.admin') : t('users.directoryDescription.student')}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -273,21 +275,21 @@ export function UsersPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder={isAdminLike ? 'Search by name, username, email, or phone' : 'Search by name, email, or phone'}
-            resultsLabel={`${filteredUsers.length} result${filteredUsers.length === 1 ? '' : 's'}`}
+            searchPlaceholder={isAdminLike ? t('users.searchPlaceholder.admin') : t('users.searchPlaceholder.student')}
+            resultsLabel={t('common.resultsLabel', { count: filteredUsers.length })}
             activeFilters={toolbarFilters}
             filters={
               <>
                 {isAdminLike ? (
                   <Select
-                    aria-label="Filter users by role"
+                    aria-label={t('users.filterByRoleLabel')}
                     value={roleFilter}
                     onChange={event => {
                       setRoleFilter(event.target.value as 'all' | Role);
                       setPage(1);
                     }}
                   >
-                    <option value="all">All roles</option>
+                    <option value="all">{t('users.allRoles')}</option>
                     {roleOptions.map(option => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -296,23 +298,23 @@ export function UsersPage() {
                   </Select>
                 ) : null}
                 <Select
-                  aria-label="Sort users"
+                  aria-label={t('users.sortUsersLabel')}
                   value={sortDirection}
                   onChange={event => {
                     setSortDirection(event.target.value as SortDirection);
                     setPage(1);
                   }}
                 >
-                  <option value="asc">Name A-Z</option>
-                  <option value="desc">Name Z-A</option>
+                  <option value="asc">{t('users.sortNameAsc')}</option>
+                  <option value="desc">{t('users.sortNameDesc')}</option>
                 </Select>
               </>
             }
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No users found"
-            emptyDescription={isAdminLike ? 'Try another search or clear the role filter.' : 'Try another search.'}
+            emptyTitle={isAdminLike ? t('users.noUsersFound') : t('users.noStudentsFound')}
+            emptyDescription={isAdminLike ? t('users.noUsersFoundDescription.admin') : t('users.noUsersFoundDescription.student')}
             columns={columns}
             rows={pagedUsers}
           />
@@ -354,14 +356,14 @@ export function UsersPage() {
       />
       <ConfirmModal
         open={!!deleteCandidate}
-        title="Delete user?"
+        title={t('users.deleteUserTitle')}
         description={
           deleteCandidate
-            ? `This will permanently remove ${getUserDisplayName(deleteCandidate)} (@${deleteCandidate.username}, ${getRoleDisplayName(deleteCandidate.role)}) from the CRM. This action cannot be undone.`
+            ? `${t('users.deleteUserDescription')} ${getUserDisplayName(deleteCandidate)} (@${deleteCandidate.username}, ${getRoleDisplayName(deleteCandidate.role)})`
             : ''
         }
-        confirmLabel="Delete user"
-        cancelLabel="Keep user"
+        confirmLabel={t('users.deleteUserConfirm')}
+        cancelLabel={t('common.cancel')}
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

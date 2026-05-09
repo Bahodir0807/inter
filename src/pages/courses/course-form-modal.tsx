@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Course, CourseFormValues } from '../../entities/course/api';
 import { AppUser } from '../../shared/types/auth';
 import { ModalShell } from '../../shared/ui/overlay/modal-shell';
+import { useI18n } from '../../shared/i18n/i18n';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
 import { Input } from '../../shared/ui/forms/input';
 import { Textarea } from '../../shared/ui/forms/textarea';
@@ -69,6 +70,8 @@ export function CourseFormModal({
     },
   });
 
+  const { t } = useI18n();
+
   const closeGuard = useUnsavedChangesGuard({
     open,
     isDirty,
@@ -116,40 +119,40 @@ export function CourseFormModal({
         closeOnBackdrop={!loading}
         closeOnEscape={!loading}
         closeDisabled={loading}
-        title={course ? 'Edit course' : 'Create course'}
-        description="Set the offer details, assign the teacher, and manage enrolled students in one place."
+        title={course ? t('course.editTitle') : t('course.createTitle')}
+        description={t('course.formDescription')}
       >
         <form className="modal-form" onSubmit={handleSubmit(async values => onSubmit(values))}>
           <FormSection
-            title="Core details"
-            description="Define the course offer first. This is the name and context people will see across tables, schedules, and payments."
+            title={t('course.formSection.coreTitle')}
+            description={t('course.formSection.coreDescription')}
           >
             <Input
-              label="Course name"
-              hint="Keep it clear enough to recognize in tables and dropdowns."
-              placeholder="For example: IELTS Intensive"
+              label={t('course.field.name')}
+              hint={t('course.field.nameHint')}
+              placeholder={t('course.field.namePlaceholder')}
               error={errors.name?.message}
               fieldClassName="ui-field--primary"
               {...register('name')}
             />
             <Textarea
-              label="Description"
-              hint="Useful for level, format, or a short teaching note."
-              placeholder="For example: Evening group, upper-intermediate, 3 sessions per week"
+              label={t('course.field.description')}
+              hint={t('course.field.descriptionHint')}
+              placeholder={t('course.field.descriptionPlaceholder')}
               error={errors.description?.message}
               {...register('description')}
             />
           </FormSection>
           <FormSection
-            title="Delivery"
-            description="Set the commercial and ownership details so the course is ready to assign in operations."
+            title={t('course.formSection.deliveryTitle')}
+            description={t('course.formSection.deliveryDescription')}
           >
             <div className="detail-grid">
               <Input
-                label="Price"
-                hint="Enter the full amount as a number."
+                label={t('course.field.price')}
+                hint={t('course.field.priceHint')}
                 type="number"
-                placeholder="1200000"
+                placeholder={t('course.field.pricePlaceholder')}
                 error={errors.price?.message}
                 {...register('price')}
               />
@@ -157,20 +160,20 @@ export function CourseFormModal({
                 <>
                   <input type="hidden" {...register('teacherId')} />
                   <Input
-                    label="Teacher"
-                    hint="This course stays assigned to your account."
-                    value={teacherLabel || 'Current teacher'}
+                    label={t('course.field.teacher')}
+                    hint={t('course.field.teacherHintLocked')}
+                    value={teacherLabel || t('course.field.currentTeacher')}
                     readOnly
                   />
                 </>
               ) : (
                 <Select
-                  label="Teacher"
-                  hint="Pre-filled when only one teacher is available or a default owner is known."
+                  label={t('course.field.teacher')}
+                  hint={t('course.field.teacherHint')}
                   error={errors.teacherId?.message}
                   {...register('teacherId')}
                 >
-                  <option value="">No teacher assigned</option>
+                  <option value="">{t('course.noTeacherAssigned')}</option>
                   {teachers.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
                       {getUserDisplayName(teacher)}
@@ -181,12 +184,12 @@ export function CourseFormModal({
             </div>
           </FormSection>
           <FormSection
-            title="Enrollment"
-            description="Add students now if the roster is already known, or leave this empty and return later."
+            title={t('course.formSection.enrollmentTitle')}
+            description={t('course.formSection.enrollmentDescription')}
           >
             <CheckboxGroup
-              label={`Students${selectedStudents.length ? ` (${selectedStudents.length})` : ''}`}
-              hint="Selected students will immediately appear as enrolled in the course."
+              label={t('course.field.studentsLabel', { count: selectedStudents.length })}
+              hint={t('course.field.studentsHint')}
               options={students.map(student => ({
                 value: student.id,
                 label: getUserDisplayName(student),
@@ -198,14 +201,14 @@ export function CourseFormModal({
           </FormSection>
           <div className="form-actions">
             <span className="subtle">
-              {isDirty ? 'Changes are ready to save.' : course ? 'Update pricing, ownership, or roster when needed.' : 'Start with the course identity, then add delivery details.'}
+              {isDirty ? t('common.changesReadyToSave') : course ? t('course.formHint.edit') : t('course.formHint.create')}
             </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || (!!course && !isDirty)}>
-                {loading ? 'Saving...' : course ? 'Save changes' : 'Create course'}
+                {loading ? t('common.saving') : course ? t('common.saveChanges') : t('common.create')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -213,10 +216,10 @@ export function CourseFormModal({
       </ModalShell>
       <ConfirmModal
         open={closeGuard.confirmOpen}
-        title="Discard changes?"
-        description="You have unsaved changes in this form. Discard them and close the modal?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t('common.discardChangesTitle')}
+        description={t('common.discardChangesDescription')}
+        confirmLabel={t('common.discardChangesConfirm')}
+        cancelLabel={t('common.keepEditing')}
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { coursesApi, Course, CourseFormValues } from '../../entities/course/api';
 import { usersApi } from '../../entities/user/api';
+import { useI18n } from '../../shared/i18n/i18n';
 import { adminLikeRoles } from '../../app/router/navigation';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { PageLayout } from '../../widgets/page/page-layout';
@@ -28,6 +29,7 @@ const pageSize = 8;
 export function CoursesPage() {
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore(state => state.user);
+  const { t } = useI18n();
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
   const canManage = isAdminLike;
   const isTeacher = sessionUser?.role === 'teacher';
@@ -57,7 +59,7 @@ export function CoursesPage() {
     mutationFn: (payload: CourseFormValues) => coursesApi.create(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success('Course created');
+      toast.success(t('common.saved'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -67,7 +69,7 @@ export function CoursesPage() {
     mutationFn: ({ id, payload }: { id: string; payload: CourseFormValues }) => coursesApi.update(id, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success('Course updated');
+      toast.success(t('common.updated'));
       setFormOpen(false);
     },
     onError: error => toast.error(error.message),
@@ -77,7 +79,7 @@ export function CoursesPage() {
     mutationFn: (id: string) => coursesApi.remove(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success('Course deleted');
+      toast.success(t('common.deleted'));
     },
     onError: error => toast.error(error.message),
   });
@@ -130,12 +132,12 @@ export function CoursesPage() {
     teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
 
   const toolbarFilters = [
-    ...(isAdminLike && teacherFilter !== 'all' ? [`Teacher: ${selectedTeacherLabel}`] : []),
-    ...(sortDirection === 'desc' ? ['Order: Name Z-A'] : []),
+    ...(isAdminLike && teacherFilter !== 'all' ? [t('course.filterTeacherValue', { teacher: selectedTeacherLabel })] : []),
+    ...(sortDirection === 'desc' ? [t('common.sortOrderDesc')] : []),
   ];
 
   if (coursesQuery.isLoading) {
-    return <LoadingState label="Loading courses..." />;
+    return <LoadingState label={t('common.loading')} />;
   }
 
   if (coursesQuery.error) {
@@ -149,25 +151,25 @@ export function CoursesPage() {
   const columns: Column<Course>[] = [
     {
       key: 'course',
-      header: 'Course',
+      header: t('course.courseLabel'),
       className: 'data-table__cell--primary',
       cell: item => (
         <div className="cell-stack cell-stack--primary cell-stack--relation">
           <span className="cell-title">{item.name}</span>
-          <span className="cell-meta">{item.description || 'No description provided yet'}</span>
+          <span className="cell-meta">{item.description || t('course.noDescription')}</span>
         </div>
       ),
     },
     {
       key: 'delivery',
-      header: 'Delivery',
+      header: t('course.deliveryLabel'),
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
           <span className="cell-title">
-            {item.teacherId ? getUserDisplayName(item.teacherId) : 'No teacher assigned'}
+            {item.teacherId ? getUserDisplayName(item.teacherId) : t('course.noTeacherAssigned')}
           </span>
-          <span className="cell-meta">{isStudent ? 'Assigned teacher' : 'Assigned instructor'}</span>
+          <span className="cell-meta">{isStudent ? t('course.assignedTeacher') : t('course.assignedInstructor')}</span>
           <div className="cell-badges">
             <Badge tone="neutral">{formatMoney(item.price)}</Badge>
           </div>
@@ -178,28 +180,28 @@ export function CoursesPage() {
       ? [
           {
             key: 'enrollment',
-            header: 'Enrollment',
+            header: t('course.enrollmentLabel'),
             className: 'data-table__cell--relation',
             cell: (item: Course) => (
               <div className="cell-stack cell-stack--relation">
-                <span className="cell-title">{item.students?.length ?? 0} students</span>
+                <span className="cell-title">{t('course.studentsLabel', { count: item.students?.length ?? 0 })}</span>
                 <span className="cell-meta">{getUserListSummary(item.students)}</span>
               </div>
             ),
           },
           {
             key: 'actions',
-            header: 'Actions',
+            header: t('common.actions'),
             className: 'data-table__cell--actions',
             headClassName: 'data-table__head--actions',
             cell: (item: Course) => (
               <div className="row-actions">
                 <Button size="sm" variant="secondary" onClick={() => { setSelectedCourse(item); setFormOpen(true); }}>
-                  Edit
+                  {t('common.edit')}
                 </Button>
                 {isAdminLike ? (
                   <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                    Delete
+                    {t('common.delete')}
                   </Button>
                 ) : null}
               </div>
@@ -211,44 +213,44 @@ export function CoursesPage() {
 
   return (
     <PageLayout
-      eyebrow="Programs"
-      title="Courses"
+      eyebrow={t('course.eyebrow')}
+      title={t('course.title')}
       description={
         isAdminLike
-          ? 'Courses, teachers, prices, and enrollment.'
+          ? t('course.description.admin')
           : isTeacher
-            ? 'Your courses, pricing, and student lists.'
-            : 'Courses you are enrolled in.'
+            ? t('course.description.teacher')
+            : t('course.description.student')
       }
-      actions={canManage ? <Button onClick={() => { setSelectedCourse(null); setFormOpen(true); }}>New course</Button> : undefined}
+      actions={canManage ? <Button onClick={() => { setSelectedCourse(null); setFormOpen(true); }}>{t('course.newCourse')}</Button> : undefined}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
-          <span className="subtle">Visible courses</span>
+          <span className="subtle">{t('course.visibleCourses')}</span>
           <strong>{filteredCourses.length}</strong>
-          <span className="subtle">After filters and search</span>
+          <span className="subtle">{t('course.afterFilters')}</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">{isStudent ? 'With teacher assigned' : 'Linked students'}</span>
+          <span className="subtle">{isStudent ? t('course.withTeacherAssigned') : t('course.linkedStudents')}</span>
           <strong>{isStudent ? coursesWithTeacher : totalStudents}</strong>
-          <span className="subtle">{isStudent ? 'Across your courses' : 'Across visible courses'}</span>
+          <span className="subtle">{isStudent ? t('course.withTeacherAssignedMeta') : t('course.linkedStudentsMeta')}</span>
         </Card>
       </div>
       {visibleCourses.length === 0 ? (
         <EmptyState
-          title={isStudent ? 'No courses assigned' : 'No courses yet'}
+          title={isStudent ? t('course.noCoursesAssigned') : t('course.noCoursesYet')}
           description={
             isAdminLike
-              ? 'Create the first course to start working.'
+              ? t('course.noCoursesDescription.admin')
               : isTeacher
-                ? 'Courses assigned to you will appear here.'
-                : 'Courses you are enrolled in will appear here.'
+                ? t('course.noCoursesDescription.teacher')
+                : t('course.noCoursesDescription.student')
           }
         />
       ) : (
         <TableShell
-          title="Course catalog"
-          description={canManage ? 'Course, teacher, price, and enrollment.' : 'Course, teacher, and price.'}
+          title={t('course.catalogTitle')}
+          description={canManage ? t('course.catalogDescription.manage') : t('course.catalogDescription.view')}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -257,21 +259,21 @@ export function CoursesPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder={isStudent ? 'Search by course or teacher' : 'Search by course, description, or teacher'}
-            resultsLabel={`${filteredCourses.length} result${filteredCourses.length === 1 ? '' : 's'}`}
+            searchPlaceholder={isStudent ? t('common.searchByCourseRoomTeacher') : t('common.searchByCourseRoomTeacherGroup')}
+            resultsLabel={t('common.resultsLabel', { count: filteredCourses.length })}
             activeFilters={toolbarFilters}
             filters={
               <>
                 {isAdminLike ? (
                   <Select
-                    aria-label="Filter courses by teacher"
+                    aria-label={t('course.filterTeacherLabel')}
                     value={teacherFilter}
                     onChange={event => {
                       setTeacherFilter(event.target.value);
                       setPage(1);
                     }}
                   >
-                    <option value="all">All teachers</option>
+                    <option value="all">{t('course.allTeachers')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher.id} value={teacher.id}>
                         {getUserDisplayName(teacher)}
@@ -280,23 +282,23 @@ export function CoursesPage() {
                   </Select>
                 ) : null}
                 <Select
-                  aria-label="Sort courses"
+                  aria-label={t('course.sortLabel')}
                   value={sortDirection}
                   onChange={event => {
                     setSortDirection(event.target.value as SortDirection);
                     setPage(1);
                   }}
                 >
-                  <option value="asc">Name A-Z</option>
-                  <option value="desc">Name Z-A</option>
+                  <option value="asc">{t('common.sortNameAsc')}</option>
+                  <option value="desc">{t('common.sortNameDesc')}</option>
                 </Select>
               </>
             }
           />
           <DataTable
             getRowKey={item => item.id}
-            emptyTitle="No courses found"
-            emptyDescription={isAdminLike ? 'Try another search or clear a filter.' : 'Try another search.'}
+            emptyTitle={t('course.emptyTitle')}
+            emptyDescription={isAdminLike ? t('course.emptyDescription.manage') : t('course.emptyDescription.student')}
             columns={columns}
             rows={pagedCourses}
           />
@@ -323,14 +325,18 @@ export function CoursesPage() {
       />
       <ConfirmModal
         open={!!deleteCandidate}
-        title="Delete course?"
+        title={t('course.deleteCourseTitle')}
         description={
           deleteCandidate
-            ? `This will permanently remove course "${deleteCandidate.name}" from the catalog. Teacher: ${deleteCandidate.teacherId ? getUserDisplayName(deleteCandidate.teacherId) : 'not assigned'}. Price: ${formatMoney(deleteCandidate.price)}. Historical references may remain visible in related records.`
+            ? t('course.deleteCourseDescription', {
+                course: deleteCandidate.name,
+                teacher: deleteCandidate.teacherId ? getUserDisplayName(deleteCandidate.teacherId) : t('course.notAssigned'),
+                price: formatMoney(deleteCandidate.price),
+              })
             : ''
         }
-        confirmLabel="Delete course"
-        cancelLabel="Keep course"
+        confirmLabel={t('course.deleteCourseConfirm')}
+        cancelLabel={t('course.keepCourse')}
         tone="danger"
         loading={removeMutation.isPending}
         onClose={() => setDeleteCandidate(null)}

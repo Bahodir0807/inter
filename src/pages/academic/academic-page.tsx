@@ -23,6 +23,7 @@ import { getRoleCapabilities } from '../../shared/lib/capabilities';
 import { formatDate, formatDateTime } from '../../shared/lib/date';
 import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { toast } from '../../shared/ui/feedback/toaster';
+import { useI18n } from '../../shared/i18n/i18n';
 
 function toDateInputValue(value: Date | string) {
   return new Date(value).toISOString().slice(0, 10);
@@ -42,6 +43,7 @@ export function AcademicPage() {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<NotificationType>('general');
   const [deleteGrade, setDeleteGrade] = useState<GradeEntry | null>(null);
+  const { t } = useI18n();
 
   const canSelectUser = capabilities.academic.manageAttendance || capabilities.academic.manageGrades || capabilities.academic.manageHomework;
   const canLookupUserSchedule = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'panda';
@@ -99,7 +101,7 @@ export function AcademicPage() {
     },
     onSuccess: async () => {
       await invalidate();
-      toast.success('Attendance marked');
+      toast.success(t('common.saved'));
     },
     onError: error => toast.error(error.message),
   });
@@ -109,7 +111,7 @@ export function AcademicPage() {
     onSuccess: async () => {
       await invalidate();
       setGradeSubject('');
-      toast.success('Grade saved');
+      toast.success(t('common.saved'));
     },
     onError: error => toast.error(error.message),
   });
@@ -119,7 +121,7 @@ export function AcademicPage() {
     onSuccess: async () => {
       await invalidate();
       setDeleteGrade(null);
-      toast.success('Grade deleted');
+      toast.success(t('common.deleted'));
     },
     onError: error => toast.error(error.message),
   });
@@ -133,7 +135,7 @@ export function AcademicPage() {
     onSuccess: async () => {
       await invalidate();
       setHomeworkTasks('');
-      toast.success('Homework assigned');
+      toast.success(t('common.saved'));
     },
     onError: error => toast.error(error.message),
   });
@@ -142,7 +144,7 @@ export function AcademicPage() {
     mutationFn: (id: string) => homeworkApi.complete(id),
     onSuccess: async () => {
       await invalidate();
-      toast.success('Homework completed');
+      toast.success(t('common.updated'));
     },
     onError: error => toast.error(error.message),
   });
@@ -151,13 +153,13 @@ export function AcademicPage() {
     mutationFn: () => notificationsApi.send({ userId: effectiveUserId, type: notificationType, message: notificationMessage }),
     onSuccess: () => {
       setNotificationMessage('');
-      toast.success('Notification sent');
+      toast.success(t('common.saved'));
     },
     onError: error => toast.error(error.message),
   });
 
   if (usersQuery.isLoading && canSelectUser) {
-    return <LoadingState label="Loading academic workspace..." />;
+    return <LoadingState label={t('common.loading')} />;
   }
 
   if (usersQuery.error) {
@@ -177,13 +179,13 @@ export function AcademicPage() {
 
   return (
     <PageLayout
-      eyebrow="Academic"
-      title="Academic workspace"
-      description="Attendance, grades, homework, and manual notifications connected to backend academic endpoints."
+      eyebrow={t('academic.eyebrow')}
+      title={t('academic.title')}
+      description={t('academic.description')}
     >
       <Card>
         <div className="stack">
-          <span className="eyebrow">Scope</span>
+          <span className="eyebrow">{t('academic.scopeLabel')}</span>
           {canSelectUser ? (
             <Select
               value={effectiveUserId}
@@ -191,9 +193,9 @@ export function AcademicPage() {
                 setSelectedUserId(event.target.value);
                 setSelectedScheduleId('');
               }}
-              label="Student"
+              label={t('academic.student')}
             >
-              <option value="">Select student</option>
+              <option value="">{t('academic.selectStudent')}</option>
               {(usersQuery.data ?? []).map(item => (
                 <option key={item.id} value={item.id}>{getUserDisplayName(item)}</option>
               ))}
@@ -209,7 +211,7 @@ export function AcademicPage() {
         <Card>
           <div className="detail-grid">
             <Input
-              label="Attendance date"
+              label={t('academic.attendanceDate')}
               type="date"
               value={attendanceDate}
               onChange={event => {
@@ -218,7 +220,7 @@ export function AcademicPage() {
               }}
             />
             <Select
-              label="Schedule"
+              label={t('academic.schedule')}
               value={selectedScheduleId}
               onChange={event => {
                 const scheduleId = event.target.value;
@@ -228,7 +230,7 @@ export function AcademicPage() {
                   setAttendanceDate(toDateInputValue(selectedSchedule.date));
                 }
               }}
-              hint={schedules.length > 0 ? 'Select a lesson to avoid ambiguous attendance records.' : 'No linked lessons found for this student/date scope.'}
+              hint={schedules.length > 0 ? t('academic.scheduleHint') : t('academic.scheduleLookupDescription')}
             >
               <option value="">Auto-detect by date</option>
               {schedules.map(item => (
@@ -237,26 +239,26 @@ export function AcademicPage() {
                 </option>
               ))}
             </Select>
-            <Select label="Attendance status" value={attendanceStatus} onChange={event => setAttendanceStatus(event.target.value as AttendanceStatus)}>
-              <option value="present">Present</option>
-              <option value="absent">Absent</option>
-              <option value="late">Late</option>
-              <option value="excused">Excused</option>
+            <Select label={t('academic.attendanceStatus')} value={attendanceStatus} onChange={event => setAttendanceStatus(event.target.value as AttendanceStatus)}>
+              <option value="present">{t('attendance.status.present')}</option>
+              <option value="absent">{t('attendance.status.absent')}</option>
+              <option value="late">{t('attendance.status.late')}</option>
+              <option value="excused">{t('attendance.status.excused')}</option>
             </Select>
             <Button disabled={!effectiveUserId || !attendanceDate || markAttendance.isPending} onClick={() => markAttendance.mutate()}>
-              Mark attendance
+              {t('academic.markAttendance')}
             </Button>
           </div>
         </Card>
       ) : null}
 
-      <TableShell title="Attendance" description="Student-only `/attendance/me` is used only for students; staff views use `/attendance/user/:userId`.">
+      <TableShell title={t('academic.attendanceTitle')} description={t('academic.attendanceDescription')}>
         <DataTable
           rows={attendance}
           getRowKey={item => item.id}
           columns={[
-            { key: 'date', header: 'Date', cell: item => formatDate(item.date) },
-            { key: 'status', header: 'Status', cell: item => <Badge tone={item.status === 'present' ? 'success' : 'warning'}>{item.status}</Badge> },
+            { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
+            { key: 'status', header: t('common.status'), cell: item => <Badge tone={item.status === 'present' ? 'success' : 'warning'}>{t(`attendance.status.${item.status}`)}</Badge> },
           ]}
         />
       </TableShell>
@@ -264,25 +266,25 @@ export function AcademicPage() {
       {capabilities.academic.manageGrades ? (
         <Card>
           <div className="detail-grid">
-            <Input label="Subject" value={gradeSubject} onChange={event => setGradeSubject(event.target.value)} />
-            <Input label="Score" type="number" min={0} max={100} value={gradeScore} onChange={event => setGradeScore(Number(event.target.value))} />
+            <Input label={t('academic.gradeSubject')} value={gradeSubject} onChange={event => setGradeSubject(event.target.value)} />
+            <Input label={t('academic.gradeScore')} type="number" min={0} max={100} value={gradeScore} onChange={event => setGradeScore(Number(event.target.value))} />
             <Button disabled={!effectiveUserId || !gradeSubject || createGrade.isPending} onClick={() => createGrade.mutate()}>
-              Add grade
+              {t('academic.addGrade')}
             </Button>
           </div>
         </Card>
       ) : null}
 
-      <TableShell title="Grades" description="Create/update/delete actions are shown only to roles allowed by backend.">
+      <TableShell title={t('academic.gradesTitle')} description={t('academic.gradesDescription')}>
         <DataTable
           rows={grades}
           getRowKey={item => item.id}
           columns={[
-            { key: 'subject', header: 'Subject', cell: item => item.subject },
-            { key: 'score', header: 'Score', cell: item => item.score },
+            { key: 'subject', header: t('common.subject'), cell: item => item.subject },
+            { key: 'score', header: t('common.score'), cell: item => item.score },
             ...(capabilities.academic.manageGrades ? [{
               key: 'actions',
-              header: 'Actions',
+              header: t('common.actions'),
               cell: (item: GradeEntry) => (
                 <div className="inline-actions">
                   <Button size="sm" variant="secondary" onClick={() => gradesApi.update(item.id, item.score).then(() => invalidate())}>Save</Button>
@@ -298,21 +300,21 @@ export function AcademicPage() {
 
       {capabilities.academic.manageHomework ? (
         <Card>
-          <Textarea label="Homework tasks" value={homeworkTasks} onChange={event => setHomeworkTasks(event.target.value)} placeholder="One task per line" />
+          <Textarea label={t('academic.homeworkTasks')} value={homeworkTasks} onChange={event => setHomeworkTasks(event.target.value)} placeholder={t('academic.homeworkPlaceholder')} />
           <Button disabled={!effectiveUserId || !homeworkTasks.trim() || createHomework.isPending} onClick={() => createHomework.mutate()}>
-            Assign homework
+            {t('academic.assignHomework')}
           </Button>
         </Card>
       ) : null}
 
-      <TableShell title="Homework" description="Students can complete their own homework; staff can assign and complete records.">
+      <TableShell title={t('academic.homeworkTitle')} description={t('academic.homeworkDescription')}>
         <DataTable
           rows={homework}
           getRowKey={item => item.id}
           columns={[
-            { key: 'date', header: 'Date', cell: item => formatDate(item.date) },
-            { key: 'tasks', header: 'Tasks', cell: item => item.tasks.join(', ') },
-            { key: 'completed', header: 'Status', cell: item => <Badge tone={item.completed ? 'success' : 'warning'}>{item.completed ? 'Complete' : 'Open'}</Badge> },
+            { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
+            { key: 'tasks', header: t('common.tasks'), cell: item => item.tasks.join(', ') },
+            { key: 'completed', header: t('common.status'), cell: item => <Badge tone={item.completed ? 'success' : 'warning'}>{item.completed ? t('common.complete') : t('common.open')}</Badge> },
             {
               key: 'actions',
               header: 'Actions',
@@ -325,14 +327,14 @@ export function AcademicPage() {
       {capabilities.academic.sendNotifications ? (
         <Card>
           <div className="detail-grid">
-            <Select label="Notification type" value={notificationType} onChange={event => setNotificationType(event.target.value as NotificationType)}>
-              <option value="general">General</option>
-              <option value="payment">Payment</option>
-              <option value="homework">Homework</option>
-              <option value="grades">Grades</option>
-              <option value="attendance">Attendance</option>
+            <Select label={t('academic.notificationType')} value={notificationType} onChange={event => setNotificationType(event.target.value as NotificationType)}>
+              <option value="general">{t('common.general')}</option>
+              <option value="payment">{t('common.payment')}</option>
+              <option value="homework">{t('common.homework')}</option>
+              <option value="grades">{t('common.grades')}</option>
+              <option value="attendance">{t('common.attendance')}</option>
             </Select>
-            <Textarea label="Message" value={notificationMessage} onChange={event => setNotificationMessage(event.target.value)} />
+            <Textarea label={t('academic.message')} value={notificationMessage} onChange={event => setNotificationMessage(event.target.value)} />
             <Button disabled={!effectiveUserId || !notificationMessage.trim() || sendNotification.isPending} onClick={() => sendNotification.mutate()}>
               Send notification
             </Button>
@@ -341,7 +343,7 @@ export function AcademicPage() {
       ) : null}
 
       {canLookupUserSchedule ? (
-        <TableShell title="User schedule lookup" description="Uses `/schedule/user/:id`, separate from student `/schedule/me`.">
+        <TableShell title={t('academic.scheduleLookupTitle')} description={t('academic.scheduleLookupDescription')}>
           <DataTable
             rows={schedules}
             getRowKey={item => item.id}
@@ -355,9 +357,10 @@ export function AcademicPage() {
 
       <ConfirmModal
         open={!!deleteGrade}
-        title="Delete grade?"
+        title={t('academic.deleteGradeTitle')}
         description={deleteGrade ? `${deleteGrade.subject}: ${deleteGrade.score}` : ''}
-        confirmLabel="Delete grade"
+        confirmLabel={t('academic.deleteGradeConfirm')}
+        cancelLabel={t('common.cancel')}
         tone="danger"
         loading={removeGrade.isPending}
         onClose={() => setDeleteGrade(null)}

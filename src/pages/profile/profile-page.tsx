@@ -13,12 +13,15 @@ import { Button } from '../../shared/ui/buttons/button';
 import { Input } from '../../shared/ui/forms/input';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { ProfileFormModal } from './profile-form-modal';
+import { useI18n } from '../../shared/i18n/i18n';
 
 export function ProfilePage() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const { t } = useI18n();
+
   const query = useQuery({
     queryKey: ['profile', 'me'],
     queryFn: () => usersApi.me(),
@@ -30,7 +33,7 @@ export function ProfilePage() {
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await queryClient.invalidateQueries({ queryKey: ['auth'] });
       setFormOpen(false);
-      toast.success('Profile updated');
+      toast.success(t('common.updated'));
     },
     onError: error => toast.error(error.message),
   });
@@ -40,13 +43,13 @@ export function ProfilePage() {
     onSuccess: () => {
       setCurrentPassword('');
       setNewPassword('');
-      toast.success('Password changed');
+      toast.success(t('profile.passwordChangeSuccess'));
     },
     onError: error => toast.error(error.message),
   });
 
   if (query.isLoading) {
-    return <LoadingState label="Loading profile..." />;
+    return <LoadingState label={t('common.loading')} />;
   }
 
   if (query.error) {
@@ -61,21 +64,21 @@ export function ProfilePage() {
 
   return (
     <PageLayout
-      eyebrow="Account"
-      title="Profile"
-      description="Current session details and user profile information loaded from the live backend."
+      eyebrow={t('profile.eyebrow')}
+      title={t('profile.title')}
+      description={t('profile.description')}
       variant="feature"
-      actions={<Button onClick={() => setFormOpen(true)}>Edit profile</Button>}
+      actions={<Button onClick={() => setFormOpen(true)}>{t('profile.editButton')}</Button>}
     >
       <div className="content-grid">
         <Card className="content-grid__side">
           <div className="stack">
-            <span className="eyebrow">Current session</span>
+            <span className="eyebrow">{t('profile.currentSession')}</span>
             <h3>{getUserDisplayName(profile)}</h3>
             <div className="cell-badges">
               <Badge tone="info">{getRoleDisplayName(profile.role)}</Badge>
               <Badge tone={profile.isActive ? 'success' : 'warning'}>
-                {profile.isActive ? 'Active' : 'Inactive'}
+                {profile.isActive ? t('common.active') : t('common.inactive')}
               </Badge>
             </div>
           </div>
@@ -83,27 +86,27 @@ export function ProfilePage() {
         <Card className="content-grid__wide">
           <div className="stats-grid">
             <div className="cell-stack">
-              <span className="subtle">Username</span>
+              <span className="subtle">{t('profile.username')}</span>
               <span className="cell-title">{profile.username}</span>
             </div>
             <div className="cell-stack">
-              <span className="subtle">Phone</span>
+              <span className="subtle">{t('profile.phone')}</span>
               <span className="cell-title">{profile.phoneNumber || '-'}</span>
             </div>
             <div className="cell-stack">
-              <span className="subtle">Email</span>
+              <span className="subtle">{t('profile.email')}</span>
               <span className="cell-title">{profile.email || '-'}</span>
             </div>
             <div className="cell-stack">
-              <span className="subtle">Telegram</span>
+              <span className="subtle">{t('profile.telegram')}</span>
               <span className="cell-title">{profile.telegramId || '-'}</span>
             </div>
             <div className="cell-stack">
-              <span className="subtle">Created</span>
+              <span className="subtle">{t('profile.created')}</span>
               <span className="cell-title">{formatDate(profile.createdAt)}</span>
             </div>
             <div className="cell-stack">
-              <span className="subtle">Updated</span>
+              <span className="subtle">{t('profile.updated')}</span>
               <span className="cell-title">{formatDate(profile.updatedAt)}</span>
             </div>
           </div>
@@ -112,13 +115,13 @@ export function ProfilePage() {
       <Card>
         <div className="detail-grid">
           <Input
-            label="Current password"
+            label={t('profile.currentPassword')}
             type="password"
             value={currentPassword}
             onChange={event => setCurrentPassword(event.target.value)}
           />
           <Input
-            label="New password"
+            label={t('profile.newPassword')}
             type="password"
             value={newPassword}
             onChange={event => setNewPassword(event.target.value)}
@@ -127,7 +130,7 @@ export function ProfilePage() {
             disabled={currentPassword.length < 8 || newPassword.length < 8 || passwordMutation.isPending}
             onClick={() => passwordMutation.mutate()}
           >
-            Change password
+            {t('profile.changePassword')}
           </Button>
         </div>
       </Card>
