@@ -226,7 +226,7 @@ async function run() {
   // Validate required environment variables
   const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
   if (missingVars.length > 0) {
-    throw new Error(`Missing required environment variables: ${missingVars.join(', ')}\nCopy .env.smoke.example to .env.smoke and fill in the values.`);
+    throw new Error(`Live QA blocked by missing credentials or configuration: ${missingVars.join(', ')}\nCopy .env.smoke.example to .env.smoke and fill in the values.`);
   }
 
   if (!apiUrl) {
@@ -289,8 +289,10 @@ run().catch((error) => {
   
   if (errorMsg.includes('not running or not reachable')) {
     verdict = 'blocked: backend unreachable';
-  } else if (errorMsg.includes('blocked by credentials')) {
-    verdict = 'blocked: credentials';
+  } else if (errorMsg.includes('blocked by credentials') || errorMsg.includes('missing credentials') || errorMsg.includes('login failed')) {
+    verdict = 'blocked: credentials invalid';
+  } else if (errorMsg.includes('expected OK') || errorMsg.includes('expected forbidden') || errorMsg.includes('DTO leaks') || errorMsg.includes('sensitive fields')) {
+    verdict = 'failed: role test failed';
   }
   
   record('live smoke verdict', verdict, errorMsg);
