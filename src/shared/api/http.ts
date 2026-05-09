@@ -60,7 +60,6 @@ function getErrorMessage(error: unknown) {
 export const http = axios.create({
   baseURL: env.apiUrl,
   withCredentials: false,
-  timeout: 30000, // 30 second timeout to prevent indefinite hangs
 });
 
 let refreshPromise: Promise<string | null> | null = null;
