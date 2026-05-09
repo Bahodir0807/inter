@@ -43,7 +43,7 @@ export function AppShell({ children }: PropsWithChildren) {
   }
 
   return (
-    <div className="app-shell">
+    <div className={cn('app-shell', `app-shell--${user.role}`)}>
       <button
         type="button"
         aria-label={t('common.closeSidebar')}
