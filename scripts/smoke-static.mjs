@@ -74,7 +74,7 @@ check('http reads backend validation details', http.includes('body?.error?.detai
 check('http avoids custom request-id header for production CORS compatibility', !http.includes("config.headers['X-Request-Id']") && !http.includes("'X-Request-Id': createRequestId()"), 'frontend must not send X-Request-Id unless production CORS allows it');
 check('favicon is declared', indexHtml.includes('rel="icon"') && indexHtml.includes('/favicon.svg'), 'index.html must declare favicon');
 
-check('theme tokens use requested light background', css.includes('--color-bg: #f8fafc'), 'light theme must define requested background token');
+check('theme tokens use requested light background', css.includes('--color-bg: #F4F7FB'), 'light theme must define requested background token');
 check('theme tokens use requested dark background', css.includes("--color-bg: #0B1220"), 'dark theme must define requested background token');
 check('theme uses data-theme dark selector', css.includes(":root[data-theme='dark']"), 'dark theme must apply globally through data-theme');
 check('theme persists to localStorage', themeProvider.includes("window.localStorage.setItem(themeStorageKey, theme)"), 'theme selection must persist');
