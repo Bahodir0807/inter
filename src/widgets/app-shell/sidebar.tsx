@@ -25,7 +25,7 @@ export function Sidebar({
           <AppIcon name="spark" />
         </span>
         <div className="app-sidebar__brand-copy">
-          <strong>Ibrat CRM</strong>
+          <strong>Inter CRM</strong>
           <p>{t('shell.brandHint')}</p>
         </div>
       </div>

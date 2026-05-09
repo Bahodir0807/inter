@@ -26,6 +26,7 @@ const groups = read('src/pages/groups/groups-page.tsx');
 const schedule = read('src/pages/schedule/schedule-page.tsx');
 const academic = read('src/pages/academic/academic-page.tsx');
 const http = read('src/shared/api/http.ts');
+const envConfig = read('src/shared/config/env.ts');
 const css = read('src/app/styles/index.css');
 const i18n = read('src/shared/i18n/translations.ts');
 const i18nProvider = read('src/shared/i18n/i18n.tsx');
@@ -76,11 +77,14 @@ check('http preserves envelope meta', http.includes('response.apiMeta = unwrappe
 check('http reads backend error message', http.includes('body?.error?.message'), 'http client must read backend error.message');
 check('http reads backend validation details', http.includes('body?.error?.details'), 'http client must read backend validation details');
 check('http avoids custom request-id header for production CORS compatibility', !http.includes("config.headers['X-Request-Id']") && !http.includes("'X-Request-Id': createRequestId()"), 'frontend must not send X-Request-Id unless production CORS allows it');
+check('api url has non-crashing fallback', envConfig.includes("const localApiUrl = 'http://localhost:3000'") && envConfig.includes("const productionApiUrl = 'https://b.sultonoway.uz'") && envConfig.includes('import.meta.env.DEV ? localApiUrl : productionApiUrl') && !envConfig.includes('Missing required environment variable VITE_API_URL'), 'missing VITE_API_URL must not crash the frontend before render or use HTTP production fallback');
 check('favicon is declared', indexHtml.includes('rel="icon"') && indexHtml.includes('/favicon.svg'), 'index.html must declare favicon');
 
 check('theme tokens use requested light background', css.includes('--color-bg: #F4F7FB'), 'light theme must define requested background token');
 check('theme tokens use requested dark background', css.includes("--color-bg: #0B1220"), 'dark theme must define requested background token');
 check('theme uses data-theme dark selector', css.includes(":root[data-theme='dark']"), 'dark theme must apply globally through data-theme');
+check('app shell owns viewport scroll', css.includes('.app-shell {\n  display: flex;\n  width: 100%;\n  height: 100dvh;') && css.includes('.app-shell__content') && css.includes('overflow-y: auto') && css.includes('body {\n  min-width: 320px;\n  overflow: hidden;'), 'authenticated app shell must keep sidebar/topbar stable and scroll only the content area');
+check('light theme sidebar is theme aware', css.includes(":root:not([data-theme='dark']) .app-sidebar {\n  color: #0F172A;") && css.includes("background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94));"), 'light theme sidebar must use light workspace styling instead of dark navy styling');
 check('theme persists to localStorage', themeProvider.includes("window.localStorage.setItem(themeStorageKey, theme)"), 'theme selection must persist');
 check('default theme is light', themeProvider.includes("return stored === 'dark' ? 'dark' : 'light'"), 'default theme must be light');
 

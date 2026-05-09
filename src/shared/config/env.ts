@@ -1,10 +1,10 @@
 const fallbackEnvironment = 'prod';
+const localApiUrl = 'http://localhost:3000';
+const productionApiUrl = 'https://b.sultonoway.uz';
 
 function normalizeApiUrl(value: string | undefined) {
-  const url = value?.trim();
-  if (!url) {
-    throw new Error('Missing required environment variable VITE_API_URL');
-  }
+  const fallbackApiUrl = import.meta.env.DEV ? localApiUrl : productionApiUrl;
+  const url = value?.trim() || fallbackApiUrl;
   return url.replace(/\/+$/, '');
 }
 

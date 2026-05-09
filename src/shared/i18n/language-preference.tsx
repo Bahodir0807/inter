@@ -10,7 +10,7 @@ export function LanguagePreferenceGate() {
   return (
     <div className="language-gate" role="dialog" aria-modal="true" aria-labelledby="language-gate-title">
       <section className="language-gate__panel">
-        <span className="eyebrow">Ibrat CRM</span>
+        <span className="eyebrow">Inter CRM</span>
         <h2 id="language-gate-title">{t('language.title')}</h2>
         <p>{t('language.subtitle')}</p>
         <p className="subtle">{t('language.description')}</p>
