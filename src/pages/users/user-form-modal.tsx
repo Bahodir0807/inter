@@ -13,19 +13,24 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 import { getRoleDisplayName } from '../../shared/lib/entity-display';
 import { useI18n } from '../../shared/i18n/i18n';
 
+const requiredText = (message: string) => z.string().trim().min(1, message);
+const optionalText = z.string().trim().optional().or(z.literal(''));
+
 const createSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
+  username: z.string().trim().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  role: z.enum(['owner', 'admin', 'teacher', 'student', 'panda', 'guest']),
+  role: z.enum(['owner', 'admin', 'teacher', 'student', 'panda', 'guest']).optional(),
   email: z.string().email('Enter a valid email address').optional().or(z.literal('')),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  phoneNumber: z.string().optional(),
-  avatarUrl: z.string().optional(),
-  telegramId: z.string().optional(),
+  firstName: requiredText('First name is required'),
+  lastName: requiredText('Last name is required'),
+  phoneNumber: optionalText,
+  avatarUrl: z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  telegramId: optionalText,
 });
 
-const editSchema = createSchema;
+const editSchema = createSchema.extend({
+  password: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
+});
 
 export type UserFormInput = z.infer<typeof editSchema>;
 
@@ -117,6 +122,7 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
               autoComplete="username"
               error={errors.username?.message}
               fieldClassName="ui-field--primary"
+              required
               {...register('username')}
             />
             <div className="detail-grid">
@@ -131,6 +137,7 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
                 placeholder={mode === 'create' ? t('users.field.passwordPlaceholderCreate') : t('users.field.passwordPlaceholderEdit')}
                 autoComplete="new-password"
                 error={errors.password?.message}
+                required={mode === 'create'}
                 {...register('password')}
               />
               <Select
@@ -157,6 +164,7 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
                 placeholder="Aziza"
                 autoComplete="given-name"
                 error={errors.firstName?.message}
+                required
                 {...register('firstName')}
               />
               <Input
@@ -164,6 +172,7 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
                 placeholder="Karimova"
                 autoComplete="family-name"
                 error={errors.lastName?.message}
+                required
                 {...register('lastName')}
               />
               <Input

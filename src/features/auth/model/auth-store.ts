@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { authApi } from '../../../entities/auth/api';
+import { authApi, LoginPayload } from '../../../entities/auth/api';
 import { AppUser, Role } from '../../../shared/types/auth';
 
 interface AuthState {
@@ -9,7 +9,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   bootstrap: () => Promise<void>;
-  login: (payload: { username: string; password: string }) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
 }
 

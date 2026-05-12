@@ -1,13 +1,42 @@
 import { http } from '../../shared/api/http';
 import { AppUser, SessionPayload } from '../../shared/types/auth';
 
+export interface LoginPayload {
+  login?: string;
+  username?: string;
+  password: string;
+}
+
+export interface RegisterPayload {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role?: 'student' | 'guest';
+  roleKey?: string;
+  phoneNumber?: string;
+}
+
+function trimPayload<T extends object>(payload: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(payload)
+      .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])
+      .filter(([, value]) => value !== ''),
+  ) as Partial<T>;
+}
+
 export const authApi = {
-  async login(payload: { username: string; password: string }) {
-    const { data } = await http.post<SessionPayload>('/auth/login', payload);
+  async login(payload: LoginPayload) {
+    const login = (payload.login ?? payload.username ?? '').trim();
+    const { data } = await http.post<SessionPayload>('/auth/login', {
+      login,
+      username: login,
+      password: payload.password,
+    });
     return data;
   },
-  async register(payload: { username: string; password: string; role?: 'student' | 'guest'; roleKey?: string; phoneNumber?: string }) {
-    const { data } = await http.post<SessionPayload>('/auth/register', payload);
+  async register(payload: RegisterPayload) {
+    const { data } = await http.post<SessionPayload>('/auth/register', trimPayload(payload));
     return data;
   },
   async refresh(refreshToken: string) {

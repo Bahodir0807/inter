@@ -27,6 +27,55 @@ export interface ProfileSelfServiceValues {
   avatarUrl?: string;
 }
 
+type UserPayload = UserFormValues | ProfileSelfServiceValues;
+
+const optionalStringFields = new Set([
+  'email',
+  'phoneNumber',
+  'avatarUrl',
+  'telegramId',
+  'roleKey',
+]);
+
+const requiredStringFields = new Set([
+  'username',
+  'password',
+  'firstName',
+  'lastName',
+]);
+
+function normalizeUserPayload<T extends UserPayload>(payload: T): Partial<T> {
+  const normalized: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(payload)) {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (optionalStringFields.has(key) && trimmed.length === 0) {
+        continue;
+      }
+
+      normalized[key] = requiredStringFields.has(key) ? trimmed : trimmed || undefined;
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      const cleaned = value
+        .map(item => (typeof item === 'string' ? item.trim() : item))
+        .filter(item => typeof item === 'string' && item.length > 0);
+      if (cleaned.length > 0) {
+        normalized[key] = cleaned;
+      }
+      continue;
+    }
+
+    if (value !== undefined && value !== null) {
+      normalized[key] = value;
+    }
+  }
+
+  return normalized as Partial<T>;
+}
+
 export interface UsersListParams extends ListQueryParams {
   role?: Role;
   status?: UserStatus;
@@ -65,15 +114,15 @@ export const usersApi = {
     return data;
   },
   async updateMyProfile(payload: ProfileSelfServiceValues) {
-    const { data } = await http.patch<AppUser>('/users/me/profile', payload);
+    const { data } = await http.patch<AppUser>('/users/me/profile', normalizeUserPayload(payload));
     return data;
   },
   async create(payload: UserFormValues & { password: string }) {
-    const { data } = await http.post<AppUser>('/users', payload);
+    const { data } = await http.post<AppUser>('/users', normalizeUserPayload(payload));
     return data;
   },
   async update(id: string, payload: UserFormValues) {
-    const { data } = await http.put<AppUser>(`/users/${id}`, payload);
+    const { data } = await http.put<AppUser>(`/users/${id}`, normalizeUserPayload(payload));
     return data;
   },
   async updateRole(id: string, role: Role) {

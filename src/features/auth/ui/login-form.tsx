@@ -19,7 +19,7 @@ export function LoginForm() {
     event.preventDefault();
 
     try {
-      await login({ username, password });
+      await login({ login: username, username, password });
       toast.success(t('login.success'));
       navigate('/app/dashboard', { replace: true });
     } catch (submitError) {

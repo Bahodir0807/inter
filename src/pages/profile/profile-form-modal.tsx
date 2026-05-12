@@ -13,8 +13,8 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
+  firstName: z.string().trim().min(1, 'First name is required'),
+  lastName: z.string().trim().min(1, 'Last name is required'),
   email: z.string().email('Enter a valid email address').optional().or(z.literal('')),
   phoneNumber: z.string().optional(),
   avatarUrl: z.string().url('Enter a valid URL').optional().or(z.literal('')),
@@ -99,6 +99,7 @@ export function ProfileFormModal({
                 autoComplete="given-name"
                 error={errors.firstName?.message}
                 fieldClassName="ui-field--primary"
+                required
                 {...register('firstName')}
               />
               <Input
@@ -107,6 +108,7 @@ export function ProfileFormModal({
                 autoComplete="family-name"
                 error={errors.lastName?.message}
                 fieldClassName="ui-field--primary"
+                required
                 {...register('lastName')}
               />
             </div>
