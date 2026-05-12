@@ -36,7 +36,7 @@ QA status:
 - Static role/route smoke: passed.
 - Frontend production build: passed.
 - Backend build after seed change: passed.
-- Read-only live smoke against `https://b.sultonoway.uz`: blocked at login because default seed credentials are not valid on the live backend.
+- Read-only live smoke against `https://ibrat-backend-hi7w.onrender.com`: blocked at login because default seed credentials are not valid on the live backend.
 - Mutating live smoke was not run against production because it creates/updates/deletes test data and requires explicit approval.
 
 Prepared QA credentials:

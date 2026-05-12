@@ -27,7 +27,7 @@ Real environment files such as `.env`, `.env.local`, `.env.production`, `.env.qa
 Frontend build variables:
 
 ```env
-VITE_API_URL=https://api.example.com
+VITE_API_URL=https://ibrat-backend-hi7w.onrender.com
 VITE_APP_ENV=production
 VITE_APP_VERSION=0.0.0
 VITE_BUILD_HASH=render

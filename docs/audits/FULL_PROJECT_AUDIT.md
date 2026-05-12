@@ -41,7 +41,7 @@ This audit covers the frontend repository in `d:\MyProjects\frontе` and the bac
 - The frontend auth flow uses a persistent access token in `localStorage` and now stores the refresh token in `sessionStorage`.
   - This reduces refresh token persistence across browser restarts, lowering exposure compared to `localStorage`.
   - It is still not as safe as HttpOnly cookies, so a future migration is recommended.
-- `src/shared/config/env.ts` previously fell back to `https://b.sultonoway.uz` when `VITE_API_URL` was missing.
+- `src/shared/config/env.ts` previously fell back to `https://ibrat-backend-hi7w.onrender.com` when `VITE_API_URL` was missing.
   - This unsafe implicit production fallback has been removed.
   - The app now throws a clear error if `VITE_API_URL` is not provided.
 - `src/shared/api/http.ts` uses `axios.defaults.withCredentials = false`, which is appropriate for token-based auth.

@@ -1,6 +1,6 @@
 param(
   [switch]$Mutate,
-  [string]$ApiUrl = "http://localhost:3000"
+  [string]$ApiUrl = "https://ibrat-backend-hi7w.onrender.com"
 )
 
 $ErrorActionPreference = "Stop"

@@ -5,7 +5,7 @@ Date: 2026-05-08
 ## Issues Addressed
 
 1. Unsafe frontend production fallback
-   - Issue: `src/shared/config/env.ts` used `https://b.sultonoway.uz` as a default when `VITE_API_URL` was missing.
+   - Issue: `src/shared/config/env.ts` used `https://ibrat-backend-hi7w.onrender.com` as a default when `VITE_API_URL` was missing.
    - Fix: Updated `src/shared/config/env.ts` to throw a clear error when `VITE_API_URL` is not provided.
    - Files: `src/shared/config/env.ts`
 

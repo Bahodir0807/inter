@@ -1,10 +1,8 @@
 const fallbackEnvironment = 'prod';
-const localApiUrl = 'http://localhost:3000';
-const productionApiUrl = 'https://b.sultonoway.uz';
+const defaultApiUrl = 'https://ibrat-backend-hi7w.onrender.com';
 
 function normalizeApiUrl(value: string | undefined) {
-  const fallbackApiUrl = import.meta.env.DEV ? localApiUrl : productionApiUrl;
-  const url = value?.trim() || fallbackApiUrl;
+  const url = value?.trim() || defaultApiUrl;
   return url.replace(/\/+$/, '');
 }
 

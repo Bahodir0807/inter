@@ -8,8 +8,7 @@ const appBaseUrl = process.env.QA_BASE_URL ?? 'http://127.0.0.1:5173';
 const cdpBaseUrl = process.env.QA_CDP_URL ?? 'http://127.0.0.1:9222';
 const appOrigin = new URL(appBaseUrl).origin;
 const backendOrigins = new Set([
-  'https://b.sultonoway.uz',
-  'http://localhost:3000',
+  'https://ibrat-backend-hi7w.onrender.com',
   'http://127.0.0.1:3000',
 ]);
 const frontendModulePattern = /(?:^\/(?:src|@vite|node_modules)\/|\.tsx?$|\.jsx?$|\.css(?:\?|$)|\.map(?:\?|$)|\/@react-refresh(?:\?|$))/;

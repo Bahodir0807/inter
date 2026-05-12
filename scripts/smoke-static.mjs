@@ -77,7 +77,7 @@ check('http preserves envelope meta', http.includes('response.apiMeta = unwrappe
 check('http reads backend error message', http.includes('body?.error?.message'), 'http client must read backend error.message');
 check('http reads backend validation details', http.includes('body?.error?.details'), 'http client must read backend validation details');
 check('http avoids custom request-id header for production CORS compatibility', !http.includes("config.headers['X-Request-Id']") && !http.includes("'X-Request-Id': createRequestId()"), 'frontend must not send X-Request-Id unless production CORS allows it');
-check('api url has non-crashing fallback', envConfig.includes("const localApiUrl = 'http://localhost:3000'") && envConfig.includes("const productionApiUrl = 'https://b.sultonoway.uz'") && envConfig.includes('import.meta.env.DEV ? localApiUrl : productionApiUrl') && !envConfig.includes('Missing required environment variable VITE_API_URL'), 'missing VITE_API_URL must not crash the frontend before render or use HTTP production fallback');
+check('api url uses configured backend domain', envConfig.includes("const defaultApiUrl = 'https://ibrat-backend-hi7w.onrender.com'"), 'frontend API fallback must use the Render backend domain');
 check('favicon is declared', indexHtml.includes('rel="icon"') && indexHtml.includes('/favicon.svg'), 'index.html must declare favicon');
 
 check('theme tokens use requested light background', css.includes('--color-bg: #F4F7FB'), 'light theme must define requested background token');

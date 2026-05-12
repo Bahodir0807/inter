@@ -4,7 +4,7 @@ COPY package*.json ./
 RUN npm ci
 
 FROM deps AS build
-ARG VITE_API_URL=http://localhost:3000
+ARG VITE_API_URL=https://ibrat-backend-hi7w.onrender.com
 ARG VITE_APP_ENV=qa
 ARG VITE_APP_VERSION=0.0.0
 ARG VITE_BUILD_HASH=qa-local
