@@ -2,6 +2,8 @@
 
 Use this checklist for the final production deploy. Do not run seed scripts against production unless a deliberate initial data load has been approved.
 
+This repository is a Vite frontend. The build output is `dist/index.html` plus static assets. It does not produce `dist/main.js` or `dist/src/main.js`.
+
 ## Backend Environment
 
 - [ ] `NODE_ENV=production`.
@@ -15,9 +17,21 @@ Use this checklist for the final production deploy. Do not run seed scripts agai
 
 - [ ] Production frontend env points to the deployed backend API URL.
 - [ ] No local QA or localhost API URL is present in the deployed build.
-- [ ] Build command has been run from the frontend project: `npm.cmd run build`.
+- [ ] Build command has been run from the frontend project: `npm run build`.
 - [ ] Upload or publish uses the current `dist` output.
 - [ ] SPA fallback/rewrite is configured so protected routes refresh correctly.
+- [ ] Real env files are not committed; only `.env*.example` templates are tracked.
+
+Required frontend env vars:
+
+- `VITE_API_URL`
+- `VITE_APP_ENV`
+- `VITE_APP_VERSION`
+- `VITE_BUILD_HASH`
+
+Optional frontend env vars:
+
+- `VITE_SENTRY_DSN`
 
 ## Mongo Atlas URI
 
@@ -42,11 +56,30 @@ Use this checklist for the final production deploy. Do not run seed scripts agai
 - [ ] Token expiration settings match operational requirements.
 - [ ] Rotate secrets if they were ever used in a shared QA/demo environment.
 
+## Render Frontend Settings
+
+Recommended Render configuration for this repository:
+
+- [ ] Service type: Static Site.
+- [ ] Root directory points to this frontend project.
+- [ ] Build Command: `npm ci && npm run build`.
+- [ ] Publish Directory: `dist`.
+- [ ] Start Command: leave empty for Static Site.
+- [ ] Required environment variables above are set in Render.
+- [ ] SPA fallback/rewrite routes all frontend paths to `index.html`.
+- [ ] Auto-deploy branch is correct.
+
+If this frontend is deployed as a Render Web Service instead of a Static Site:
+
+- [ ] Build Command: `npm ci && npm run build`.
+- [ ] Start Command: `npm run start:prod`.
+- [ ] Confirm Render binds traffic to the service port.
+
 ## Render Backend Settings
 
 - [ ] Root directory points to the backend project.
-- [ ] Build command: `npm.cmd run build` or platform-equivalent `npm run build`.
-- [ ] Start command: `npm.cmd run start:prod` or platform-equivalent `npm run start:prod`.
+- [ ] Build command: backend project build command, usually `npm run build`.
+- [ ] Start command: backend project production command, usually `npm run start:prod`.
 - [ ] Required environment variables are set in Render.
 - [ ] Health check path points to the backend health endpoint, for example `/health/ready`.
 - [ ] Auto-deploy branch is correct.
@@ -55,7 +88,7 @@ Use this checklist for the final production deploy. Do not run seed scripts agai
 ## Frontend Hosting Upload
 
 - [ ] Run frontend validation before upload.
-- [ ] Run `npm.cmd run build`.
+- [ ] Run `npm run build`.
 - [ ] Upload the contents of `dist`, not the project root.
 - [ ] Configure SPA fallback to `index.html`.
 - [ ] Confirm deployed `index.html` references current hashed assets.
@@ -75,7 +108,7 @@ Use this checklist for the final production deploy. Do not run seed scripts agai
 - [ ] Fill `SMOKE_API_BASE_URL` with the deployed backend URL.
 - [ ] Fill owner, admin, teacher, student, and panda credentials.
 - [ ] Keep `SMOKE_ALLOW_MUTATION=false` for production.
-- [ ] Run readonly live smoke: `npm.cmd run smoke:live`.
+- [ ] Run readonly live smoke: `npm run smoke:live`.
 - [ ] Only run mutating smoke against QA with `SMOKE_ALLOW_MUTATION=true`.
 - [ ] Review generated reports in `reports/`.
 

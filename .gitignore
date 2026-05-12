@@ -13,6 +13,19 @@ reports
 dist-ssr
 *.local
 
+# Environment files
+.env
+.env.local
+.env.production
+.env.qa
+.env.staging
+.env.*.local
+!.env.example
+!.env.local.example
+!.env.production.example
+!.env.qa.example
+!.env.smoke.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

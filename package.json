@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "vite --host 0.0.0.0",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck",
     "test": "npm run smoke:static",
     "preview": "vite preview",
+    "start:prod": "vite preview --host 0.0.0.0",
     "qa:up": "docker compose -f docker-compose.qa.yml up --build -d",
     "qa:seed": "docker compose -f docker-compose.qa.yml --profile seed run --rm seed",
     "qa:local:backend": "powershell -ExecutionPolicy Bypass -File scripts/qa-local-backend.ps1",
@@ -17,7 +19,8 @@
     "qa:local:smoke": "powershell -ExecutionPolicy Bypass -File scripts/qa-local-smoke.ps1",
     "qa:local:smoke:mutate": "powershell -ExecutionPolicy Bypass -File scripts/qa-local-smoke.ps1 -Mutate",
     "smoke:live": "node scripts/smoke-live.mjs",
-    "smoke:static": "node scripts/smoke-static.mjs"
+    "smoke:static": "node scripts/smoke-static.mjs",
+    "hygiene:check": "node scripts/repo-hygiene-check.mjs"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
