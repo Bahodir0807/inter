@@ -20,6 +20,12 @@ export function UserDetailModal({
   if (!user) {
     return null;
   }
+  const paymentMethodLabel =
+    user.paymentMethod === 'cash'
+      ? t('users.paymentMethod.cash')
+      : user.paymentMethod === 'card'
+        ? t('users.paymentMethod.card')
+        : '-';
 
   return (
     <ModalShell
@@ -56,6 +62,26 @@ export function UserDetailModal({
         <div className="stack">
           <span className="subtle">{t('users.detailPhone')}</span>
           <strong>{user.phoneNumber || '-'}</strong>
+        </div>
+        <div className="stack">
+          <span className="subtle">{t('users.detailStudentYear')}</span>
+          <strong>{user.studentYear || '-'}</strong>
+        </div>
+        <div className="stack">
+          <span className="subtle">{t('users.detailPaymentMethod')}</span>
+          <strong>{paymentMethodLabel}</strong>
+        </div>
+        <div className="stack">
+          <span className="subtle">{t('users.detailContactOwner')}</span>
+          <strong>{user.contactOwner || '-'}</strong>
+        </div>
+        <div className="stack">
+          <span className="subtle">{t('users.detailContactOwnerFullName')}</span>
+          <strong>{user.contactOwnerFullName || '-'}</strong>
+        </div>
+        <div className="stack">
+          <span className="subtle">{t('users.detailContactOwnerRelation')}</span>
+          <strong>{user.contactOwnerRelation || '-'}</strong>
         </div>
         {showAccountDetails ? (
           <div className="stack">

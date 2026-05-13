@@ -106,12 +106,21 @@ export function RoomsPage() {
 
   const rooms = query.data?.items ?? [];
   const pagination = query.data?.pagination;
+  const openCreateRoom = () => {
+    setEditingRoom(null);
+    setFormOpen(true);
+  };
 
   return (
     <PageLayout
       eyebrow={t('rooms.eyebrow')}
       title={t('rooms.title')}
       description={t('rooms.description')}
+      actions={capabilities.rooms.manage ? (
+        <Button type="button" onClick={openCreateRoom}>
+          {t('rooms.createRoom')}
+        </Button>
+      ) : undefined}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
@@ -159,18 +168,6 @@ export function RoomsPage() {
                   </Select>
                 </>
               )}
-              actions={capabilities.rooms.manage ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => {
-                    setEditingRoom(null);
-                    setFormOpen(true);
-                  }}
-                >
-                  {t('rooms.createRoom')}
-                </Button>
-              ) : null}
             />
           )}
         >

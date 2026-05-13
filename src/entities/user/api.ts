@@ -1,6 +1,6 @@
 import { http } from '../../shared/api/http';
 import { ListQueryParams, PaginatedList } from '../../shared/types/api';
-import { AppUser, Role } from '../../shared/types/auth';
+import { AppUser, Role, StudentPaymentMethod } from '../../shared/types/auth';
 
 export type UserStatus = 'active' | 'inactive' | 'blocked';
 
@@ -13,7 +13,11 @@ export interface UserFormValues {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
-  avatarUrl?: string;
+  studentYear?: string;
+  paymentMethod?: StudentPaymentMethod | '';
+  contactOwner?: string;
+  contactOwnerFullName?: string;
+  contactOwnerRelation?: string;
   telegramId?: string;
   roleKey?: string;
   branchIds?: string[];
@@ -24,7 +28,6 @@ export interface ProfileSelfServiceValues {
   lastName?: string;
   email?: string;
   phoneNumber?: string;
-  avatarUrl?: string;
 }
 
 type UserPayload = UserFormValues | ProfileSelfServiceValues;
@@ -32,7 +35,11 @@ type UserPayload = UserFormValues | ProfileSelfServiceValues;
 const optionalStringFields = new Set([
   'email',
   'phoneNumber',
-  'avatarUrl',
+  'studentYear',
+  'paymentMethod',
+  'contactOwner',
+  'contactOwnerFullName',
+  'contactOwnerRelation',
   'telegramId',
   'roleKey',
 ]);
@@ -44,13 +51,19 @@ const requiredStringFields = new Set([
   'lastName',
 ]);
 
-function normalizeUserPayload<T extends UserPayload>(payload: T): Partial<T> {
+function normalizeUserPayload<T extends UserPayload>(
+  payload: T,
+  options: { clearEmptyOptionals?: boolean } = {},
+): Partial<T> {
   const normalized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(payload)) {
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (optionalStringFields.has(key) && trimmed.length === 0) {
+        if (options.clearEmptyOptionals) {
+          normalized[key] = null;
+        }
         continue;
       }
 
@@ -114,7 +127,7 @@ export const usersApi = {
     return data;
   },
   async updateMyProfile(payload: ProfileSelfServiceValues) {
-    const { data } = await http.patch<AppUser>('/users/me/profile', normalizeUserPayload(payload));
+    const { data } = await http.patch<AppUser>('/users/me/profile', normalizeUserPayload(payload, { clearEmptyOptionals: true }));
     return data;
   },
   async create(payload: UserFormValues & { password: string }) {
@@ -122,7 +135,7 @@ export const usersApi = {
     return data;
   },
   async update(id: string, payload: UserFormValues) {
-    const { data } = await http.put<AppUser>(`/users/${id}`, normalizeUserPayload(payload));
+    const { data } = await http.put<AppUser>(`/users/${id}`, normalizeUserPayload(payload, { clearEmptyOptionals: true }));
     return data;
   },
   async updateRole(id: string, role: Role) {

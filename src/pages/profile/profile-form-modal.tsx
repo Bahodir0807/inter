@@ -17,7 +17,6 @@ const schema = z.object({
   lastName: z.string().trim().min(1, 'Last name is required'),
   email: z.string().email('Enter a valid email address').optional().or(z.literal('')),
   phoneNumber: z.string().optional(),
-  avatarUrl: z.string().url('Enter a valid URL').optional().or(z.literal('')),
 });
 
 type ProfileFormInput = z.infer<typeof schema>;
@@ -50,7 +49,6 @@ export function ProfileFormModal({
       lastName: '',
       email: '',
       phoneNumber: '',
-      avatarUrl: '',
     },
   });
 
@@ -70,7 +68,6 @@ export function ProfileFormModal({
       lastName: profile?.lastName ?? '',
       email: profile?.email ?? '',
       phoneNumber: profile?.phoneNumber ?? '',
-      avatarUrl: profile?.avatarUrl ?? '',
     });
 
     window.setTimeout(() => setFocus('firstName'), 0);
@@ -132,14 +129,6 @@ export function ProfileFormModal({
                 autoComplete="tel"
                 error={errors.phoneNumber?.message}
                 {...register('phoneNumber')}
-              />
-              <Input
-                label={t('users.field.avatarUrl')}
-                placeholder="https://example.com/avatar.jpg"
-                autoComplete="url"
-                error={errors.avatarUrl?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('avatarUrl')}
               />
             </div>
           </FormSection>

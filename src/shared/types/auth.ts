@@ -1,4 +1,5 @@
 export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'panda' | 'guest';
+export type StudentPaymentMethod = 'cash' | 'card';
 
 export const roleLabels: Record<Role, string> = {
   owner: 'Owner',
@@ -28,7 +29,11 @@ export interface AppUser {
   role: Role;
   phoneNumber?: string;
   isActive: boolean;
-  avatarUrl?: string;
+  studentYear?: string;
+  paymentMethod?: StudentPaymentMethod;
+  contactOwner?: string;
+  contactOwnerFullName?: string;
+  contactOwnerRelation?: string;
   createdAt?: string;
   updatedAt?: string;
 }

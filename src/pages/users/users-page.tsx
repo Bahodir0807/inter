@@ -94,6 +94,17 @@ export function UsersPage() {
 
   const users = query.data ?? [];
   const usersWithContact = users.filter(item => item.phoneNumber || item.email).length;
+  const formatPaymentMethod = (method?: AppUser['paymentMethod']) => {
+    if (method === 'cash') {
+      return t('users.paymentMethod.cash');
+    }
+
+    if (method === 'card') {
+      return t('users.paymentMethod.card');
+    }
+
+    return t('common.notSet');
+  };
 
   const filteredUsers = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -105,6 +116,11 @@ export function UsersPage() {
         item.lastName,
         item.email,
         item.phoneNumber,
+        item.studentYear,
+        item.paymentMethod,
+        item.contactOwner,
+        item.contactOwnerFullName,
+        item.contactOwnerRelation,
       ]
         .filter(Boolean)
         .join(' ')
@@ -142,7 +158,29 @@ export function UsersPage() {
         <div className="cell-stack cell-stack--primary cell-stack--relation">
           <span className="cell-title">{getUserDisplayName(item)}</span>
           {isAdminLike ? <span className="cell-meta cell-meta--strong">@{item.username}</span> : null}
-          <span className="cell-meta">{item.phoneNumber || item.email || t('users.noContactDetailsLabel')}</span>
+          <span className="cell-meta">{item.studentYear || item.phoneNumber || item.email || t('users.noContactDetailsLabel')}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'studentProfile',
+      header: t('users.studentProfileLabel'),
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">{item.studentYear || t('common.notSet')}</span>
+          <span className="cell-meta">{formatPaymentMethod(item.paymentMethod)}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'contactOwner',
+      header: t('users.contactOwnerLabel'),
+      className: 'data-table__cell--relation',
+      cell: item => (
+        <div className="cell-stack cell-stack--relation">
+          <span className="cell-title">{item.contactOwnerFullName || item.contactOwner || t('common.notSet')}</span>
+          <span className="cell-meta">{item.contactOwnerRelation || t('common.notSet')}</span>
         </div>
       ),
     },

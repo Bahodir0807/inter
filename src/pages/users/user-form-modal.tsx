@@ -15,6 +15,7 @@ import { useI18n } from '../../shared/i18n/i18n';
 
 const requiredText = (message: string) => z.string().trim().min(1, message);
 const optionalText = z.string().trim().optional().or(z.literal(''));
+const paymentMethodSchema = z.enum(['cash', 'card']).optional().or(z.literal(''));
 
 const createSchema = z.object({
   username: z.string().trim().min(3, 'Username must be at least 3 characters'),
@@ -24,7 +25,11 @@ const createSchema = z.object({
   firstName: requiredText('First name is required'),
   lastName: requiredText('Last name is required'),
   phoneNumber: optionalText,
-  avatarUrl: z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  studentYear: optionalText,
+  paymentMethod: paymentMethodSchema,
+  contactOwner: optionalText,
+  contactOwnerFullName: optionalText,
+  contactOwnerRelation: optionalText,
   telegramId: optionalText,
 });
 
@@ -63,7 +68,11 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
       firstName: '',
       lastName: '',
       phoneNumber: '',
-      avatarUrl: '',
+      studentYear: '',
+      paymentMethod: '',
+      contactOwner: '',
+      contactOwnerFullName: '',
+      contactOwnerRelation: '',
       telegramId: '',
     },
   });
@@ -87,7 +96,11 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
       phoneNumber: user?.phoneNumber ?? '',
-      avatarUrl: user?.avatarUrl ?? '',
+      studentYear: user?.studentYear ?? '',
+      paymentMethod: user?.paymentMethod ?? '',
+      contactOwner: user?.contactOwner ?? '',
+      contactOwnerFullName: user?.contactOwnerFullName ?? '',
+      contactOwnerRelation: user?.contactOwnerRelation ?? '',
       telegramId: user?.telegramId ?? '',
     });
 
@@ -195,6 +208,51 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
             </div>
           </FormSection>
           <FormSection
+            title={t('users.formSection.studentTitle')}
+            description={t('users.formSection.studentDescription')}
+          >
+            <div className="detail-grid">
+              <Input
+                label={t('users.field.studentYear')}
+                placeholder="2026, 1-kurs, 9-sinf"
+                error={errors.studentYear?.message}
+                fieldClassName="ui-field--quiet"
+                {...register('studentYear')}
+              />
+              <Select
+                label={t('users.field.paymentMethod')}
+                error={errors.paymentMethod?.message}
+                fieldClassName="ui-field--quiet"
+                {...register('paymentMethod')}
+              >
+                <option value="">{t('common.notSet')}</option>
+                <option value="cash">{t('users.paymentMethod.cash')}</option>
+                <option value="card">{t('users.paymentMethod.card')}</option>
+              </Select>
+              <Input
+                label={t('users.field.contactOwner')}
+                placeholder="ota, ona, aka, opa, o'zi"
+                error={errors.contactOwner?.message}
+                fieldClassName="ui-field--quiet"
+                {...register('contactOwner')}
+              />
+              <Input
+                label={t('users.field.contactOwnerFullName')}
+                placeholder="Aliyev Sardor"
+                error={errors.contactOwnerFullName?.message}
+                fieldClassName="ui-field--quiet"
+                {...register('contactOwnerFullName')}
+              />
+              <Input
+                label={t('users.field.contactOwnerRelation')}
+                placeholder="otasi, onasi, akasi, opasi, vasiy, o'zi"
+                error={errors.contactOwnerRelation?.message}
+                fieldClassName="ui-field--quiet"
+                {...register('contactOwnerRelation')}
+              />
+            </div>
+          </FormSection>
+          <FormSection
             title={t('users.formSection.linksTitle')}
             description={t('users.formSection.linksDescription')}
           >
@@ -206,15 +264,6 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
                 error={errors.telegramId?.message}
                 fieldClassName="ui-field--quiet"
                 {...register('telegramId')}
-              />
-              <Input
-                label={t('users.field.avatarUrl')}
-                hint={t('users.field.avatarHint')}
-                placeholder="https://example.com/avatar.jpg"
-                autoComplete="url"
-                error={errors.avatarUrl?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('avatarUrl')}
               />
             </div>
           </FormSection>

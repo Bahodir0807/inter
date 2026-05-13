@@ -69,7 +69,7 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
           <span>{env.appVersion}</span>
         </div>
         <div className="app-topbar__user-chip">
-          <span className="app-topbar__avatar" aria-hidden="true">
+          <span className="app-topbar__initials" aria-hidden="true">
             {initials}
           </span>
           <div className="app-topbar__user-copy">
