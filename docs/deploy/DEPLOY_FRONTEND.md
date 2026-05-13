@@ -1,8 +1,10 @@
-# Deploy Checklist
+# Frontend Deploy Checklist
 
 Use this checklist for the final production deploy. Do not run seed scripts against production unless a deliberate initial data load has been approved.
 
 This repository is a Vite frontend. The build output is `dist/index.html` plus static assets. It does not produce `dist/main.js` or `dist/src/main.js`.
+
+For cPanel hosting, see `docs/deploy/CPANEL_DEPLOY.md`.
 
 ## Backend Environment
 
@@ -24,7 +26,7 @@ This repository is a Vite frontend. The build output is `dist/index.html` plus s
 
 Required frontend env vars:
 
-- `VITE_API_URL`
+- `VITE_API_BASE_URL`
 - `VITE_APP_ENV`
 - `VITE_APP_VERSION`
 - `VITE_BUILD_HASH`
@@ -88,12 +90,25 @@ If this frontend is deployed as a Render Web Service instead of a Static Site:
 ## Frontend Hosting Upload
 
 - [ ] Run frontend validation before upload.
+- [ ] Run `npm install` if dependencies are not installed on the build machine.
 - [ ] Run `npm run build`.
 - [ ] Upload the contents of `dist`, not the project root.
+- [ ] Confirm `index.html` is directly in the hosting web root, for example `public_html/index.html`.
+- [ ] Confirm `assets/` is directly in the hosting web root.
 - [ ] Configure SPA fallback to `index.html`.
 - [ ] Confirm deployed `index.html` references current hashed assets.
 - [ ] Hard refresh the deployed site and verify login page loads.
 - [ ] Confirm protected route refresh works, for example `/app/dashboard`.
+
+## cPanel Upload
+
+- [ ] Run `npm install`.
+- [ ] Run `npm run build`.
+- [ ] Upload the contents of `dist/` into `public_html`.
+- [ ] Ensure `index.html` is directly in `public_html`.
+- [ ] Ensure `assets/` is directly in `public_html`.
+- [ ] Ensure `.htaccess` is directly in `public_html`.
+- [ ] Verify protected route refresh works after upload.
 
 ## Health Endpoint
 

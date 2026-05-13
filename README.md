@@ -2,7 +2,7 @@
 
 React + TypeScript + Vite frontend for the Inter CRM application.
 
-## Quick Start
+## Local Setup
 
 ```bash
 npm install
@@ -10,11 +10,11 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-Set `VITE_API_URL` in `.env.local` to the backend API URL used for local development.
+Set `VITE_API_BASE_URL` in `.env.local` to the backend URL used for local development.
 
-## Environment
+## Env Setup
 
-Only safe templates should be committed:
+Only safe templates are tracked:
 
 - `.env.example`
 - `.env.local.example`
@@ -22,31 +22,33 @@ Only safe templates should be committed:
 - `.env.qa.example`
 - `.env.smoke.example`
 
-Real environment files such as `.env`, `.env.local`, `.env.production`, `.env.qa`, and `.env.staging` are ignored by Git. Store production values in the hosting provider environment settings, not in the repository.
+Real env files such as `.env`, `.env.local`, `.env.production`, `.env.qa`, `.env.staging`, and `.env.*.local` are ignored. Do not commit filled env files or secrets.
 
 Frontend build variables:
 
 ```env
-VITE_API_URL=https://ibrat-backend-hi7w.onrender.com
-VITE_APP_ENV=production
+VITE_API_BASE_URL=http://localhost:3000
+VITE_APP_ENV=local
 VITE_APP_VERSION=0.0.0
-VITE_BUILD_HASH=render
+VITE_BUILD_HASH=local
 VITE_SENTRY_DSN=
 ```
 
-## Commands
+## Scripts
 
 ```bash
 npm run dev
 npm run build
 npm run preview
 npm test
+npm run lint
+npm run typecheck
 npm run smoke:static
 npm run smoke:live
 npm run hygiene:check
 ```
 
-`npm test` currently runs the static smoke checks. `npm run smoke:live` requires smoke credentials from `.env.smoke.example` or equivalent shell environment variables.
+`npm test` currently runs `npm run smoke:static`. `npm run lint` is a TypeScript-only check because this project does not have ESLint configured. `npm run smoke:live` requires smoke credentials from `.env.smoke.example` or equivalent shell environment variables.
 
 QA helpers:
 
@@ -58,43 +60,40 @@ npm run qa:local:seed
 npm run qa:local:smoke
 ```
 
-The demo/seed command is `npm run qa:seed` for the Docker QA profile, or `npm run qa:local:seed` for the local backend helper.
-
-## Render Deployment
-
-This repository builds a static Vite app. The production artifact is `dist/index.html` plus assets, not a Node entrypoint such as `dist/main.js`.
-
-Recommended Render setup:
-
-- Service type: Static Site
-- Build command: `npm ci && npm run build`
-- Publish directory: `dist`
-- Required env vars: `VITE_API_URL`, `VITE_APP_ENV`, `VITE_APP_VERSION`, `VITE_BUILD_HASH`
-- Optional env var: `VITE_SENTRY_DSN`
-
-If deployed as a web service for preview-style hosting, use:
+## Build
 
 ```bash
-npm run start:prod
+npm run build
 ```
 
-## Documentation
+The production artifact is `dist/index.html` plus `dist/assets/`. `dist/` is generated output and is ignored by Git.
 
-Detailed docs live under `docs/`:
+## cPanel Deploy
 
-- Deploy and browser QA: `docs/deploy/`
-- QA notes and summaries: `docs/qa/`
-- Audits and applied fixes: `docs/audits/`
-- Security planning docs: `docs/security/`
+1. Run `npm install`.
+2. Set production env values, especially `VITE_API_BASE_URL`.
+3. Run `npm run build`.
+4. Upload the contents of `dist/` into `public_html`.
+5. Confirm `index.html` is directly inside `public_html`, not nested under `dist`.
+6. Include the generated `.htaccess` in `public_html` for SPA routing.
 
-## Hygiene
+See [docs/deploy/CPANEL_DEPLOY.md](docs/deploy/CPANEL_DEPLOY.md).
 
-Before opening a production deployment PR, run:
+## QA And Smoke
 
 ```bash
 npm run build
 npm test
-npm run hygiene:check
+npm run lint
+npm run typecheck
+npm run smoke:static
 ```
 
-Do not commit real secrets or filled env files.
+For live smoke, copy `.env.smoke.example` to `.env.smoke` locally or set the same `SMOKE_*` variables in your shell. Keep `SMOKE_ALLOW_MUTATION=false` for production.
+
+## Documentation
+
+- Deploy docs: [docs/deploy/](docs/deploy/)
+- Browser QA: [docs/qa/CHECKLIST_BROWSER_QA.md](docs/qa/CHECKLIST_BROWSER_QA.md)
+- QA notes: [docs/qa/QA_README.md](docs/qa/QA_README.md)
+- Audits and applied fixes: [docs/audits/](docs/audits/)

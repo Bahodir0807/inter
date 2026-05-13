@@ -77,6 +77,7 @@ check('http preserves envelope meta', http.includes('response.apiMeta = unwrappe
 check('http reads backend error message', http.includes('body?.error?.message'), 'http client must read backend error.message');
 check('http reads backend validation details', http.includes('body?.error?.details'), 'http client must read backend validation details');
 check('http avoids custom request-id header for production CORS compatibility', !http.includes("config.headers['X-Request-Id']") && !http.includes("'X-Request-Id': createRequestId()"), 'frontend must not send X-Request-Id unless production CORS allows it');
+check('api url uses VITE_API_BASE_URL', envConfig.includes('import.meta.env.VITE_API_BASE_URL'), 'frontend must read VITE_API_BASE_URL');
 check('api url uses configured backend domain', envConfig.includes("const defaultApiUrl = 'https://ibrat-backend-hi7w.onrender.com'"), 'frontend API fallback must use the Render backend domain');
 check('favicon is declared', indexHtml.includes('rel="icon"') && indexHtml.includes('/favicon.svg'), 'index.html must declare favicon');
 

@@ -55,8 +55,8 @@ Completed final QA gap fixes to ensure live QA validation is strict, clear, and 
 ```javascript
 let anyLoginFailed = false;
 for (const role of Object.keys(credentials)) {
-  const token = await login(role);
-  if (token) {
+  const loginResult = await login(role);
+  if (loginResult) {
     // ... run tests
   } else {
     anyLoginFailed = true;

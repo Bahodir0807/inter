@@ -5,8 +5,8 @@ Date: 2026-05-08
 ## Issues Addressed
 
 1. Unsafe frontend production fallback
-   - Issue: `src/shared/config/env.ts` used `https://ibrat-backend-hi7w.onrender.com` as a default when `VITE_API_URL` was missing.
-   - Fix: Updated `src/shared/config/env.ts` to throw a clear error when `VITE_API_URL` is not provided.
+   - Issue: `src/shared/config/env.ts` used `https://ibrat-backend-hi7w.onrender.com` as a default when the API base URL env var was missing.
+   - Fix: Updated frontend env templates and docs to use `VITE_API_BASE_URL`.
    - Files: `src/shared/config/env.ts`
 
 2. Refresh token storage exposure

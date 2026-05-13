@@ -1,22 +1,6 @@
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-
-  RewriteRule ^assets/ - [L]
-  RewriteRule ^favicon\.svg$ - [L]
-  RewriteRule \.(js|mjs|css|map|json|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf)$ - [L]
-
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
-</IfModule>
-
-<IfModule mod_mime.c>
-  AddType application/javascript .js .mjs
-  AddType text/css .css
-  AddType image/svg+xml .svg
-  AddType application/json .json
-  AddType font/woff2 .woff2
-  AddType font/woff .woff
-</IfModule>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]

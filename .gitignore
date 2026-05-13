@@ -9,11 +9,11 @@ lerna-debug.log*
 
 node_modules
 dist
-reports
 dist-ssr
 *.local
 
 # Environment files
+.env*
 .env
 .env.local
 .env.production
@@ -21,10 +21,23 @@ dist-ssr
 .env.staging
 .env.*.local
 !.env.example
+!.env.*.example
 !.env.local.example
 !.env.production.example
 !.env.qa.example
 !.env.smoke.example
+
+# Generated reports and coverage
+reports/
+reports/*.json
+reports/*.html
+reports/*.md
+coverage/
+
+# Local debug files
+*.debug
+debug.log
+*.tmp
 
 # Editor directories and files
 .vscode/*

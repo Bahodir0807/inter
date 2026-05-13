@@ -16,7 +16,7 @@ function normalizeEnvironment(value: string | undefined) {
 }
 
 export const env = {
-  apiUrl: normalizeApiUrl(import.meta.env.VITE_API_URL as string | undefined),
+  apiUrl: normalizeApiUrl(import.meta.env.VITE_API_BASE_URL as string | undefined),
   appEnv: normalizeEnvironment(import.meta.env.VITE_APP_ENV as string | undefined),
   appVersion: (import.meta.env.VITE_APP_VERSION as string | undefined)?.trim() || '0.0.0',
   buildHash: (import.meta.env.VITE_BUILD_HASH as string | undefined)?.trim() || 'local',

@@ -62,7 +62,7 @@ Live smoke commands:
 ```bash
 npm run smoke:static
 npm run smoke:live
-SMOKE_MUTATE=true npm run smoke:live
+SMOKE_ALLOW_MUTATION=true npm run smoke:live
 ```
 
 Use `SMOKE_*` env vars to override usernames/passwords for real QA accounts.
@@ -354,8 +354,8 @@ Commands:
 npm run qa:up
 npm run qa:seed
 npm run smoke:static
-$env:SMOKE_API_URL="http://localhost:3000"; npm run smoke:live
-$env:SMOKE_API_URL="http://localhost:3000"; $env:SMOKE_MUTATE="true"; npm run smoke:live
+$env:SMOKE_API_BASE_URL="http://localhost:3000"; npm run smoke:live
+$env:SMOKE_API_BASE_URL="http://localhost:3000"; $env:SMOKE_ALLOW_MUTATION="true"; npm run smoke:live
 ```
 
 Seed data:
@@ -432,8 +432,8 @@ Recommended next:
 | Frontend production build | `npm.cmd run build` | Passed |
 | Backend build | `npm.cmd run build` in backend | Passed |
 | Read-only live smoke | `npm run smoke:live` | Failed at login: default seed admin credentials are not valid on live backend |
-| Mutating live smoke | `SMOKE_MUTATE=true npm run smoke:live` | Not run without explicit production mutation approval |
-| QA compose live smoke | `SMOKE_API_URL=http://localhost:3000 npm run smoke:live` | Prepared; not run because QA stack was not started in this session |
+| Mutating live smoke | `SMOKE_ALLOW_MUTATION=true npm run smoke:live` | Not run without explicit production mutation approval |
+| QA compose live smoke | `SMOKE_API_BASE_URL=http://localhost:3000 npm run smoke:live` | Prepared; not run because QA stack was not started in this session |
 
 ### Isolated QA Validation Attempt
 
@@ -443,8 +443,8 @@ Requested QA command order was attempted against local QA only:
 |---|---|---|
 | Docker stack | `npm run qa:up` | Failed: `docker` command is not available in this environment/PATH |
 | Seed | `npm run qa:seed` | Failed: `docker` command is not available in this environment/PATH |
-| Read-only smoke | `SMOKE_API_URL=http://localhost:3000 npm run smoke:live` | Failed: `fetch failed`, no local backend was running |
-| Mutating smoke | `SMOKE_API_URL=http://localhost:3000 SMOKE_MUTATE=true npm run smoke:live` | Failed before mutation: `fetch failed`, no local backend was running |
+| Read-only smoke | `SMOKE_API_BASE_URL=http://localhost:3000 npm run smoke:live` | Failed: `fetch failed`, no local backend was running |
+| Mutating smoke | `SMOKE_API_BASE_URL=http://localhost:3000 SMOKE_ALLOW_MUTATION=true npm run smoke:live` | Failed before mutation: `fetch failed`, no local backend was running |
 
 Reports generated:
 

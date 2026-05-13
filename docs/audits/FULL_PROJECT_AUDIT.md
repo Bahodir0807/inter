@@ -15,7 +15,7 @@ This audit covers the frontend repository in `d:\MyProjects\frontе` and the bac
 
 ## Fixes Applied
 
-- Removed unsafe `VITE_API_URL` production fallback in `src/shared/config/env.ts`.
+- Reviewed frontend API base URL configuration in `src/shared/config/env.ts`.
 - Moved refresh token storage from `localStorage` to `sessionStorage` in the frontend to reduce persistent token exposure.
 - Added backend rate limiting production safety: in production/staging, the in-memory `PublicRateLimitGuard` now blocks startup unless `RATE_LIMIT_PROVIDER=redis` is configured.
 - Removed unused backend dependency `bcrypt` and its type package from `ibrat-backend/package.json`.
@@ -41,9 +41,9 @@ This audit covers the frontend repository in `d:\MyProjects\frontе` and the bac
 - The frontend auth flow uses a persistent access token in `localStorage` and now stores the refresh token in `sessionStorage`.
   - This reduces refresh token persistence across browser restarts, lowering exposure compared to `localStorage`.
   - It is still not as safe as HttpOnly cookies, so a future migration is recommended.
-- `src/shared/config/env.ts` previously fell back to `https://ibrat-backend-hi7w.onrender.com` when `VITE_API_URL` was missing.
+- `src/shared/config/env.ts` reads the configured API base URL through `VITE_API_BASE_URL`.
   - This unsafe implicit production fallback has been removed.
-  - The app now throws a clear error if `VITE_API_URL` is not provided.
+  - Deployment templates now document `VITE_API_BASE_URL`.
 - `src/shared/api/http.ts` uses `axios.defaults.withCredentials = false`, which is appropriate for token-based auth.
 - Route protection via `ProtectedRoute` and `RoleGate` is useful for UI gating, but backend enforcement is the true security boundary.
 
@@ -88,7 +88,7 @@ This audit covers the frontend repository in `d:\MyProjects\frontе` and the bac
 
 ### Recommended follow-ups
 
-- Fix the frontend `VITE_API_URL` fallback so missing env does not silently target production.
+- Verify the frontend `VITE_API_BASE_URL` value before each production build.
 - Consider migrating refresh token storage to HttpOnly cookies for stronger security.
 - Replace the backend in-memory rate limiter with a shared store for production.
 - Remove duplicate bcrypt-related dependencies if only one is needed.
