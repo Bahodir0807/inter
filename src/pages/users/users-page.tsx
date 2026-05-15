@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { usersApi, UserFormValues } from '../../entities/user/api';
+import { studentProfileFields, usersApi, UserFormValues } from '../../entities/user/api';
+import { groupsApi, Group } from '../../entities/group/api';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { adminLikeRoles } from '../../app/router/navigation';
 import { PageLayout } from '../../widgets/page/page-layout';
@@ -26,6 +27,32 @@ import { useI18n } from '../../shared/i18n/i18n';
 
 const pageSize = 8;
 
+function omitStudentProfileForNonStudent<T extends UserFormValues>(payload: T, role: Role | undefined) {
+  if (role === 'student') {
+    return payload;
+  }
+
+  for (const field of studentProfileFields) {
+    delete payload[field];
+  }
+
+  return payload;
+}
+
+function normalizeEntityId(value: unknown) {
+  if (value && typeof value === 'object' && 'id' in value) {
+    return String((value as { id: unknown }).id);
+  }
+
+  return String(value ?? '');
+}
+
+function getGroupStudentIds(group: Group) {
+  return (group.students ?? [])
+    .map(student => normalizeEntityId(student))
+    .filter(Boolean);
+}
+
 export function UsersPage() {
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore(state => state.user);
@@ -48,10 +75,65 @@ export function UsersPage() {
     enabled: !!sessionUser,
   });
 
+  const groupsQuery = useQuery({
+    queryKey: ['users-form-groups'],
+    queryFn: () => groupsApi.getAll(),
+    enabled: isAdminLike,
+  });
+
+  const groups = groupsQuery.data ?? [];
+
+  const invalidateUsersAndGroups = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['users'] }),
+      queryClient.invalidateQueries({ queryKey: ['groups'] }),
+      queryClient.invalidateQueries({ queryKey: ['users-form-groups'] }),
+    ]);
+  };
+
+  const syncStudentGroupMembership = async (studentId: string, targetGroupId?: string) => {
+    const normalizedStudentId = normalizeEntityId(studentId);
+    const currentGroups = groups.filter(group => getGroupStudentIds(group).includes(normalizedStudentId));
+
+    if (targetGroupId) {
+      const targetGroup = groups.find(group => group.id === targetGroupId);
+      if (!targetGroup) {
+        throw new Error(t('users.group.notFound', 'Selected group was not found. Refresh and try again.'));
+      }
+
+      const studentIds = getGroupStudentIds(targetGroup);
+      if (!studentIds.includes(normalizedStudentId)) {
+        await groupsApi.update(targetGroup.id, {
+          students: [...studentIds, normalizedStudentId],
+        });
+      }
+    }
+
+    const groupsToRemove = currentGroups.filter(group => group.id !== targetGroupId);
+    await Promise.all(groupsToRemove.map(group => groupsApi.update(group.id, {
+      students: getGroupStudentIds(group).filter(id => id !== normalizedStudentId),
+    })));
+  };
+
   const createMutation = useMutation({
-    mutationFn: (payload: UserFormValues & { password: string }) => usersApi.create(payload),
+    mutationFn: async ({ payload, groupId }: { payload: UserFormValues & { password: string }; groupId?: string }) => {
+      const created = await usersApi.create(payload);
+      if (payload.role === 'student') {
+        try {
+          await syncStudentGroupMembership(created.id, groupId);
+        } catch (error) {
+          await invalidateUsersAndGroups();
+          const detail = error instanceof Error ? ` ${error.message}` : '';
+          throw new Error(t(
+            'users.group.attachFailedAfterCreate',
+            'Student created, but group attach failed. Open the student and try assigning the group again.',
+          ) + detail);
+        }
+      }
+      return created;
+    },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['users'] });
+      await invalidateUsersAndGroups();
       toast.success(t('common.saved'));
       setFormOpen(false);
     },
@@ -60,8 +142,9 @@ export function UsersPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, values, previousRole }: { id: string; values: UserFormInput; previousRole: Role }) => {
-      const { role, password, ...rest } = values;
-      const payload: UserFormValues = { ...rest };
+      const { role, password, groupId, ...rest } = values;
+      const effectiveRole = role ?? previousRole;
+      const payload: UserFormValues = omitStudentProfileForNonStudent({ ...rest }, effectiveRole);
 
       if (password) {
         payload.password = password;
@@ -70,13 +153,34 @@ export function UsersPage() {
       const updated = await usersApi.update(id, payload);
 
       if (role && role !== previousRole) {
-        return usersApi.updateRole(id, role);
+        const roleUpdated = await usersApi.updateRole(id, role);
+        try {
+          await syncStudentGroupMembership(id, effectiveRole === 'student' ? groupId : undefined);
+        } catch (error) {
+          await invalidateUsersAndGroups();
+          const detail = error instanceof Error ? ` ${error.message}` : '';
+          throw new Error(t(
+            'users.group.attachFailedAfterEdit',
+            'Student saved, but group membership update failed. The student was not removed from the previous group before the new group attach finished.',
+          ) + detail);
+        }
+        return roleUpdated;
       }
 
+      try {
+        await syncStudentGroupMembership(id, effectiveRole === 'student' ? groupId : undefined);
+      } catch (error) {
+        await invalidateUsersAndGroups();
+        const detail = error instanceof Error ? ` ${error.message}` : '';
+        throw new Error(t(
+          'users.group.attachFailedAfterEdit',
+          'Student saved, but group membership update failed. The student was not removed from the previous group before the new group attach finished.',
+        ) + detail);
+      }
       return updated;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['users'] });
+      await invalidateUsersAndGroups();
       toast.success(t('common.updated'));
       setFormOpen(false);
     },
@@ -93,6 +197,15 @@ export function UsersPage() {
   });
 
   const users = query.data ?? [];
+  const getUserGroupIds = (userId?: string) => {
+    if (!userId) {
+      return [];
+    }
+
+    return groups
+      .filter(group => getGroupStudentIds(group).includes(userId))
+      .map(group => group.id);
+  };
   const usersWithContact = users.filter(item => item.phoneNumber || item.email).length;
   const formatPaymentMethod = (method?: AppUser['paymentMethod']) => {
     if (method === 'cash') {
@@ -363,14 +476,20 @@ export function UsersPage() {
         open={formOpen}
         mode={formMode}
         user={selectedUser}
+        groups={groups}
+        currentGroupIds={formMode === 'edit' ? getUserGroupIds(selectedUser?.id) : []}
+        groupsLoading={groupsQuery.isLoading}
+        groupsError={groupsQuery.error?.message ?? null}
         loading={createMutation.isPending || updateMutation.isPending}
         onClose={() => setFormOpen(false)}
         onSubmit={async values => {
           if (formMode === 'create') {
-            await createMutation.mutateAsync({
-              ...values,
-              password: values.password || '',
-            });
+            const { groupId, ...userValues } = values;
+            const payload = omitStudentProfileForNonStudent({
+              ...userValues,
+              password: userValues.password || '',
+            }, userValues.role);
+            await createMutation.mutateAsync({ payload, groupId });
             return;
           }
 

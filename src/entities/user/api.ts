@@ -32,6 +32,14 @@ export interface ProfileSelfServiceValues {
 
 type UserPayload = UserFormValues | ProfileSelfServiceValues;
 
+export const studentProfileFields = [
+  'studentYear',
+  'paymentMethod',
+  'contactOwner',
+  'contactOwnerFullName',
+  'contactOwnerRelation',
+] as const satisfies ReadonlyArray<keyof UserFormValues>;
+
 const optionalStringFields = new Set([
   'email',
   'phoneNumber',
@@ -135,7 +143,7 @@ export const usersApi = {
     return data;
   },
   async update(id: string, payload: UserFormValues) {
-    const { data } = await http.put<AppUser>(`/users/${id}`, normalizeUserPayload(payload, { clearEmptyOptionals: true }));
+    const { data } = await http.patch<AppUser>(`/users/${id}`, normalizeUserPayload(payload, { clearEmptyOptionals: true }));
     return data;
   },
   async updateRole(id: string, role: Role) {

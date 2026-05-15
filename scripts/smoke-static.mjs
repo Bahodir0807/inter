@@ -40,6 +40,9 @@ const roleGate = read('src/features/auth/ui/role-gate.tsx');
 const indexHtml = read('index.html');
 const dashboardPage = read('src/pages/dashboard/dashboard-page.tsx');
 const usersPage = read('src/pages/users/users-page.tsx');
+const userFormModal = read('src/pages/users/user-form-modal.tsx');
+const userApi = read('src/entities/user/api.ts');
+const authTypes = read('src/shared/types/auth.ts');
 const roomsPage = read('src/pages/rooms/rooms-page.tsx');
 const paymentsPage = read('src/pages/payments/payments-page.tsx');
 const schedulePage = read('src/pages/schedule/schedule-page.tsx');
@@ -105,6 +108,41 @@ check('app shell does not own nested Routes', !appShell.includes('<Routes') && !
 check('authenticated app routes are protected before shell', appRouter.includes('<Route element={<ProtectedRoute roles={[\'student\', \'teacher\', \'admin\', \'owner\', \'panda\']} />}>') && appRouter.indexOf('<Route element={<ProtectedRoute') < appRouter.indexOf('path="/app" element={<AppShell />}'), 'ProtectedRoute must wrap authenticated AppShell routes');
 check('app route permissions still use RoleGate', appRouter.includes('<RoleGate roles={route.roles}>') && roleGate.includes('!roles.includes(user.role)') && protectedRoute.includes('return <Outlet />'), 'RoleGate and ProtectedRoute must preserve role access through nested outlets');
 check('sidebar and topbar mounted once in shell', (appShell.match(/<Sidebar/g) ?? []).length === 1 && (appShell.match(/<Topbar/g) ?? []).length === 1 && appShell.indexOf('<Sidebar') < appShell.indexOf('<Outlet />'), 'Sidebar and Topbar must be mounted once outside route content');
+
+const persistedStudentUserFields = [
+  'email',
+  'phoneNumber',
+  'telegramId',
+  'studentYear',
+  'paymentMethod',
+  'contactOwner',
+  'contactOwnerFullName',
+  'contactOwnerRelation',
+];
+
+for (const field of persistedStudentUserFields) {
+  check(
+    `user form schema includes ${field}`,
+    userFormModal.includes(`${field}:`),
+    `User form schema/defaults/reset must include ${field}`,
+  );
+  check(
+    `AppUser includes ${field}`,
+    authTypes.includes(`${field}?:`),
+    `AppUser must include ${field} so GET /users and GET /users/students responses hydrate edit forms`,
+  );
+  check(
+    `UserFormValues includes ${field}`,
+    userApi.includes(`${field}?:`),
+    `UserFormValues must include ${field} so POST /users and PATCH /users/:id can send it`,
+  );
+}
+
+check('user create posts normalized payload', userApi.includes("http.post<AppUser>('/users', normalizeUserPayload(payload))"), 'usersApi.create must POST the normalized user payload');
+check('user update patches normalized payload', userApi.includes('http.patch<AppUser>(`/users/${id}`, normalizeUserPayload(payload, { clearEmptyOptionals: true }))'), 'usersApi.update must PATCH /users/:id with the normalized user payload');
+check('user update does not use PUT', !userApi.includes('http.put<AppUser>(`/users/${id}`'), 'usersApi.update must not use PUT /users/:id');
+check('student profile fields scoped to students', usersPage.includes('omitStudentProfileForNonStudent') && usersPage.includes('studentProfileFields'), 'student-only profile fields must be omitted when saving non-student users');
+check('normalizer clears empty optional fields on edit', userApi.includes('clearEmptyOptionals') && userApi.includes('normalized[key] = null'), 'empty optional user fields must be clearable during edits');
 
 const forbiddenRussianEnglishLabels = [
   'Users',

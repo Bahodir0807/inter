@@ -9,8 +9,9 @@ import { Select } from '../../shared/ui/forms/select';
 import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { AppUser, roleOptions } from '../../shared/types/auth';
+import { Group } from '../../entities/group/api';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
-import { getRoleDisplayName } from '../../shared/lib/entity-display';
+import { getCourseDisplayName, getRoleDisplayName, getUserListSummary } from '../../shared/lib/entity-display';
 import { useI18n } from '../../shared/i18n/i18n';
 
 const requiredText = (message: string) => z.string().trim().min(1, message);
@@ -31,6 +32,7 @@ const createSchema = z.object({
   contactOwnerFullName: optionalText,
   contactOwnerRelation: optionalText,
   telegramId: optionalText,
+  groupId: z.string().optional().or(z.literal('')),
 });
 
 const editSchema = createSchema.extend({
@@ -43,17 +45,53 @@ interface UserFormModalProps {
   open: boolean;
   mode: 'create' | 'edit';
   user?: AppUser | null;
+  groups?: Group[];
+  currentGroupIds?: string[];
+  groupsLoading?: boolean;
+  groupsError?: string | null;
   onClose: () => void;
   onSubmit: (values: UserFormInput) => Promise<void>;
   loading: boolean;
 }
 
-export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: UserFormModalProps) {
+function getGroupTeachers(group: Group) {
+  if (group.course && typeof group.course !== 'string' && Array.isArray(group.course.teachers) && group.course.teachers.length > 0) {
+    return group.course.teachers;
+  }
+
+  if (group.course && typeof group.course !== 'string' && Array.isArray(group.course.teacherIds) && group.course.teacherIds.length > 0) {
+    return group.course.teacherIds;
+  }
+
+  return [group.teacher].filter(Boolean);
+}
+
+function getGroupOptionLabel(group: Group) {
+  return [
+    getCourseDisplayName(group.course),
+    group.name,
+    getUserListSummary(getGroupTeachers(group), 3),
+  ].filter(Boolean).join(' / ');
+}
+
+export function UserFormModal({
+  open,
+  mode,
+  user,
+  groups = [],
+  currentGroupIds = [],
+  groupsLoading = false,
+  groupsError = null,
+  onClose,
+  onSubmit,
+  loading,
+}: UserFormModalProps) {
   const { t } = useI18n();
   const schema = mode === 'create' ? createSchema : editSchema;
   const {
     register,
     reset,
+    watch,
     handleSubmit,
     setFocus,
     formState: { errors, isDirty, isValid },
@@ -74,6 +112,7 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
       contactOwnerFullName: '',
       contactOwnerRelation: '',
       telegramId: '',
+      groupId: '',
     },
   });
 
@@ -82,6 +121,7 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
     isDirty,
     onDiscard: onClose,
   });
+  const currentGroupId = currentGroupIds[0] ?? '';
 
   useEffect(() => {
     if (!open) {
@@ -102,10 +142,27 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
       contactOwnerFullName: user?.contactOwnerFullName ?? '',
       contactOwnerRelation: user?.contactOwnerRelation ?? '',
       telegramId: user?.telegramId ?? '',
+      groupId: currentGroupId,
     });
 
     window.setTimeout(() => setFocus('username'), 0);
-  }, [open, reset, setFocus, user]);
+  }, [currentGroupId, open, reset, setFocus, user]);
+
+  const selectedRole = watch('role');
+  const showGroupSelector = selectedRole === 'student';
+  const currentGroupNames = currentGroupIds
+    .map(groupId => groups.find(group => group.id === groupId))
+    .filter((group): group is Group => !!group)
+    .map(group => group.name);
+  const groupSelectorHint = groupsLoading
+    ? t('users.group.loading', 'Loading groups...')
+    : groupsError
+      ? groupsError
+      : groups.length === 0
+        ? t('users.group.empty', 'No groups available yet.')
+        : currentGroupNames.length > 0
+          ? t('users.group.current', 'Current group: {{group}}', { group: currentGroupNames.join(', ') })
+          : t('users.group.hint', 'Select a group to attach this student after save.');
 
   return (
     <>
@@ -212,6 +269,22 @@ export function UserFormModal({ open, mode, user, onClose, onSubmit, loading }: 
             description={t('users.formSection.studentDescription')}
           >
             <div className="detail-grid">
+              {showGroupSelector ? (
+                <Select
+                  label={t('users.field.group', 'Group')}
+                  hint={groupSelectorHint}
+                  disabled={loading || groupsLoading || groups.length === 0}
+                  fieldClassName="ui-field--quiet"
+                  {...register('groupId')}
+                >
+                  <option value="">{t('users.group.notAssigned', 'No group selected')}</option>
+                  {groups.map(group => (
+                    <option key={group.id} value={group.id}>
+                      {getGroupOptionLabel(group)}
+                    </option>
+                  ))}
+                </Select>
+              ) : null}
               <Input
                 label={t('users.field.studentYear')}
                 placeholder="2026, 1-kurs, 9-sinf"

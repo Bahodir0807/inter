@@ -8,6 +8,8 @@ export interface Course {
   description?: string;
   price: number;
   teacherId?: string | AppUser | null;
+  teacherIds?: Array<string | AppUser>;
+  teachers?: AppUser[];
   students?: Array<string | AppUser>;
   createdAt?: string;
   updatedAt?: string;
