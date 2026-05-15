@@ -338,7 +338,7 @@ export function DashboardPage() {
               <QuickAction to="/app/schedule" icon="schedule" label={t('dashboard.action.planLessons')} meta={t('dashboard.action.openSchedule')} />
               <QuickAction to="/app/payments" icon="payments" label={t('dashboard.action.reviewPayments')} meta={t('dashboard.action.confirmPendingRecords')} />
               <QuickAction to="/app/groups" icon="groups" label={t('dashboard.action.checkGroups')} meta={t('dashboard.action.rostersAndTeachers')} />
-              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.academicFollowUp')} meta={t('dashboard.academicMetaNoHomework', 'Attendance and grades')} />
+              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.academicFollowUp')} meta={t('dashboard.academicMetaNoHomework')} />
             </div>
           </OpsPanel>
 

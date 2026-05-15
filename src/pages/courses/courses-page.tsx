@@ -232,7 +232,7 @@ export function CoursesPage() {
     >
       {supportUnavailable ? (
         <ErrorState
-          title={t('course.supportLoadFailedTitle', 'Course form data could not be loaded')}
+          title={t('course.supportLoadFailedTitle')}
           description={usersQuery.error.message}
           onRetry={() => void usersQuery.refetch()}
         />

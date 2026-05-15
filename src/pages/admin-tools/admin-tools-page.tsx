@@ -166,7 +166,7 @@ export function AdminToolsPage() {
         <div className="detail-grid">
           <Input label={t('adminTools.statisticType')} value={statType} onChange={event => setStatType(event.target.value)} />
           <Input label={t('adminTools.value')} type="number" value={statValue} onChange={event => setStatValue(Number(event.target.value))} />
-          <Textarea label={t('adminTools.metadataJson')} value={statMetadata} onChange={event => setStatMetadata(event.target.value)} placeholder='{"source":"manual"}' />
+          <Textarea label={t('adminTools.metadataJson')} value={statMetadata} onChange={event => setStatMetadata(event.target.value)} placeholder={t('adminTools.metadataPlaceholder')} />
           <Button disabled={!statType || createStatistic.isPending} onClick={() => createStatistic.mutate()}>
             {t('adminTools.createStatistic')}
           </Button>

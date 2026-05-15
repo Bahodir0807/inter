@@ -7,6 +7,7 @@ import { AppShell } from '../../widgets/app-shell/app-shell';
 import { LoginPage } from '../../pages/login/login-page';
 import { appRoutes } from './navigation';
 import { LoadingState } from '../../shared/ui/feedback/loading-state';
+import { translate } from '../../shared/i18n/i18n';
 
 function RootRedirect() {
   const user = useAuthStore(state => state.user);
@@ -28,7 +29,7 @@ export function AppRouter() {
               path={route.path.replace('/app/', '')}
               element={(
                 <RoleGate roles={route.roles}>
-                  <Suspense fallback={<LoadingState label="Loading page..." />}>
+                  <Suspense fallback={<LoadingState label={translate('common.loadingPage')} />}>
                     {route.element}
                   </Suspense>
                 </RoleGate>

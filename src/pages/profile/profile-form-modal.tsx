@@ -13,9 +13,9 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
-  firstName: z.string().trim().min(1, 'First name is required'),
-  lastName: z.string().trim().min(1, 'Last name is required'),
-  email: z.string().email('Enter a valid email address').optional().or(z.literal('')),
+  firstName: z.string().trim().min(1, 'profile.validation.firstName'),
+  lastName: z.string().trim().min(1, 'profile.validation.lastName'),
+  email: z.string().email('validation.email').optional().or(z.literal('')),
   phoneNumber: z.string().optional(),
 });
 
@@ -35,6 +35,7 @@ export function ProfileFormModal({
   onSubmit: (values: ProfileSelfServiceValues) => Promise<void>;
 }) {
   const { t } = useI18n();
+  const resolveErrorMessage = (key: string | undefined) => (key ? t(key) : undefined);
   const {
     register,
     reset,
@@ -92,18 +93,18 @@ export function ProfileFormModal({
             <div className="detail-grid">
               <Input
                 label={t('users.field.firstName')}
-                placeholder="Aziza"
+                placeholder={t('users.placeholder.firstName')}
                 autoComplete="given-name"
-                error={errors.firstName?.message}
+                error={resolveErrorMessage(errors.firstName?.message)}
                 fieldClassName="ui-field--primary"
                 required
                 {...register('firstName')}
               />
               <Input
                 label={t('users.field.lastName')}
-                placeholder="Karimova"
+                placeholder={t('users.placeholder.lastName')}
                 autoComplete="family-name"
-                error={errors.lastName?.message}
+                error={resolveErrorMessage(errors.lastName?.message)}
                 fieldClassName="ui-field--primary"
                 required
                 {...register('lastName')}
@@ -118,16 +119,16 @@ export function ProfileFormModal({
               <Input
                 label={t('profile.email')}
                 type="email"
-                placeholder="name@example.com"
+                placeholder={t('common.placeholder.email')}
                 autoComplete="email"
-                error={errors.email?.message}
+                error={resolveErrorMessage(errors.email?.message)}
                 {...register('email')}
               />
               <Input
                 label={t('profile.phone')}
-                placeholder="+998 90 123 45 67"
+                placeholder={t('common.placeholder.phone')}
                 autoComplete="tel"
-                error={errors.phoneNumber?.message}
+                error={resolveErrorMessage(errors.phoneNumber?.message)}
                 {...register('phoneNumber')}
               />
             </div>

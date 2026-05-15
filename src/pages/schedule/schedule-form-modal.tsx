@@ -16,6 +16,7 @@ import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
 import { getCourseDisplayName, getGroupDisplayName, getRoomDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
+import { useI18n } from '../../shared/i18n/i18n';
 
 const WEEKDAYS = [
   'Monday',
@@ -28,18 +29,18 @@ const WEEKDAYS = [
 ] as const;
 
 const schema = z.object({
-  course: z.string().min(1, 'Select a course'),
-  room: z.string().min(1, 'Select a room'),
-  weekdays: z.array(z.enum(WEEKDAYS)).min(1, 'Select at least one weekday'),
-  date: z.string().min(1, 'Choose a reference date'),
-  timeStart: z.string().min(1, 'Set the start time'),
-  timeEnd: z.string().min(1, 'Set the end time'),
-  teacher: z.string().min(1, 'Select a teacher'),
+  course: z.string().min(1, 'schedule.validation.selectCourse'),
+  room: z.string().min(1, 'schedule.validation.selectRoom'),
+  weekdays: z.array(z.enum(WEEKDAYS)).min(1, 'schedule.validation.selectWeekday'),
+  date: z.string().min(1, 'schedule.validation.chooseDate'),
+  timeStart: z.string().min(1, 'schedule.validation.setStartTime'),
+  timeEnd: z.string().min(1, 'schedule.validation.setEndTime'),
+  teacher: z.string().min(1, 'schedule.validation.selectTeacher'),
   students: z.array(z.string()),
   group: z.string().optional(),
 }).refine(data => data.timeStart < data.timeEnd, {
   path: ['timeEnd'],
-  message: 'End time must come after start time',
+  message: 'schedule.validation.endsAtError',
 });
 
 type ScheduleFormInput = z.input<typeof schema>;
@@ -106,6 +107,16 @@ function getUpcomingLessonWindow() {
   };
 }
 
+const weekdayI18nKey: Record<string, string> = {
+  Monday: 'weekday.monday',
+  Tuesday: 'weekday.tuesday',
+  Wednesday: 'weekday.wednesday',
+  Thursday: 'weekday.thursday',
+  Friday: 'weekday.friday',
+  Saturday: 'weekday.saturday',
+  Sunday: 'weekday.sunday',
+};
+
 export function ScheduleFormModal({
   open,
   item,
@@ -133,6 +144,7 @@ export function ScheduleFormModal({
   onClose: () => void;
   onSubmit: (values: ScheduleFormValues) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     watch,
@@ -167,6 +179,11 @@ export function ScheduleFormModal({
   const preferredCourseId = courses.length === 1 ? courses[0]?.id ?? '' : '';
   const preferredRoomId = rooms.length === 1 ? rooms[0]?.id ?? '' : '';
   const preferredGroupId = groups.length === 1 ? groups[0]?.id ?? '' : '';
+
+  function resolveErrorMessage(key: string | undefined): string | undefined {
+    if (!key) return undefined;
+    return t(key);
+  }
 
   useEffect(() => {
     if (!open) {
@@ -210,8 +227,8 @@ export function ScheduleFormModal({
         closeOnBackdrop={!loading}
         closeOnEscape={!loading}
         closeDisabled={loading}
-        title={item ? 'Edit lesson' : 'Create lesson'}
-        description="Plan the lesson, attach it to a room and group, and assign the relevant students."
+        title={item ? t('schedule.lessonEdit') : t('schedule.lessonCreate')}
+        description={t('schedule.lessonDetailsDescription')}
       >
         <form
           className="modal-form"
@@ -227,18 +244,18 @@ export function ScheduleFormModal({
           })}
         >
           <FormSection
-            title="Lesson details"
-            description="Choose the learning context first. This defines what the lesson is, where it happens, and who owns it."
+            title={t('schedule.lessonDetails')}
+            description={t('schedule.lessonDetailsDescription')}
           >
             <div className="detail-grid">
               <Select
-                label="Course"
-                hint="Pre-filled when the lesson is being created from a single course context."
-                error={errors.course?.message}
+                label={t('dashboard.table.course')}
+                hint={t('schedule.courseHint')}
+                error={resolveErrorMessage(errors.course?.message)}
                 fieldClassName="ui-field--primary"
                 {...register('course')}
               >
-                <option value="">Select course</option>
+                <option value="">{t('schedule.selectCourse')}</option>
                 {courses.map(course => (
                   <option key={course.id} value={course.id}>
                     {getCourseDisplayName(course)}
@@ -249,20 +266,20 @@ export function ScheduleFormModal({
                 <>
                   <input type="hidden" {...register('teacher')} />
                   <Input
-                    label="Teacher"
-                    hint="This lesson stays assigned to your account."
-                    value={teacherLabel || 'Current teacher'}
+                    label={t('schedule.teacherLabel')}
+                    hint={t('schedule.teacherHintLocked')}
+                    value={teacherLabel || t('schedule.currentTeacher')}
                     readOnly
                   />
                 </>
               ) : (
                 <Select
-                  label="Teacher"
-                  hint="Defaults to the current teacher context when available."
-                  error={errors.teacher?.message}
+                  label={t('schedule.teacherLabel')}
+                  hint={t('schedule.teacherHint')}
+                  error={resolveErrorMessage(errors.teacher?.message)}
                   {...register('teacher')}
                 >
-                  <option value="">Select teacher</option>
+                  <option value="">{t('schedule.selectTeacher')}</option>
                   {teachers.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
                       {getUserDisplayName(teacher)}
@@ -271,12 +288,12 @@ export function ScheduleFormModal({
                 </Select>
               )}
               <Select
-                label="Room"
-                hint="If only one room is available, it is selected automatically."
-                error={errors.room?.message}
+                label={t('rooms.room')}
+                hint={t('schedule.roomHint')}
+                error={resolveErrorMessage(errors.room?.message)}
                 {...register('room')}
               >
-                <option value="">Select room</option>
+                <option value="">{t('schedule.selectRoom')}</option>
                 {rooms.map(room => (
                   <option key={room.id} value={room.id}>
                     {getRoomDisplayName(room)}
@@ -284,13 +301,13 @@ export function ScheduleFormModal({
                 ))}
               </Select>
               <Select
-                label="Group"
-                hint="Optional. Link a cohort when this lesson belongs to a group flow."
-                error={errors.group?.message}
+                label={t('dashboard.group')}
+                hint={t('schedule.groupHint')}
+                error={resolveErrorMessage(errors.group?.message)}
                 fieldClassName="ui-field--quiet"
                 {...register('group')}
               >
-                <option value="">No group linked</option>
+                <option value="">{t('schedule.noGroupLinkedOption')}</option>
                 {groups.map(group => (
                   <option key={group.id} value={group.id}>
                     {getGroupDisplayName(group)}
@@ -300,14 +317,14 @@ export function ScheduleFormModal({
             </div>
           </FormSection>
           <FormSection
-            title="Timing"
-            description="Pick the lesson time and the weekdays when the group meets."
+            title={t('schedule.timing')}
+            description={t('schedule.timingDescription')}
           >
             <div className="detail-grid">
               <CheckboxGroup
-                label="Weekdays"
-                hint="Select the days of the week for this lesson. The first chosen day is used to build the schedule payload."
-                options={WEEKDAYS.map(day => ({ value: day, label: day }))}
+                label={t('schedule.weekdays')}
+                hint={t('schedule.weekdaysHint')}
+                options={WEEKDAYS.map(day => ({ value: day, label: t(weekdayI18nKey[day]) }))}
                 values={watch('weekdays')}
                 onChange={values => {
                   const weekdayValues = values as Weekday[];
@@ -317,31 +334,31 @@ export function ScheduleFormModal({
                   }
                 }}
               />
-              {errors.weekdays?.message ? <span className="ui-field__error">{errors.weekdays.message}</span> : null}
+              {errors.weekdays?.message ? <span className="ui-field__error">{resolveErrorMessage(errors.weekdays.message)}</span> : null}
               <input type="hidden" {...register('date')} />
               <Input
-                label="Starts at"
-                hint="Choose the lesson start time in your local timezone."
+                label={t('schedule.startsAt')}
+                hint={t('schedule.startsAtHint')}
                 type="time"
-                error={errors.timeStart?.message}
+                error={resolveErrorMessage(errors.timeStart?.message)}
                 {...register('timeStart')}
               />
               <Input
-                label="Ends at"
-                hint="Choose the lesson end time in your local timezone."
+                label={t('schedule.endsAtLabel')}
+                hint={t('schedule.endsAtHint')}
                 type="time"
-                error={errors.timeEnd?.message}
+                error={resolveErrorMessage(errors.timeEnd?.message)}
                 {...register('timeEnd')}
               />
             </div>
           </FormSection>
           <FormSection
-            title="Attendance"
-            description="Select the students who should be attached to this lesson. Leave it empty if attendance will be added later."
+            title={t('schedule.attendance')}
+            description={t('schedule.attendanceDescription')}
           >
             <CheckboxGroup
-              label={`Students${selectedStudents.length ? ` (${selectedStudents.length})` : ''}`}
-              hint="Only selected students will appear as linked to this session."
+              label={t('schedule.studentsLabel', { count: selectedStudents.length })}
+              hint={t('schedule.studentsHint')}
               options={students.map(student => ({
                 value: student.id,
                 label: getUserDisplayName(student),
@@ -353,14 +370,14 @@ export function ScheduleFormModal({
           </FormSection>
           <div className="form-actions">
             <span className="subtle">
-              {isDirty ? 'Changes are ready to save.' : item ? 'Adjust only the lesson details that changed.' : 'Start with lesson context, then confirm time and attendance.'}
+              {isDirty ? t('schedule.formHint.dirty') : item ? t('schedule.formHint.edit') : t('schedule.formHint.create')}
             </span>
             <div className="inline-actions">
               <Button type="submit" disabled={loading || !isValid || (!!item && !isDirty)}>
-                {loading ? 'Saving...' : item ? 'Save changes' : 'Create lesson'}
+                {loading ? t('common.saving') : item ? t('common.saveChanges') : t('schedule.lessonCreate')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -368,10 +385,10 @@ export function ScheduleFormModal({
       </ModalShell>
       <ConfirmModal
         open={closeGuard.confirmOpen}
-        title="Discard changes?"
-        description="You have unsaved changes in this form. Discard them and close the modal?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        title={t('common.discardChangesTitle')}
+        description={t('common.discardChangesDescription')}
+        confirmLabel={t('common.discardChangesConfirm')}
+        cancelLabel={t('common.keepEditing')}
         tone="danger"
         onConfirm={closeGuard.confirmDiscard}
         onClose={closeGuard.cancelDiscard}

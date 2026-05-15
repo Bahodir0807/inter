@@ -2,7 +2,7 @@ import { Button } from '../buttons/button';
 import { translate } from '../../i18n/i18n';
 
 export function ErrorState({
-  title = translate('common.error', 'Unable to load data'),
+  title = translate('common.error'),
   description,
   onRetry,
 }: {

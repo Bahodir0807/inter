@@ -240,7 +240,7 @@ export function GroupsPage() {
     >
       {supportUnavailable ? (
         <ErrorState
-          title={t('group.supportLoadFailedTitle', 'Group form data could not be loaded')}
+          title={t('group.supportLoadFailedTitle')}
           description={supportError.message}
           onRetry={() => {
             void coursesQuery.refetch();

@@ -263,7 +263,7 @@ export function PaymentsPage() {
     >
       {supportUnavailable ? (
         <ErrorState
-          title={t('payments.supportLoadFailedTitle', 'Payment form data could not be loaded')}
+          title={t('payments.supportLoadFailedTitle')}
           description={supportQuery.error.message}
           onRetry={() => void supportQuery.refetch()}
         />

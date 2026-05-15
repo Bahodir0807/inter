@@ -1,4 +1,4 @@
-import { AppUser, Role, roleLabels } from '../types/auth';
+import { AppUser, Role } from '../types/auth';
 import { Course } from '../../entities/course/api';
 import { Group } from '../../entities/group/api';
 import { Room } from '../../entities/room/api';
@@ -21,7 +21,7 @@ export function getRoleDisplayName(role?: Role | null) {
     return '-';
   }
 
-  return translate(`roles.${role}`, roleLabels[role] ?? role);
+  return translate(`roles.${role}`);
 }
 
 export function getUserListSummary(users?: Array<AppUser | string> | null, limit = 2) {
@@ -31,7 +31,7 @@ export function getUserListSummary(users?: Array<AppUser | string> | null, limit
     .filter(name => name !== '-');
 
   if (names.length === 0) {
-    return 'No linked users';
+    return translate('common.noLinkedUsers');
   }
 
   const visible = names.slice(0, limit).join(', ');
@@ -41,13 +41,13 @@ export function getUserListSummary(users?: Array<AppUser | string> | null, limit
 export function getRoomTypeDisplayName(roomType?: Room['type'] | null) {
   switch (roomType) {
     case 'classroom':
-      return translate('roomType.classroom', 'Classroom');
+      return translate('roomType.classroom');
     case 'lab':
-      return translate('roomType.lab', 'Lab');
+      return translate('roomType.lab');
     case 'office':
-      return translate('roomType.office', 'Office');
+      return translate('roomType.office');
     case 'meeting':
-      return translate('roomType.meeting', 'Meeting room');
+      return translate('roomType.meeting');
     default:
       return '-';
   }

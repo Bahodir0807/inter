@@ -14,15 +14,15 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 import { useI18n } from '../../shared/i18n/i18n';
 
 const roomTypeOptions: Array<{ value: Room['type']; label: string }> = [
-  { value: 'classroom', label: 'Classroom' },
-  { value: 'lab', label: 'Lab' },
-  { value: 'office', label: 'Office' },
-  { value: 'meeting', label: 'Meeting room' },
+  { value: 'classroom', label: 'roomType.classroom' },
+  { value: 'lab', label: 'roomType.lab' },
+  { value: 'office', label: 'roomType.office' },
+  { value: 'meeting', label: 'roomType.meeting' },
 ];
 
 const schema = z.object({
-  name: z.string().min(1, 'Enter a room name'),
-  capacity: z.coerce.number().min(1, 'Capacity must be at least 1'),
+  name: z.string().min(1, 'rooms.validation.name'),
+  capacity: z.coerce.number().min(1, 'rooms.validation.capacity'),
   type: z.enum(['classroom', 'lab', 'office', 'meeting']),
   isAvailable: z.enum(['true', 'false']),
   description: z.string().optional(),
@@ -45,6 +45,7 @@ export function RoomFormModal({
   onSubmit: (values: RoomFormValues) => Promise<void>;
 }) {
   const { t } = useI18n();
+  const resolveErrorMessage = (key: string | undefined) => (key ? t(key) : undefined);
   const {
     register,
     reset,
@@ -112,7 +113,7 @@ export function RoomFormModal({
               label={t('rooms.field.name')}
               placeholder={t('rooms.field.namePlaceholder')}
               hint={t('rooms.field.nameHint')}
-              error={errors.name?.message}
+              error={resolveErrorMessage(errors.name?.message)}
               fieldClassName="ui-field--primary"
               {...register('name')}
             />
@@ -120,15 +121,15 @@ export function RoomFormModal({
               <Input
                 label={t('rooms.capacity')}
                 type="number"
-                placeholder="20"
+                placeholder={t('rooms.field.capacityPlaceholder')}
                 hint={t('rooms.field.capacityHint')}
-                error={errors.capacity?.message}
+                error={resolveErrorMessage(errors.capacity?.message)}
                 {...register('capacity')}
               />
               <Select
                 label={t('rooms.type')}
                 hint={t('rooms.field.typeHint')}
-                error={errors.type?.message}
+                error={resolveErrorMessage(errors.type?.message)}
                 {...register('type')}
               >
                 {roomTypeOptions.map(option => (
@@ -140,7 +141,7 @@ export function RoomFormModal({
               <Select
                 label={t('rooms.availability')}
                 hint={t('rooms.field.availabilityHint')}
-                error={errors.isAvailable?.message}
+                error={resolveErrorMessage(errors.isAvailable?.message)}
                 {...register('isAvailable')}
               >
                 <option value="true">{t('common.available')}</option>
@@ -151,7 +152,7 @@ export function RoomFormModal({
               label={t('course.field.description')}
               hint={t('rooms.field.descriptionHint')}
               placeholder={t('rooms.field.descriptionPlaceholder')}
-              error={errors.description?.message}
+              error={resolveErrorMessage(errors.description?.message)}
               {...register('description')}
             />
           </FormSection>

@@ -98,7 +98,7 @@ export function UsersPage() {
     if (targetGroupId) {
       const targetGroup = groups.find(group => group.id === targetGroupId);
       if (!targetGroup) {
-        throw new Error(t('users.group.notFound', 'Selected group was not found. Refresh and try again.'));
+        throw new Error(t('users.group.notFound'));
       }
 
       const studentIds = getGroupStudentIds(targetGroup);
@@ -126,7 +126,6 @@ export function UsersPage() {
           const detail = error instanceof Error ? ` ${error.message}` : '';
           throw new Error(t(
             'users.group.attachFailedAfterCreate',
-            'Student created, but group attach failed. Open the student and try assigning the group again.',
           ) + detail);
         }
       }
@@ -161,7 +160,6 @@ export function UsersPage() {
           const detail = error instanceof Error ? ` ${error.message}` : '';
           throw new Error(t(
             'users.group.attachFailedAfterEdit',
-            'Student saved, but group membership update failed. The student was not removed from the previous group before the new group attach finished.',
           ) + detail);
         }
         return roleUpdated;
@@ -174,7 +172,6 @@ export function UsersPage() {
         const detail = error instanceof Error ? ` ${error.message}` : '';
         throw new Error(t(
           'users.group.attachFailedAfterEdit',
-          'Student saved, but group membership update failed. The student was not removed from the previous group before the new group attach finished.',
         ) + detail);
       }
       return updated;

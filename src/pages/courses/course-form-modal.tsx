@@ -17,9 +17,9 @@ import { getUserDisplayName } from '../../shared/lib/entity-display';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
 
 const schema = z.object({
-  name: z.string().min(1, 'Enter a course name'),
+  name: z.string().min(1, 'course.validation.name'),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, 'Price cannot be negative'),
+  price: z.coerce.number().min(0, 'course.validation.price'),
   teacherId: z.string().optional(),
   students: z.array(z.string()),
 });
@@ -71,6 +71,7 @@ export function CourseFormModal({
   });
 
   const { t } = useI18n();
+  const resolveErrorMessage = (key: string | undefined) => (key ? t(key) : undefined);
 
   const closeGuard = useUnsavedChangesGuard({
     open,
@@ -131,7 +132,7 @@ export function CourseFormModal({
               label={t('course.field.name')}
               hint={t('course.field.nameHint')}
               placeholder={t('course.field.namePlaceholder')}
-              error={errors.name?.message}
+              error={resolveErrorMessage(errors.name?.message)}
               fieldClassName="ui-field--primary"
               {...register('name')}
             />
@@ -139,7 +140,7 @@ export function CourseFormModal({
               label={t('course.field.description')}
               hint={t('course.field.descriptionHint')}
               placeholder={t('course.field.descriptionPlaceholder')}
-              error={errors.description?.message}
+              error={resolveErrorMessage(errors.description?.message)}
               {...register('description')}
             />
           </FormSection>
@@ -153,7 +154,7 @@ export function CourseFormModal({
                 hint={t('course.field.priceHint')}
                 type="number"
                 placeholder={t('course.field.pricePlaceholder')}
-                error={errors.price?.message}
+                error={resolveErrorMessage(errors.price?.message)}
                 {...register('price')}
               />
               {teacherLocked ? (
@@ -170,7 +171,7 @@ export function CourseFormModal({
                 <Select
                   label={t('course.field.teacher')}
                   hint={t('course.field.teacherHint')}
-                  error={errors.teacherId?.message}
+                  error={resolveErrorMessage(errors.teacherId?.message)}
                   {...register('teacherId')}
                 >
                   <option value="">{t('course.noTeacherAssigned')}</option>

@@ -259,7 +259,7 @@ export function SchedulePage() {
     >
       {supportUnavailable ? (
         <ErrorState
-          title={t('schedule.supportLoadFailedTitle', 'Schedule form data could not be loaded')}
+          title={t('schedule.supportLoadFailedTitle')}
           description={supportQuery.error.message}
           onRetry={() => void supportQuery.refetch()}
         />

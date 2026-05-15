@@ -16,8 +16,8 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
-  student: z.string().min(1, 'Select a student'),
-  courseId: z.string().min(1, 'Select a course'),
+  student: z.string().min(1, 'payments.validation.student'),
+  courseId: z.string().min(1, 'payments.validation.course'),
   method: z.string().optional(),
   paidAt: z.string().optional(),
 });
@@ -59,6 +59,7 @@ export function PaymentFormModal({
   onSubmit: (values: PaymentFormValues) => Promise<void>;
 }) {
   const { t } = useI18n();
+  const resolveErrorMessage = (key: string | undefined) => (key ? t(key) : undefined);
   const {
     register,
     reset,
@@ -122,7 +123,7 @@ export function PaymentFormModal({
               <Select
                 label={t('academic.student')}
                 hint={t('payments.field.studentHint')}
-                error={errors.student?.message}
+                error={resolveErrorMessage(errors.student?.message)}
                 fieldClassName="ui-field--primary"
                 {...register('student')}
               >
@@ -136,7 +137,7 @@ export function PaymentFormModal({
               <Select
                 label={t('dashboard.table.course')}
                 hint={t('payments.field.courseHint')}
-                error={errors.courseId?.message}
+                error={resolveErrorMessage(errors.courseId?.message)}
                 {...register('courseId')}
               >
                 <option value="">{t('payments.selectCourse')}</option>
@@ -156,14 +157,14 @@ export function PaymentFormModal({
               label={t('payments.method')}
               hint={t('payments.methodHint')}
               placeholder={t('payments.methodPlaceholder')}
-              error={errors.method?.message}
+              error={resolveErrorMessage(errors.method?.message)}
               {...register('method')}
             />
             <Input
               label={t('payments.paidAt')}
               hint={t('payments.paidAtHint')}
               type="datetime-local"
-              error={errors.paidAt?.message}
+              error={resolveErrorMessage(errors.paidAt?.message)}
               {...register('paidAt')}
             />
           </FormSection>

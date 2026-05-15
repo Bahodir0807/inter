@@ -147,7 +147,7 @@ export function AcademicPage() {
   const scheduleHint = scheduleQuery.isLoading
     ? t('common.loading')
     : scheduleQuery.error
-      ? t('academic.scheduleLoadFailed', 'Schedule could not be loaded. You can still save attendance by date.')
+      ? t('academic.scheduleLoadFailed')
       : schedules.length > 0
         ? t('academic.scheduleHint')
         : t('academic.scheduleLookupDescription');
@@ -156,7 +156,7 @@ export function AcademicPage() {
     <PageLayout
       eyebrow={t('academic.eyebrow')}
       title={t('academic.title')}
-      description={t('academic.descriptionNoHomework', 'Attendance, grades, notifications, and schedule lookup for learning operations.')}
+      description={t('academic.descriptionNoHomework')}
     >
       <Card>
         <div className="stack">
@@ -236,8 +236,8 @@ export function AcademicPage() {
           <DataTable
             rows={attendance}
             getRowKey={item => item.id}
-            emptyTitle={t('academic.noAttendanceTitle', 'No attendance records')}
-            emptyDescription={t('academic.noAttendanceDescription', 'Attendance records will appear here after the first mark.')}
+            emptyTitle={t('academic.noAttendanceTitle')}
+            emptyDescription={t('academic.noAttendanceDescription')}
             columns={[
               { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
               { key: 'status', header: t('common.status'), cell: item => <Badge tone={item.status === 'present' ? 'success' : 'warning'}>{t(`attendance.status.${item.status}`)}</Badge> },
@@ -267,8 +267,8 @@ export function AcademicPage() {
           <DataTable
             rows={grades}
             getRowKey={item => item.id}
-            emptyTitle={t('academic.noGradesTitle', 'No grades yet')}
-            emptyDescription={t('academic.noGradesDescription', 'Grades will appear here after the first record.')}
+            emptyTitle={t('academic.noGradesTitle')}
+            emptyDescription={t('academic.noGradesDescription')}
             columns={[
               { key: 'subject', header: t('common.subject'), cell: item => item.subject },
               { key: 'score', header: t('common.score'), cell: item => item.score },
@@ -316,8 +316,8 @@ export function AcademicPage() {
             <DataTable
               rows={schedules}
               getRowKey={item => item.id}
-              emptyTitle={t('academic.noScheduleTitle', 'No lessons found')}
-              emptyDescription={t('academic.noScheduleDescription', 'Lessons will appear here after schedule entries are added.')}
+              emptyTitle={t('academic.noScheduleTitle')}
+              emptyDescription={t('academic.noScheduleDescription')}
               columns={[
                 { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
                 { key: 'time', header: t('academic.time'), cell: item => `${formatDate(item.timeStart)} - ${formatDate(item.timeEnd)}` },

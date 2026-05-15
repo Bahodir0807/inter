@@ -19,12 +19,12 @@ const optionalText = z.string().trim().optional().or(z.literal(''));
 const paymentMethodSchema = z.enum(['cash', 'card']).optional().or(z.literal(''));
 
 const createSchema = z.object({
-  username: z.string().trim().min(3, 'Username must be at least 3 characters'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  username: z.string().trim().min(3, 'users.validation.username'),
+  password: z.string().min(8, 'users.validation.password'),
   role: z.enum(['owner', 'admin', 'teacher', 'student', 'panda', 'guest']).optional(),
-  email: z.string().email('Enter a valid email address').optional().or(z.literal('')),
-  firstName: requiredText('First name is required'),
-  lastName: requiredText('Last name is required'),
+  email: z.string().email('validation.email').optional().or(z.literal('')),
+  firstName: requiredText('users.validation.firstName'),
+  lastName: requiredText('users.validation.lastName'),
   phoneNumber: optionalText,
   studentYear: optionalText,
   paymentMethod: paymentMethodSchema,
@@ -36,7 +36,7 @@ const createSchema = z.object({
 });
 
 const editSchema = createSchema.extend({
-  password: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
+  password: z.string().min(8, 'users.validation.password').optional().or(z.literal('')),
 });
 
 export type UserFormInput = z.infer<typeof editSchema>;
@@ -87,6 +87,7 @@ export function UserFormModal({
   loading,
 }: UserFormModalProps) {
   const { t } = useI18n();
+  const resolveErrorMessage = (key: string | undefined) => (key ? t(key) : undefined);
   const schema = mode === 'create' ? createSchema : editSchema;
   const {
     register,
@@ -171,14 +172,14 @@ export function UserFormModal({
     .filter((group): group is Group => !!group)
     .map(group => group.name);
   const groupSelectorHint = groupsLoading
-    ? t('users.group.loading', 'Loading groups...')
+    ? t('users.group.loading')
     : groupsError
       ? groupsError
       : groups.length === 0
-        ? t('users.group.empty', 'No groups available yet.')
+        ? t('users.group.empty')
         : currentGroupNames.length > 0
-          ? t('users.group.current', 'Current group: {{group}}', { group: currentGroupNames.join(', ') })
-          : t('users.group.hint', 'Select a group to attach this student after save.');
+          ? t('users.group.current', { group: currentGroupNames.join(', ') })
+          : t('users.group.hint');
 
   return (
     <>
@@ -217,7 +218,7 @@ export function UserFormModal({
               hint={t('users.field.usernameHint')}
               placeholder={t('users.field.usernamePlaceholder')}
               autoComplete="username"
-              error={errors.username?.message}
+              error={resolveErrorMessage(errors.username?.message)}
               fieldClassName="ui-field--primary"
               required
               {...register('username')}
@@ -233,14 +234,14 @@ export function UserFormModal({
                 type="password"
                 placeholder={mode === 'create' ? t('users.field.passwordPlaceholderCreate') : t('users.field.passwordPlaceholderEdit')}
                 autoComplete="new-password"
-                error={errors.password?.message}
+                error={resolveErrorMessage(errors.password?.message)}
                 required={mode === 'create'}
                 {...register('password')}
               />
               <Select
                 label={t('users.detailRole')}
                 hint={t('users.field.roleHint')}
-                error={errors.role?.message}
+                error={resolveErrorMessage(errors.role?.message)}
                 {...register('role')}
               >
                 {roleOptions.map(option => (
@@ -258,17 +259,17 @@ export function UserFormModal({
             <div className="detail-grid">
               <Input
                 label={t('users.field.firstName')}
-                placeholder="Aziza"
+                placeholder={t('users.placeholder.firstName')}
                 autoComplete="given-name"
-                error={errors.firstName?.message}
+                error={resolveErrorMessage(errors.firstName?.message)}
                 required
                 {...register('firstName')}
               />
               <Input
                 label={t('users.field.lastName')}
-                placeholder="Karimova"
+                placeholder={t('users.placeholder.lastName')}
                 autoComplete="family-name"
-                error={errors.lastName?.message}
+                error={resolveErrorMessage(errors.lastName?.message)}
                 required
                 {...register('lastName')}
               />
@@ -277,18 +278,18 @@ export function UserFormModal({
                   label={t('profile.email')}
                   hint={t('users.field.emailHint')}
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder={t('common.placeholder.email')}
                   autoComplete="email"
-                  error={errors.email?.message}
+                  error={resolveErrorMessage(errors.email?.message)}
                   {...register('email')}
                 />
               ) : null}
               <Input
                 label={t('profile.phone')}
                 hint={t('users.field.phoneHint')}
-                placeholder="+998 90 123 45 67"
+                placeholder={t('common.placeholder.phone')}
                 autoComplete="tel"
-                error={errors.phoneNumber?.message}
+                error={resolveErrorMessage(errors.phoneNumber?.message)}
                 {...register('phoneNumber')}
               />
             </div>
@@ -302,13 +303,13 @@ export function UserFormModal({
                 <div className="detail-grid">
                   {showGroupSelector ? (
                     <Select
-                      label={t('users.field.group', 'Group')}
+                      label={t('users.field.group')}
                       hint={groupSelectorHint}
                       disabled={loading || groupsLoading || groups.length === 0}
                       fieldClassName="ui-field--quiet"
                       {...register('groupId')}
                     >
-                      <option value="">{t('users.group.notAssigned', 'No group selected')}</option>
+                      <option value="">{t('users.group.notAssigned')}</option>
                       {groups.map(group => (
                         <option key={group.id} value={group.id}>
                           {getGroupOptionLabel(group)}
@@ -318,14 +319,14 @@ export function UserFormModal({
                   ) : null}
                   <Input
                     label={t('users.field.studentYear')}
-                    placeholder="2026, 1-kurs, 9-sinf"
-                    error={errors.studentYear?.message}
+                    placeholder={t('users.placeholder.studentYear')}
+                    error={resolveErrorMessage(errors.studentYear?.message)}
                     fieldClassName="ui-field--quiet"
                     {...register('studentYear')}
                   />
                   <Select
                     label={t('users.field.paymentMethod')}
-                    error={errors.paymentMethod?.message}
+                    error={resolveErrorMessage(errors.paymentMethod?.message)}
                     fieldClassName="ui-field--quiet"
                     {...register('paymentMethod')}
                   >
@@ -335,22 +336,22 @@ export function UserFormModal({
                   </Select>
                   <Input
                     label={t('users.field.contactOwner')}
-                    placeholder="ota, ona, aka, opa, o'zi"
-                    error={errors.contactOwner?.message}
+                    placeholder={t('users.placeholder.contactOwner')}
+                    error={resolveErrorMessage(errors.contactOwner?.message)}
                     fieldClassName="ui-field--quiet"
                     {...register('contactOwner')}
                   />
                   <Input
                     label={t('users.field.contactOwnerFullName')}
-                    placeholder="Aliyev Sardor"
-                    error={errors.contactOwnerFullName?.message}
+                    placeholder={t('users.placeholder.contactOwnerFullName')}
+                    error={resolveErrorMessage(errors.contactOwnerFullName?.message)}
                     fieldClassName="ui-field--quiet"
                     {...register('contactOwnerFullName')}
                   />
                   <Input
                     label={t('users.field.contactOwnerRelation')}
-                    placeholder="otasi, onasi, akasi, opasi, vasiy, o'zi"
-                    error={errors.contactOwnerRelation?.message}
+                    placeholder={t('users.placeholder.contactOwnerRelation')}
+                    error={resolveErrorMessage(errors.contactOwnerRelation?.message)}
                     fieldClassName="ui-field--quiet"
                     {...register('contactOwnerRelation')}
                   />
@@ -364,8 +365,8 @@ export function UserFormModal({
                   <Input
                     label={t('users.field.telegramId')}
                     hint={t('users.field.telegramHint')}
-                    placeholder="@aziza_karimova or 123456789"
-                    error={errors.telegramId?.message}
+                    placeholder={t('users.placeholder.telegramId')}
+                    error={resolveErrorMessage(errors.telegramId?.message)}
                     fieldClassName="ui-field--quiet"
                     {...register('telegramId')}
                   />

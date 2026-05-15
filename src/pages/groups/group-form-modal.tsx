@@ -17,9 +17,9 @@ import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-g
 import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
-  name: z.string().min(1, 'Enter a group name'),
-  course: z.string().min(1, 'Select a course'),
-  teacher: z.string().min(1, 'Select a teacher'),
+  name: z.string().min(1, 'group.validation.name'),
+  course: z.string().min(1, 'group.validation.course'),
+  teacher: z.string().min(1, 'group.validation.teacher'),
   students: z.array(z.string()),
 });
 
@@ -50,6 +50,7 @@ export function GroupFormModal({
   onSubmit: (values: GroupFormValues) => Promise<void>;
 }) {
   const { t } = useI18n();
+  const resolveErrorMessage = (key: string | undefined) => (key ? t(key) : undefined);
   const {
     register,
     watch,
@@ -109,12 +110,12 @@ export function GroupFormModal({
     : '';
   const existingTeacherNoLongerLinked = !!group && !!selectedCourse && !!existingTeacherId && !courseTeacherIds.includes(existingTeacherId);
   const teacherHint = !hasSelectedCourse
-    ? t('group.field.teacherHintSelectCourse', 'Select a course first, then choose one of its teachers.')
+    ? t('group.field.teacherHintSelectCourse')
     : !courseHasTeachers
-      ? t('group.field.teacherHintNoCourseTeachers', 'This course has no teachers assigned. Add a teacher to the course before creating a group.')
+      ? t('group.field.teacherHintNoCourseTeachers')
       : existingTeacherNoLongerLinked
-        ? t('group.field.teacherHintInvalidExisting', 'The current group teacher is no longer assigned to this course. Choose another teacher from this course.')
-        : t('group.field.teacherHintCourseTeachers', 'Only teachers assigned to the selected course are available.');
+        ? t('group.field.teacherHintInvalidExisting')
+        : t('group.field.teacherHintCourseTeachers');
   const teacherLabel = getUserDisplayName(
     courseTeacherOptions.find(teacher => teacher.id === selectedTeacherId)
       ?? courseTeacherOptions.find(teacher => teacher.id === preferredTeacherId),
@@ -149,7 +150,7 @@ export function GroupFormModal({
     if (!validTeacherIds.includes(values.teacher)) {
       setError('teacher', {
         type: 'validate',
-        message: t('group.field.teacherCourseMismatch', 'Choose a teacher assigned to the selected course.'),
+        message: 'group.field.teacherCourseMismatch',
       });
       return;
     }
@@ -177,7 +178,7 @@ export function GroupFormModal({
               label={t('group.field.name')}
               hint={t('group.field.nameHint')}
               placeholder={t('group.field.namePlaceholder')}
-              error={errors.name?.message}
+              error={resolveErrorMessage(errors.name?.message)}
               fieldClassName="ui-field--primary"
               {...register('name')}
             />
@@ -185,7 +186,7 @@ export function GroupFormModal({
               <Select
                 label={t('dashboard.table.course')}
                 hint={t('group.field.courseHint')}
-                error={errors.course?.message}
+                error={resolveErrorMessage(errors.course?.message)}
                 {...register('course')}
               >
                 <option value="">{t('payments.selectCourse')}</option>
@@ -201,7 +202,7 @@ export function GroupFormModal({
                   <Input
                     label={t('dashboard.table.teacher')}
                     hint={teacherHint || t('group.field.teacherHintLocked')}
-                    error={existingTeacherNoLongerLinked ? t('group.field.teacherCourseMismatch', 'Choose a teacher assigned to the selected course.') : errors.teacher?.message}
+                    error={existingTeacherNoLongerLinked ? t('group.field.teacherCourseMismatch') : resolveErrorMessage(errors.teacher?.message)}
                     value={teacherLabel || t('course.field.currentTeacher')}
                     readOnly
                   />
@@ -210,15 +211,15 @@ export function GroupFormModal({
                 <Select
                   label={t('dashboard.table.teacher')}
                   hint={teacherHint}
-                  error={errors.teacher?.message}
+                  error={resolveErrorMessage(errors.teacher?.message)}
                   disabled={!hasSelectedCourse || !courseHasTeachers}
                   {...register('teacher')}
                 >
                   <option value="">
                     {!hasSelectedCourse
-                      ? t('group.selectCourseFirst', 'Select course first')
+                      ? t('group.selectCourseFirst')
                       : !courseHasTeachers
-                        ? t('group.noCourseTeachers', 'No teachers assigned to this course')
+                        ? t('group.noCourseTeachers')
                         : t('group.selectTeacher')}
                   </option>
                   {courseTeacherOptions.map(teacher => (

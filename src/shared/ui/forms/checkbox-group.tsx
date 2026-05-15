@@ -47,8 +47,8 @@ export function CheckboxGroup({ label, hint, options, values, onChange, classNam
         </div>
         <span className="choice-header__meta">
           {values.length
-            ? translate('common.selectedCount', '{{count}} selected', { count: values.length })
-            : translate('common.availableCount', '{{count}} available', { count: options.length })}
+            ? translate('common.selectedCount', { count: values.length })
+            : translate('common.availableCount', { count: options.length })}
         </span>
       </div>
       {selectedOptions.length ? (
@@ -59,14 +59,14 @@ export function CheckboxGroup({ label, hint, options, values, onChange, classNam
             </span>
           ))}
           {remainingSelectedCount > 0 ? (
-            <span className="choice-summary__item choice-summary__item--muted">+{remainingSelectedCount} more</span>
+            <span className="choice-summary__item choice-summary__item--muted">{translate('common.moreCount', { count: remainingSelectedCount })}</span>
           ) : null}
         </div>
       ) : null}
       {orderedOptions.length === 0 ? (
         <div className="choice-empty">
-          <strong>{translate('common.noOptionsAvailable', 'No options available yet')}</strong>
-          <span>{translate('common.addOptionsFirst', 'Add the related records first, then come back to select them here.')}</span>
+          <strong>{translate('common.noOptionsAvailable')}</strong>
+          <span>{translate('common.addOptionsFirst')}</span>
         </div>
       ) : (
         <div className="choice-grid">
