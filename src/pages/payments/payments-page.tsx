@@ -143,6 +143,8 @@ export function PaymentsPage() {
   const pagination = paymentsQuery.data?.pagination;
   const students = supportQuery.data?.students ?? [];
   const courses = supportQuery.data?.courses ?? [];
+  const supportUnavailable = isAdminLike && !!supportQuery.error;
+  const supportLoading = isAdminLike && supportQuery.isLoading;
 
   const selectedStudentLabel =
     studentFilter === 'all' ? '' : getUserDisplayName(students.find(student => student.id === studentFilter));
@@ -253,8 +255,19 @@ export function PaymentsPage() {
           ? t('payments.description.admin')
           : t('payments.description.student')
       }
-      actions={isAdminLike ? <Button onClick={() => setFormOpen(true)}>{t('payments.newPayment')}</Button> : undefined}
+      actions={isAdminLike ? (
+        <Button onClick={() => setFormOpen(true)} disabled={supportLoading || supportUnavailable}>
+          {supportLoading ? t('common.loading') : t('payments.newPayment')}
+        </Button>
+      ) : undefined}
     >
+      {supportUnavailable ? (
+        <ErrorState
+          title={t('payments.supportLoadFailedTitle', 'Payment form data could not be loaded')}
+          description={supportQuery.error.message}
+          onRetry={() => void supportQuery.refetch()}
+        />
+      ) : null}
       <div className="dashboard-grid">
         <Card className="metric-card">
           <span className="subtle">{t('payments.visiblePayments')}</span>
@@ -372,7 +385,7 @@ export function PaymentsPage() {
         open={formOpen}
         students={students}
         courses={courses}
-        loading={createMutation.isPending}
+        loading={createMutation.isPending || supportLoading}
         onClose={() => setFormOpen(false)}
         onSubmit={async values => {
           await createMutation.mutateAsync(values);

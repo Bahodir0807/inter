@@ -54,8 +54,9 @@ check('student blocked from management routes', navigation.includes("roles: teac
 check('student management capabilities disabled', capabilities.includes('courses: false') && capabilities.includes('groups: false') && capabilities.includes('schedule: false') && capabilities.includes('rooms: false'), 'student capabilities must block management routes');
 check('admin tools capability', capabilities.includes('adminTools: true'), 'admin-like capabilities must allow admin tools');
 
-check('dashboard guards student-only endpoints', dashboard.includes('const [homework, grades, attendance, payments] = isStudent'), 'dashboard must guard student-only endpoints by role');
-check('dashboard no unconditional student-only Promise.all', !dashboard.includes('Promise.all([\n        scheduleApi.getMine(),\n        homeworkApi.getMine(),\n        gradesApi.getMine(),\n        attendanceApi.getMine()'), 'dashboard must not call student-only endpoints unconditionally');
+check('dashboard guards student-only endpoints', dashboard.includes('const [grades, attendance, payments] = isStudent'), 'dashboard must guard student-only endpoints by role');
+check('dashboard hides homework endpoint while disabled', !dashboard.includes('homeworkApi'), 'dashboard must not call homework while the feature is hidden');
+check('dashboard no unconditional student-only Promise.all', !dashboard.includes('Promise.all([\n        scheduleApi.getMine(),\n        gradesApi.getMine(),\n        attendanceApi.getMine()'), 'dashboard must not call student-only endpoints unconditionally');
 
 check('rooms server pagination', rooms.includes('roomsApi.getAllPage(params)'), 'rooms must use server pagination');
 check('rooms form modal', rooms.includes('RoomFormModal'), 'rooms must expose create/update modal');
@@ -72,7 +73,8 @@ check('teacher groups use server scope', groups.includes("groupsApi.getAll(isTea
 check('teacher courses use server scope', courses.includes("coursesApi.getAll(isTeacher && sessionUser ? { teacherId: sessionUser.id } : undefined)"), 'teacher courses view must request teacher-scoped data');
 check('teacher cannot delete grades in UI', academic.includes('capabilities.academic.deleteGrades'), 'grade delete action must have a separate admin-like capability');
 check('staff academic scope starts empty', academic.includes("const [selectedUserId, setSelectedUserId] = useState('')"), 'staff academic queries must wait for explicit student selection');
-check('student homework completion hidden', academic.includes("item.completed || user?.role === 'student'"), 'student homework mutation action must be hidden');
+check('academic hides homework while disabled', !academic.includes('homeworkApi') && !academic.includes('manageHomework'), 'academic page must not expose homework UI while the feature is hidden');
+check('homework route redirects to dashboard', appRouter.includes('path="homework" element={<Navigate to="/app/dashboard" replace />}'), 'manual /app/homework route must redirect to dashboard');
 check('teacher avoids user schedule lookup', academic.includes('canLookupUserSchedule ? scheduleApi.getByUser(effectiveUserId) : scheduleApi.getMine()') && academic.includes("enabled: !!effectiveUserId && (canLookupUserSchedule || user?.role === 'teacher')"), 'teacher academic view must use /schedule/me instead of /schedule/user/:id');
 check('teacher notifications disabled', capabilities.includes('sendNotifications: false'), 'teacher notification mutation capability must be disabled');
 

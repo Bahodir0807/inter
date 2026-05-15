@@ -93,6 +93,9 @@ export function GroupsPage() {
   const groups = groupsQuery.data ?? [];
   const courses = coursesQuery.data ?? [];
   const users = usersQuery.data ?? [];
+  const supportError = coursesQuery.error ?? usersQuery.error;
+  const supportLoading = canManage && (coursesQuery.isLoading || usersQuery.isLoading);
+  const supportUnavailable = canManage && !!supportError;
   const teachers = isAdminLike
     ? users.filter(user => user.role === 'teacher')
     : sessionUser
@@ -211,7 +214,7 @@ export function GroupsPage() {
       headClassName: 'data-table__head--actions',
       cell: (item: Group) => (
         <div className="row-actions">
-          <Button size="sm" variant="secondary" onClick={() => { setSelectedGroup(item); setFormOpen(true); }}>
+          <Button size="sm" variant="secondary" disabled={supportLoading || supportUnavailable} onClick={() => { setSelectedGroup(item); setFormOpen(true); }}>
             {t('common.edit')}
           </Button>
           {isAdminLike ? (
@@ -229,8 +232,22 @@ export function GroupsPage() {
       eyebrow={t('group.eyebrow')}
       title={t('group.title')}
       description={isAdminLike ? t('group.description.admin') : t('group.description.student')}
-      actions={canManage ? <Button onClick={() => { setSelectedGroup(null); setFormOpen(true); }}>{t('group.newGroup')}</Button> : undefined}
+      actions={canManage ? (
+        <Button onClick={() => { setSelectedGroup(null); setFormOpen(true); }} disabled={supportLoading || supportUnavailable}>
+          {supportLoading ? t('common.loading') : t('group.newGroup')}
+        </Button>
+      ) : undefined}
     >
+      {supportUnavailable ? (
+        <ErrorState
+          title={t('group.supportLoadFailedTitle', 'Group form data could not be loaded')}
+          description={supportError.message}
+          onRetry={() => {
+            void coursesQuery.refetch();
+            void usersQuery.refetch();
+          }}
+        />
+      ) : null}
       <div className="dashboard-grid">
         <Card className="metric-card">
           <span className="subtle">{t('group.visibleGroups')}</span>
@@ -318,7 +335,7 @@ export function GroupsPage() {
         students={students}
         defaultTeacherId={!isAdminLike ? sessionUser?.id : undefined}
         teacherLocked={!isAdminLike}
-        loading={createMutation.isPending || updateMutation.isPending}
+        loading={createMutation.isPending || updateMutation.isPending || supportLoading}
         onClose={() => setFormOpen(false)}
         onSubmit={async values => {
           if (selectedGroup) {

@@ -104,6 +104,8 @@ export function SchedulePage() {
 
   const items = scheduleQuery.data ?? [];
   const support = supportQuery.data;
+  const supportLoading = canManage && supportQuery.isLoading;
+  const supportUnavailable = canManage && !!supportQuery.error;
   const teachers = canManage
     ? isAdminLike
       ? (support?.users ?? []).filter(user => user.role === 'teacher')
@@ -223,7 +225,7 @@ export function SchedulePage() {
             headClassName: 'data-table__head--actions',
             cell: (item: ScheduleItem) => (
               <div className="row-actions">
-                <Button size="sm" variant="secondary" onClick={() => { setSelectedItem(item); setFormOpen(true); }}>
+                <Button size="sm" variant="secondary" disabled={supportLoading || supportUnavailable} onClick={() => { setSelectedItem(item); setFormOpen(true); }}>
                   {t('common.edit')}
                 </Button>
                 {isAdminLike ? (
@@ -249,8 +251,19 @@ export function SchedulePage() {
             ? t('schedule.description.teacher')
             : t('schedule.description.student')
       }
-      actions={canManage ? <Button onClick={() => { setSelectedItem(null); setFormOpen(true); }}>{t('schedule.newLesson')}</Button> : undefined}
+      actions={canManage ? (
+        <Button onClick={() => { setSelectedItem(null); setFormOpen(true); }} disabled={supportLoading || supportUnavailable}>
+          {supportLoading ? t('common.loading') : t('schedule.newLesson')}
+        </Button>
+      ) : undefined}
     >
+      {supportUnavailable ? (
+        <ErrorState
+          title={t('schedule.supportLoadFailedTitle', 'Schedule form data could not be loaded')}
+          description={supportQuery.error.message}
+          onRetry={() => void supportQuery.refetch()}
+        />
+      ) : null}
       <div className="dashboard-grid">
         <Card className="metric-card">
           <span className="subtle">{t('schedule.visibleLessons')}</span>
@@ -355,7 +368,7 @@ export function SchedulePage() {
         students={students}
         defaultTeacherId={!isAdminLike ? sessionUser?.id : undefined}
         teacherLocked={!isAdminLike}
-        loading={createMutation.isPending || updateMutation.isPending}
+        loading={createMutation.isPending || updateMutation.isPending || supportLoading}
         onClose={() => setFormOpen(false)}
         onSubmit={async values => {
           if (selectedItem) {

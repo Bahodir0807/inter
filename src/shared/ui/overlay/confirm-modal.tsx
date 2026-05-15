@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '../buttons/button';
 import { ModalShell } from './modal-shell';
 import { translate } from '../../i18n/i18n';
@@ -25,6 +26,22 @@ export function ConfirmModal({
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const [pending, setPending] = useState(false);
+  const busy = loading || pending;
+
+  async function handleConfirm() {
+    if (busy) {
+      return;
+    }
+
+    setPending(true);
+    try {
+      await onConfirm();
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <ModalShell
       open={open}
@@ -32,21 +49,21 @@ export function ConfirmModal({
       title={title}
       description={description}
       closeOnBackdrop={false}
-      closeOnEscape={!loading}
-      closeDisabled={loading}
+      closeOnEscape={!busy}
+      closeDisabled={busy}
     >
       <div className="stack">
         <div className="inline-actions">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
             {cancelLabel}
           </Button>
           <Button
             type="button"
             variant={tone === 'danger' ? 'danger' : 'primary'}
-            onClick={() => void onConfirm()}
-            disabled={loading}
+            onClick={() => void handleConfirm()}
+            disabled={busy}
           >
-            {loading ? translate('common.working') : confirmLabel}
+            {busy ? translate('common.working') : confirmLabel}
           </Button>
         </div>
       </div>

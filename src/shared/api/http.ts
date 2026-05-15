@@ -53,6 +53,7 @@ function getErrorMessage(error: unknown) {
   if (status === 404) return 'The requested record was not found.';
   if (status && status >= 500) return 'Server error. Please try again later or contact support.';
   if (status === 429) return 'Too many requests. Please wait and try again.';
+  if (!error.response) return 'Could not reach the server. Check your connection and try again.';
 
   return error.message || 'Request failed';
 }

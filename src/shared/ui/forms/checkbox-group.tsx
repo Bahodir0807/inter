@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { cn } from '../../lib/cn';
+import { translate } from '../../i18n/i18n';
 
 interface CheckboxOption {
   value: string;
@@ -44,7 +45,11 @@ export function CheckboxGroup({ label, hint, options, values, onChange, classNam
           <span id={`${groupId}-label`} className="ui-field__label">{label}</span>
           {hint ? <span id={`${groupId}-hint`} className="ui-field__hint">{hint}</span> : null}
         </div>
-        <span className="choice-header__meta">{values.length ? `${values.length} selected` : `${options.length} available`}</span>
+        <span className="choice-header__meta">
+          {values.length
+            ? translate('common.selectedCount', '{{count}} selected', { count: values.length })
+            : translate('common.availableCount', '{{count}} available', { count: options.length })}
+        </span>
       </div>
       {selectedOptions.length ? (
         <div className="choice-summary" aria-live="polite">
@@ -58,8 +63,14 @@ export function CheckboxGroup({ label, hint, options, values, onChange, classNam
           ) : null}
         </div>
       ) : null}
-      <div className="choice-grid">
-        {orderedOptions.map(option => {
+      {orderedOptions.length === 0 ? (
+        <div className="choice-empty">
+          <strong>{translate('common.noOptionsAvailable', 'No options available yet')}</strong>
+          <span>{translate('common.addOptionsFirst', 'Add the related records first, then come back to select them here.')}</span>
+        </div>
+      ) : (
+        <div className="choice-grid">
+          {orderedOptions.map(option => {
           const checked = values.includes(option.value);
           return (
             <button
@@ -76,8 +87,9 @@ export function CheckboxGroup({ label, hint, options, values, onChange, classNam
               {option.description ? <span className="subtle">{option.description}</span> : null}
             </button>
           );
-        })}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }

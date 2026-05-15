@@ -21,6 +21,7 @@ export function AppRouter() {
       <Route element={<ProtectedRoute roles={['student', 'teacher', 'admin', 'owner', 'panda']} />}>
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="homework" element={<Navigate to="/app/dashboard" replace />} />
           {appRoutes.map(route => (
             <Route
               key={route.path}

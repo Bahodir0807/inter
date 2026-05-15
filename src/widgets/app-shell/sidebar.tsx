@@ -42,7 +42,12 @@ export function Sidebar({
               <span className="app-sidebar__icon" aria-hidden="true">
                 <AppIcon name={item.icon} />
               </span>
-              <span className="app-sidebar__label">{t(item.labelKey, item.label)}</span>
+              <span className="app-sidebar__link-copy">
+                <span className="app-sidebar__label">{t(item.labelKey, item.label)}</span>
+                {item.descriptionKey ? (
+                  <span className="app-sidebar__description">{t(item.descriptionKey, item.description)}</span>
+                ) : null}
+              </span>
             </NavLink>
           ))}
         </nav>

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi, AttendanceStatus } from '../../entities/attendance/api';
 import { gradesApi, GradeEntry } from '../../entities/grade/api';
-import { homeworkApi } from '../../entities/homework/api';
 import { notificationsApi, NotificationType } from '../../entities/notification/api';
 import { usersApi } from '../../entities/user/api';
 import { scheduleApi } from '../../entities/schedule/api';
@@ -39,13 +38,12 @@ export function AcademicPage() {
   const [selectedScheduleId, setSelectedScheduleId] = useState('');
   const [gradeSubject, setGradeSubject] = useState('');
   const [gradeScore, setGradeScore] = useState(100);
-  const [homeworkTasks, setHomeworkTasks] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<NotificationType>('general');
   const [deleteGrade, setDeleteGrade] = useState<GradeEntry | null>(null);
   const { t } = useI18n();
 
-  const canSelectUser = capabilities.academic.manageAttendance || capabilities.academic.manageGrades || capabilities.academic.manageHomework;
+  const canSelectUser = capabilities.academic.manageAttendance || capabilities.academic.manageGrades;
   const canLookupUserSchedule = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'panda';
   const usersQuery = useQuery({
     queryKey: ['academic-users'],
@@ -64,11 +62,6 @@ export function AcademicPage() {
     queryFn: () => (canSelectUser ? gradesApi.getByUser(effectiveUserId) : gradesApi.getMine()),
     enabled: !!effectiveUserId,
   });
-  const homeworkQuery = useQuery({
-    queryKey: ['homework', effectiveUserId, user?.role],
-    queryFn: () => (canSelectUser ? homeworkApi.getByUser(effectiveUserId) : homeworkApi.getMine()),
-    enabled: !!effectiveUserId,
-  });
   const scheduleQuery = useQuery({
     queryKey: ['schedule-user', effectiveUserId, user?.role],
     queryFn: () => (canLookupUserSchedule ? scheduleApi.getByUser(effectiveUserId) : scheduleApi.getMine()),
@@ -84,7 +77,6 @@ export function AcademicPage() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['attendance'] }),
       queryClient.invalidateQueries({ queryKey: ['grades'] }),
-      queryClient.invalidateQueries({ queryKey: ['homework'] }),
     ]);
   };
 
@@ -126,29 +118,6 @@ export function AcademicPage() {
     onError: error => toast.error(error.message),
   });
 
-  const createHomework = useMutation({
-    mutationFn: () => homeworkApi.create({
-      userId: effectiveUserId,
-      date: new Date().toISOString(),
-      tasks: homeworkTasks.split('\n').map(item => item.trim()).filter(Boolean),
-    }),
-    onSuccess: async () => {
-      await invalidate();
-      setHomeworkTasks('');
-      toast.success(t('common.saved'));
-    },
-    onError: error => toast.error(error.message),
-  });
-
-  const completeHomework = useMutation({
-    mutationFn: (id: string) => homeworkApi.complete(id),
-    onSuccess: async () => {
-      await invalidate();
-      toast.success(t('common.updated'));
-    },
-    onError: error => toast.error(error.message),
-  });
-
   const sendNotification = useMutation({
     mutationFn: () => notificationsApi.send({ userId: effectiveUserId, type: notificationType, message: notificationMessage }),
     onSuccess: () => {
@@ -168,7 +137,6 @@ export function AcademicPage() {
 
   const attendance = attendanceQuery.data ?? [];
   const grades = gradesQuery.data ?? [];
-  const homework = homeworkQuery.data ?? [];
   const schedules = (scheduleQuery.data ?? []).filter(item => {
     if (!effectiveUserId || canLookupUserSchedule) {
       return true;
@@ -176,12 +144,19 @@ export function AcademicPage() {
 
     return (item.students ?? []).some(student => (typeof student === 'string' ? student : student.id) === effectiveUserId);
   });
+  const scheduleHint = scheduleQuery.isLoading
+    ? t('common.loading')
+    : scheduleQuery.error
+      ? t('academic.scheduleLoadFailed', 'Schedule could not be loaded. You can still save attendance by date.')
+      : schedules.length > 0
+        ? t('academic.scheduleHint')
+        : t('academic.scheduleLookupDescription');
 
   return (
     <PageLayout
       eyebrow={t('academic.eyebrow')}
       title={t('academic.title')}
-      description={t('academic.description')}
+      description={t('academic.descriptionNoHomework', 'Attendance, grades, notifications, and schedule lookup for learning operations.')}
     >
       <Card>
         <div className="stack">
@@ -230,7 +205,7 @@ export function AcademicPage() {
                   setAttendanceDate(toDateInputValue(selectedSchedule.date));
                 }
               }}
-              hint={schedules.length > 0 ? t('academic.scheduleHint') : t('academic.scheduleLookupDescription')}
+              hint={scheduleHint}
             >
               <option value="">{t('academic.autoDetectByDate')}</option>
               {schedules.map(item => (
@@ -253,14 +228,22 @@ export function AcademicPage() {
       ) : null}
 
       <TableShell title={t('academic.attendanceTitle')} description={t('academic.attendanceDescription')}>
-        <DataTable
-          rows={attendance}
-          getRowKey={item => item.id}
-          columns={[
-            { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
-            { key: 'status', header: t('common.status'), cell: item => <Badge tone={item.status === 'present' ? 'success' : 'warning'}>{t(`attendance.status.${item.status}`)}</Badge> },
-          ]}
-        />
+        {attendanceQuery.isLoading ? (
+          <LoadingState label={t('common.loading')} />
+        ) : attendanceQuery.error ? (
+          <ErrorState description={attendanceQuery.error.message} onRetry={() => void attendanceQuery.refetch()} />
+        ) : (
+          <DataTable
+            rows={attendance}
+            getRowKey={item => item.id}
+            emptyTitle={t('academic.noAttendanceTitle', 'No attendance records')}
+            emptyDescription={t('academic.noAttendanceDescription', 'Attendance records will appear here after the first mark.')}
+            columns={[
+              { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
+              { key: 'status', header: t('common.status'), cell: item => <Badge tone={item.status === 'present' ? 'success' : 'warning'}>{t(`attendance.status.${item.status}`)}</Badge> },
+            ]}
+          />
+        )}
       </TableShell>
 
       {capabilities.academic.manageGrades ? (
@@ -276,52 +259,34 @@ export function AcademicPage() {
       ) : null}
 
       <TableShell title={t('academic.gradesTitle')} description={t('academic.gradesDescription')}>
-        <DataTable
-          rows={grades}
-          getRowKey={item => item.id}
-          columns={[
-            { key: 'subject', header: t('common.subject'), cell: item => item.subject },
-            { key: 'score', header: t('common.score'), cell: item => item.score },
-            ...(capabilities.academic.manageGrades ? [{
-              key: 'actions',
-              header: t('common.actions'),
-              cell: (item: GradeEntry) => (
-                <div className="inline-actions">
-                  <Button size="sm" variant="secondary" onClick={() => gradesApi.update(item.id, item.score).then(() => invalidate())}>{t('common.save')}</Button>
-                  {capabilities.academic.deleteGrades ? (
-                    <Button size="sm" variant="danger" onClick={() => setDeleteGrade(item)}>{t('common.delete')}</Button>
-                  ) : null}
-                </div>
-              ),
-            }] : []),
-          ]}
-        />
-      </TableShell>
-
-      {capabilities.academic.manageHomework ? (
-        <Card>
-          <Textarea label={t('academic.homeworkTasks')} value={homeworkTasks} onChange={event => setHomeworkTasks(event.target.value)} placeholder={t('academic.homeworkPlaceholder')} />
-          <Button disabled={!effectiveUserId || !homeworkTasks.trim() || createHomework.isPending} onClick={() => createHomework.mutate()}>
-            {t('academic.assignHomework')}
-          </Button>
-        </Card>
-      ) : null}
-
-      <TableShell title={t('academic.homeworkTitle')} description={t('academic.homeworkDescription')}>
-        <DataTable
-          rows={homework}
-          getRowKey={item => item.id}
-          columns={[
-            { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
-            { key: 'tasks', header: t('common.tasks'), cell: item => item.tasks.join(', ') },
-            { key: 'completed', header: t('common.status'), cell: item => <Badge tone={item.completed ? 'success' : 'warning'}>{item.completed ? t('common.complete') : t('common.open')}</Badge> },
-            {
-              key: 'actions',
-              header: t('common.actions'),
-              cell: item => item.completed || user?.role === 'student' ? null : <Button size="sm" variant="secondary" onClick={() => completeHomework.mutate(item.id)}>{t('common.complete')}</Button>,
-            },
-          ]}
-        />
+        {gradesQuery.isLoading ? (
+          <LoadingState label={t('common.loading')} />
+        ) : gradesQuery.error ? (
+          <ErrorState description={gradesQuery.error.message} onRetry={() => void gradesQuery.refetch()} />
+        ) : (
+          <DataTable
+            rows={grades}
+            getRowKey={item => item.id}
+            emptyTitle={t('academic.noGradesTitle', 'No grades yet')}
+            emptyDescription={t('academic.noGradesDescription', 'Grades will appear here after the first record.')}
+            columns={[
+              { key: 'subject', header: t('common.subject'), cell: item => item.subject },
+              { key: 'score', header: t('common.score'), cell: item => item.score },
+              ...(capabilities.academic.manageGrades ? [{
+                key: 'actions',
+                header: t('common.actions'),
+                cell: (item: GradeEntry) => (
+                  <div className="inline-actions">
+                    <Button size="sm" variant="secondary" onClick={() => gradesApi.update(item.id, item.score).then(() => invalidate())}>{t('common.save')}</Button>
+                    {capabilities.academic.deleteGrades ? (
+                      <Button size="sm" variant="danger" onClick={() => setDeleteGrade(item)}>{t('common.delete')}</Button>
+                    ) : null}
+                  </div>
+                ),
+              }] : []),
+            ]}
+          />
+        )}
       </TableShell>
 
       {capabilities.academic.sendNotifications ? (
@@ -330,7 +295,6 @@ export function AcademicPage() {
             <Select label={t('academic.notificationType')} value={notificationType} onChange={event => setNotificationType(event.target.value as NotificationType)}>
               <option value="general">{t('common.general')}</option>
               <option value="payment">{t('common.payment')}</option>
-              <option value="homework">{t('common.homework')}</option>
               <option value="grades">{t('common.grades')}</option>
               <option value="attendance">{t('common.attendance')}</option>
             </Select>
@@ -344,14 +308,22 @@ export function AcademicPage() {
 
       {canLookupUserSchedule ? (
         <TableShell title={t('academic.scheduleLookupTitle')} description={t('academic.scheduleLookupDescription')}>
-          <DataTable
-            rows={schedules}
-            getRowKey={item => item.id}
-            columns={[
-              { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
-              { key: 'time', header: t('academic.time'), cell: item => `${formatDate(item.timeStart)} - ${formatDate(item.timeEnd)}` },
-            ]}
-          />
+          {scheduleQuery.isLoading ? (
+            <LoadingState label={t('common.loading')} />
+          ) : scheduleQuery.error ? (
+            <ErrorState description={scheduleQuery.error.message} onRetry={() => void scheduleQuery.refetch()} />
+          ) : (
+            <DataTable
+              rows={schedules}
+              getRowKey={item => item.id}
+              emptyTitle={t('academic.noScheduleTitle', 'No lessons found')}
+              emptyDescription={t('academic.noScheduleDescription', 'Lessons will appear here after schedule entries are added.')}
+              columns={[
+                { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
+                { key: 'time', header: t('academic.time'), cell: item => `${formatDate(item.timeStart)} - ${formatDate(item.timeEnd)}` },
+              ]}
+            />
+          )}
         </TableShell>
       ) : null}
 

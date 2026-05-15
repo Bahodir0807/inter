@@ -5,7 +5,6 @@ import { attendanceApi } from '../../entities/attendance/api';
 import { Course, coursesApi } from '../../entities/course/api';
 import { gradesApi } from '../../entities/grade/api';
 import { Group, groupsApi } from '../../entities/group/api';
-import { homeworkApi } from '../../entities/homework/api';
 import { Payment, paymentsApi } from '../../entities/payment/api';
 import { roomsApi } from '../../entities/room/api';
 import { ScheduleItem, scheduleApi } from '../../entities/schedule/api';
@@ -250,16 +249,15 @@ export function DashboardPage() {
     queryFn: async () => {
       const schedule = await scheduleApi.getMine();
       const teacherGroups = isTeacher && user ? await groupsApi.getAll({ teacherId: user.id }) : [];
-      const [homework, grades, attendance, payments] = isStudent
+      const [grades, attendance, payments] = isStudent
         ? await Promise.all([
-            homeworkApi.getMine(),
             gradesApi.getMine(),
             attendanceApi.getMine(),
             paymentsApi.getMine(),
           ])
-        : [[], [], [], []];
+        : [[], [], []];
 
-      return { schedule, teacherGroups, homework, grades, attendance, payments };
+      return { schedule, teacherGroups, grades, attendance, payments };
     },
     enabled: !!user && !isOwnerAdmin && !isPanda,
   });
@@ -340,7 +338,7 @@ export function DashboardPage() {
               <QuickAction to="/app/schedule" icon="schedule" label={t('dashboard.action.planLessons')} meta={t('dashboard.action.openSchedule')} />
               <QuickAction to="/app/payments" icon="payments" label={t('dashboard.action.reviewPayments')} meta={t('dashboard.action.confirmPendingRecords')} />
               <QuickAction to="/app/groups" icon="groups" label={t('dashboard.action.checkGroups')} meta={t('dashboard.action.rostersAndTeachers')} />
-              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.academicFollowUp')} meta={t('dashboard.action.academicMeta')} />
+              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.academicFollowUp')} meta={t('dashboard.academicMetaNoHomework', 'Attendance and grades')} />
             </div>
           </OpsPanel>
 
@@ -444,7 +442,6 @@ export function DashboardPage() {
   const data = activeQuery.data as {
     schedule: Awaited<ReturnType<typeof scheduleApi.getMine>>;
     teacherGroups: Group[];
-    homework: Awaited<ReturnType<typeof homeworkApi.getMine>>;
     grades: Awaited<ReturnType<typeof gradesApi.getMine>>;
     attendance: Awaited<ReturnType<typeof attendanceApi.getMine>>;
     payments: Awaited<ReturnType<typeof paymentsApi.getMine>>;
@@ -454,7 +451,6 @@ export function DashboardPage() {
     .sort(byStartTime);
   const todayLessons = upcomingLessons.filter(item => isToday(item.timeStart || item.date));
   const nextLesson = upcomingLessons[0];
-  const openHomework = data.homework.filter(item => !item.completed);
   const latestGrade = [...data.grades].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())[0];
   const pendingStudentPayments = data.payments.filter(item => item.status === 'pending');
   const attendanceSummary = data.attendance[0]?.status ?? t('dashboard.noRecordsYet');
@@ -475,7 +471,6 @@ export function DashboardPage() {
           <OpsPanel title={t('dashboard.academicShortcuts')}>
             <div className="quick-actions">
               <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.markAttendance')} meta={t('dashboard.action.openAttendanceWorkspace')} />
-              <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.assignHomework')} meta={t('dashboard.action.useStudentScope')} />
               <QuickAction to="/app/academic" icon="courses" label={t('dashboard.action.recordGrades')} meta={t('dashboard.action.updateProgress')} />
               <QuickAction to="/app/schedule" icon="schedule" label={t('dashboard.action.openSchedule')} meta={t('dashboard.action.reviewLessonPlan')} />
             </div>
@@ -503,7 +498,6 @@ export function DashboardPage() {
     <PageLayout eyebrow={t('dashboard.myWorkspace')} title={t('dashboard.title')} description={t('dashboard.myDescription')} variant="feature">
       <div className="dashboard-grid">
         <MetricCard tone="hero" label={t('dashboard.nextLesson')} value={nextLesson ? formatDate(nextLesson.timeStart) : '-'} hint={nextLesson ? getCourseDisplayName(nextLesson.course) : t('dashboard.noScheduledLesson')} />
-        <MetricCard label={t('dashboard.metric.homework')} value={openHomework.length} hint={t('dashboard.openAssignments')} />
         <MetricCard label={t('dashboard.metric.grades')} value={latestGrade ? latestGrade.score : data.grades.length} hint={latestGrade ? latestGrade.subject : t('dashboard.metric.recordedGrades')} />
         <MetricCard tone={pendingStudentPayments.length > 0 ? 'warning' : 'accent'} label={t('dashboard.metric.payments')} value={pendingStudentPayments.length} hint={t('dashboard.pendingPaymentRecords')} />
       </div>
@@ -521,17 +515,6 @@ export function DashboardPage() {
             </ul>
           ) : (
             <CompactEmpty title={t('dashboard.noNextLesson')} description={t('dashboard.nextLessonAppear')} />
-          )}
-        </OpsPanel>
-        <OpsPanel title={t('dashboard.metric.homework')}>
-          {data.homework.length === 0 ? (
-            <CompactEmpty title={t('dashboard.noHomework')} description={t('dashboard.assignedHomeworkAppear')} />
-          ) : (
-            <ul className="ops-list">
-              {data.homework.slice(0, 5).map(item => (
-                <ListItem key={item.id} title={item.tasks.join(', ')} meta={formatDate(item.date)} badge={item.completed ? t('dashboard.done') : t('common.open')} tone={item.completed ? 'success' : 'warning'} />
-              ))}
-            </ul>
           )}
         </OpsPanel>
         <OpsPanel title={t('dashboard.metric.grades')}>
@@ -558,7 +541,7 @@ export function DashboardPage() {
         </OpsPanel>
         <OpsPanel title={t('dashboard.shortcuts')}>
           <div className="quick-actions">
-            <QuickAction to="/app/academic" icon="courses" label={t('dashboard.academicRecords')} meta={t('dashboard.homeworkAndGrades')} />
+            <QuickAction to="/app/academic" icon="courses" label={t('dashboard.academicRecords')} meta={t('dashboard.metric.grades')} />
             <QuickAction to="/app/payments" icon="payments" label={t('dashboard.metric.payments')} meta={t('dashboard.reviewStatus')} />
             <QuickAction to="/app/profile" icon="profile" label={t('nav.profile')} meta={t('dashboard.contactDetails')} />
           </div>
