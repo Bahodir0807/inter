@@ -17,6 +17,15 @@ export interface ScheduleItem {
   group?: Group | string | null;
 }
 
+export type Weekday =
+  | 'Monday'
+  | 'Tuesday'
+  | 'Wednesday'
+  | 'Thursday'
+  | 'Friday'
+  | 'Saturday'
+  | 'Sunday';
+
 export interface ScheduleFormValues {
   course: string;
   room: string;
@@ -24,6 +33,7 @@ export interface ScheduleFormValues {
   timeStart: string;
   timeEnd: string;
   teacher: string;
+  weekdays?: Weekday[];
   students?: string[];
   group?: string;
 }

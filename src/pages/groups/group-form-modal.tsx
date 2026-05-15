@@ -54,6 +54,8 @@ export function GroupFormModal({
     register,
     watch,
     setValue,
+    setError,
+    clearErrors,
     reset,
     handleSubmit,
     setFocus,
@@ -94,11 +96,66 @@ export function GroupFormModal({
   }, [group, open, preferredCourseId, preferredTeacherId, reset, setFocus]);
 
   const selectedStudents = watch('students');
+  const selectedCourseId = watch('course');
   const selectedTeacherId = watch('teacher');
+  const selectedCourse = courses.find(course => course.id === selectedCourseId);
+  const courseTeacherIds = selectedCourse ? getCourseTeacherIds(selectedCourse) : [];
+  const courseTeacherOptions = selectedCourse ? getCourseTeacherOptions(selectedCourse, teachers) : [];
+  const hasSelectedCourse = !!selectedCourseId;
+  const courseHasTeachers = courseTeacherOptions.length > 0;
+  const selectedTeacherIsValid = !!selectedTeacherId && courseTeacherIds.includes(selectedTeacherId);
+  const existingTeacherId = group
+    ? typeof group.teacher === 'string' ? group.teacher : group.teacher.id
+    : '';
+  const existingTeacherNoLongerLinked = !!group && !!selectedCourse && !!existingTeacherId && !courseTeacherIds.includes(existingTeacherId);
+  const teacherHint = !hasSelectedCourse
+    ? t('group.field.teacherHintSelectCourse', 'Select a course first, then choose one of its teachers.')
+    : !courseHasTeachers
+      ? t('group.field.teacherHintNoCourseTeachers', 'This course has no teachers assigned. Add a teacher to the course before creating a group.')
+      : existingTeacherNoLongerLinked
+        ? t('group.field.teacherHintInvalidExisting', 'The current group teacher is no longer assigned to this course. Choose another teacher from this course.')
+        : t('group.field.teacherHintCourseTeachers', 'Only teachers assigned to the selected course are available.');
   const teacherLabel = getUserDisplayName(
-    teachers.find(teacher => teacher.id === selectedTeacherId)
-      ?? teachers.find(teacher => teacher.id === preferredTeacherId),
+    courseTeacherOptions.find(teacher => teacher.id === selectedTeacherId)
+      ?? courseTeacherOptions.find(teacher => teacher.id === preferredTeacherId),
   );
+  const canSubmit = isValid && selectedTeacherIsValid && courseHasTeachers;
+
+  useEffect(() => {
+    if (!open || !selectedCourseId) {
+      return;
+    }
+
+    if (selectedTeacherId && !courseTeacherIds.includes(selectedTeacherId)) {
+      setValue('teacher', '', { shouldDirty: true, shouldValidate: true });
+      return;
+    }
+
+    if (!selectedTeacherId && courseTeacherOptions.length === 1) {
+      setValue('teacher', courseTeacherOptions[0].id, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [courseTeacherIds, courseTeacherOptions, open, selectedCourseId, selectedTeacherId, setValue]);
+
+  useEffect(() => {
+    if (!selectedTeacherId || selectedTeacherIsValid) {
+      clearErrors('teacher');
+    }
+  }, [clearErrors, selectedTeacherId, selectedTeacherIsValid]);
+
+  async function submit(values: GroupFormOutput) {
+    const submitCourse = courses.find(course => course.id === values.course);
+    const validTeacherIds = submitCourse ? getCourseTeacherIds(submitCourse) : [];
+
+    if (!validTeacherIds.includes(values.teacher)) {
+      setError('teacher', {
+        type: 'validate',
+        message: t('group.field.teacherCourseMismatch', 'Choose a teacher assigned to the selected course.'),
+      });
+      return;
+    }
+
+    await onSubmit(values);
+  }
 
   return (
     <>
@@ -111,7 +168,7 @@ export function GroupFormModal({
         title={group ? t('group.editGroup') : t('group.createGroup')}
         description={t('group.formDescription')}
       >
-        <form className="modal-form" onSubmit={handleSubmit(async values => onSubmit(values))}>
+        <form className="modal-form" onSubmit={handleSubmit(submit)}>
           <FormSection
             title={t('group.formSection.coreTitle')}
             description={t('group.formSection.coreDescription')}
@@ -143,7 +200,8 @@ export function GroupFormModal({
                   <input type="hidden" {...register('teacher')} />
                   <Input
                     label={t('dashboard.table.teacher')}
-                    hint={t('group.field.teacherHintLocked')}
+                    hint={teacherHint || t('group.field.teacherHintLocked')}
+                    error={existingTeacherNoLongerLinked ? t('group.field.teacherCourseMismatch', 'Choose a teacher assigned to the selected course.') : errors.teacher?.message}
                     value={teacherLabel || t('course.field.currentTeacher')}
                     readOnly
                   />
@@ -151,12 +209,19 @@ export function GroupFormModal({
               ) : (
                 <Select
                   label={t('dashboard.table.teacher')}
-                  hint={t('group.field.teacherHint')}
+                  hint={teacherHint}
                   error={errors.teacher?.message}
+                  disabled={!hasSelectedCourse || !courseHasTeachers}
                   {...register('teacher')}
                 >
-                  <option value="">{t('group.selectTeacher')}</option>
-                  {teachers.map(teacher => (
+                  <option value="">
+                    {!hasSelectedCourse
+                      ? t('group.selectCourseFirst', 'Select course first')
+                      : !courseHasTeachers
+                        ? t('group.noCourseTeachers', 'No teachers assigned to this course')
+                        : t('group.selectTeacher')}
+                  </option>
+                  {courseTeacherOptions.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
                       {getUserDisplayName(teacher)}
                     </option>
@@ -186,7 +251,7 @@ export function GroupFormModal({
               {isDirty ? t('common.changesReadyToSave') : group ? t('group.formHint.edit') : t('group.formHint.create')}
             </span>
             <div className="inline-actions">
-              <Button type="submit" disabled={loading || !isValid || (!!group && !isDirty)}>
+              <Button type="submit" disabled={loading || !canSubmit || (!!group && !isDirty)}>
                 {loading ? t('common.saving') : group ? t('common.saveChanges') : t('group.createGroup')}
               </Button>
               <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
@@ -208,4 +273,47 @@ export function GroupFormModal({
       />
     </>
   );
+}
+
+function getId(value: string | AppUser | null | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  return typeof value === 'string' ? value : value.id;
+}
+
+function uniqueIds(values: Array<string | AppUser | null | undefined>) {
+  return [...new Set(values.map(getId).filter(Boolean))];
+}
+
+function getCourseTeacherIds(course: Course) {
+  return uniqueIds([
+    course.teacherId,
+    ...(course.teacherIds ?? []),
+    ...(course.teachers ?? []),
+  ]);
+}
+
+function getCourseTeacherOptions(course: Course, allTeachers: AppUser[]) {
+  const teacherIds = getCourseTeacherIds(course);
+  const teachersById = new Map(allTeachers.map(teacher => [teacher.id, teacher]));
+
+  for (const teacher of course.teachers ?? []) {
+    teachersById.set(teacher.id, teacher);
+  }
+
+  if (course.teacherId && typeof course.teacherId !== 'string') {
+    teachersById.set(course.teacherId.id, course.teacherId);
+  }
+
+  for (const teacher of course.teacherIds ?? []) {
+    if (typeof teacher !== 'string') {
+      teachersById.set(teacher.id, teacher);
+    }
+  }
+
+  return teacherIds
+    .map(id => teachersById.get(id))
+    .filter((teacher): teacher is AppUser => !!teacher);
 }

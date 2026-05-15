@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ScheduleFormValues, ScheduleItem } from '../../entities/schedule/api';
+import { ScheduleFormValues, ScheduleItem, Weekday } from '../../entities/schedule/api';
 import { Course } from '../../entities/course/api';
 import { Group } from '../../entities/group/api';
 import { Room } from '../../entities/room/api';
@@ -17,32 +17,78 @@ import { Button } from '../../shared/ui/buttons/button';
 import { getCourseDisplayName, getGroupDisplayName, getRoomDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
 
+const WEEKDAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
+
 const schema = z.object({
   course: z.string().min(1, 'Select a course'),
   room: z.string().min(1, 'Select a room'),
-  date: z.string().min(1, 'Choose the session date'),
+  weekdays: z.array(z.enum(WEEKDAYS)).min(1, 'Select at least one weekday'),
+  date: z.string().min(1, 'Choose a reference date'),
   timeStart: z.string().min(1, 'Set the start time'),
   timeEnd: z.string().min(1, 'Set the end time'),
   teacher: z.string().min(1, 'Select a teacher'),
   students: z.array(z.string()),
   group: z.string().optional(),
+}).refine(data => data.timeStart < data.timeEnd, {
+  path: ['timeEnd'],
+  message: 'End time must come after start time',
 });
 
 type ScheduleFormInput = z.input<typeof schema>;
 type ScheduleFormOutput = z.output<typeof schema>;
 
-function toLocalDateTime(value?: string) {
+function toLocalTime(value?: string) {
   if (!value) {
     return '';
   }
 
   const date = new Date(value);
   const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  return new Date(date.getTime() - offset).toISOString().slice(11, 16);
 }
 
-function toIso(value: string) {
-  return value ? new Date(value).toISOString() : value;
+function getLocalDate(value?: string) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function getWeekdayFromDate(value?: string): Weekday {
+  if (!value) {
+    return WEEKDAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+  }
+
+  const date = new Date(value);
+  const dayIndex = date.getDay();
+  return WEEKDAYS[dayIndex === 0 ? 6 : dayIndex - 1];
+}
+
+function getUpcomingDateForWeekday(weekday: Weekday, from = new Date()) {
+  const currentDayIndex = from.getDay() === 0 ? 6 : from.getDay() - 1;
+  const targetDayIndex = WEEKDAYS.indexOf(weekday);
+  const offsetDays = (targetDayIndex - currentDayIndex + 7) % 7;
+  const next = new Date(from);
+  next.setDate(from.getDate() + offsetDays);
+  return next.toISOString().slice(0, 10);
+}
+
+function combineLocalDateAndTime(date: string, time: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
+  const combined = new Date(year, month - 1, day, hours, minutes);
+  return combined.toISOString();
 }
 
 function getUpcomingLessonWindow() {
@@ -53,9 +99,10 @@ function getUpcomingLessonWindow() {
   const end = new Date(start.getTime() + 60 * 60 * 1000);
 
   return {
-    date: toLocalDateTime(start.toISOString()),
-    timeStart: toLocalDateTime(start.toISOString()),
-    timeEnd: toLocalDateTime(end.toISOString()),
+    weekdays: [getWeekdayFromDate(start.toISOString())],
+    date: start.toISOString().slice(0, 10),
+    timeStart: start.toISOString().slice(11, 16),
+    timeEnd: end.toISOString().slice(11, 16),
   };
 }
 
@@ -100,6 +147,7 @@ export function ScheduleFormModal({
     defaultValues: {
       course: '',
       room: '',
+      weekdays: [],
       date: '',
       timeStart: '',
       timeEnd: '',
@@ -126,13 +174,19 @@ export function ScheduleFormModal({
     }
 
     const newLessonWindow = getUpcomingLessonWindow();
+    const itemWeekdays = Array.isArray((item as any)?.weekdays) && (item as any).weekdays.length > 0
+      ? (item as any).weekdays as Weekday[]
+      : item?.date
+        ? [getWeekdayFromDate(item.date)]
+        : newLessonWindow.weekdays;
 
     reset({
       course: typeof item?.course === 'string' ? item.course : item?.course?.id ?? preferredCourseId,
       room: typeof item?.room === 'string' ? item.room : item?.room?.id ?? preferredRoomId,
-      date: toLocalDateTime(item?.date) || newLessonWindow.date,
-      timeStart: toLocalDateTime(item?.timeStart) || newLessonWindow.timeStart,
-      timeEnd: toLocalDateTime(item?.timeEnd) || newLessonWindow.timeEnd,
+      weekdays: itemWeekdays,
+      date: item?.date ? getLocalDate(item.date) : newLessonWindow.date,
+      timeStart: toLocalTime(item?.timeStart) || newLessonWindow.timeStart,
+      timeEnd: toLocalTime(item?.timeEnd) || newLessonWindow.timeEnd,
       teacher: typeof item?.teacher === 'string' ? item.teacher : item?.teacher?.id ?? preferredTeacherId,
       students: (item?.students ?? []).map(student => (typeof student === 'string' ? student : student.id)),
       group: typeof item?.group === 'string' ? item.group : item?.group?.id ?? preferredGroupId,
@@ -161,13 +215,16 @@ export function ScheduleFormModal({
       >
         <form
           className="modal-form"
-          onSubmit={handleSubmit(async values =>
-            onSubmit({
+          onSubmit={handleSubmit(async values => {
+            const combinedStart = combineLocalDateAndTime(values.date, values.timeStart);
+            const combinedEnd = combineLocalDateAndTime(values.date, values.timeEnd);
+            await onSubmit({
               ...values,
-              date: toIso(values.date),
-              timeStart: toIso(values.timeStart),
-              timeEnd: toIso(values.timeEnd),
-            }))}
+              date: combinedStart,
+              timeStart: combinedStart,
+              timeEnd: combinedEnd,
+            });
+          })}
         >
           <FormSection
             title="Lesson details"
@@ -244,27 +301,35 @@ export function ScheduleFormModal({
           </FormSection>
           <FormSection
             title="Timing"
-            description="New lessons start one hour from now by default so operators can create a session with minimal typing."
+            description="Pick the lesson time and the weekdays when the group meets."
           >
             <div className="detail-grid">
-              <Input
-                label="Session date"
-                hint="Used in calendar and timeline views."
-                type="datetime-local"
-                error={errors.date?.message}
-                {...register('date')}
+              <CheckboxGroup
+                label="Weekdays"
+                hint="Select the days of the week for this lesson. The first chosen day is used to build the schedule payload."
+                options={WEEKDAYS.map(day => ({ value: day, label: day }))}
+                values={watch('weekdays')}
+                onChange={values => {
+                  const weekdayValues = values as Weekday[];
+                  setValue('weekdays', weekdayValues, { shouldDirty: true, shouldValidate: true });
+                  if (weekdayValues.length > 0) {
+                    setValue('date', getUpcomingDateForWeekday(weekdayValues[0]), { shouldDirty: true });
+                  }
+                }}
               />
+              {errors.weekdays?.message ? <span className="ui-field__error">{errors.weekdays.message}</span> : null}
+              <input type="hidden" {...register('date')} />
               <Input
                 label="Starts at"
-                hint="Defaults to the next full hour."
-                type="datetime-local"
+                hint="Choose the lesson start time in your local timezone."
+                type="time"
                 error={errors.timeStart?.message}
                 {...register('timeStart')}
               />
               <Input
                 label="Ends at"
-                hint="Pre-filled one hour after the start time."
-                type="datetime-local"
+                hint="Choose the lesson end time in your local timezone."
+                type="time"
                 error={errors.timeEnd?.message}
                 {...register('timeEnd')}
               />

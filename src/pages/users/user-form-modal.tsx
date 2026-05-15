@@ -92,6 +92,7 @@ export function UserFormModal({
     register,
     reset,
     watch,
+    setValue,
     handleSubmit,
     setFocus,
     formState: { errors, isDirty, isValid },
@@ -149,7 +150,22 @@ export function UserFormModal({
   }, [currentGroupId, open, reset, setFocus, user]);
 
   const selectedRole = watch('role');
-  const showGroupSelector = selectedRole === 'student';
+  const isStudent = selectedRole === 'student';
+
+  useEffect(() => {
+    if (selectedRole !== 'student') {
+      setValue('groupId', '');
+      setValue('studentYear', '');
+      setValue('paymentMethod', '');
+      setValue('contactOwner', '');
+      setValue('contactOwnerFullName', '');
+      setValue('contactOwnerRelation', '');
+      setValue('telegramId', '');
+      setValue('email', '');
+    }
+  }, [selectedRole, setValue]);
+
+  const showGroupSelector = isStudent;
   const currentGroupNames = currentGroupIds
     .map(groupId => groups.find(group => group.id === groupId))
     .filter((group): group is Group => !!group)
@@ -178,7 +194,18 @@ export function UserFormModal({
         <form
           className="modal-form"
           onSubmit={handleSubmit(async values => {
-            await onSubmit(values);
+            const payload = isStudent
+              ? values
+              : {
+                username: values.username,
+                password: values.password,
+                role: values.role,
+                firstName: values.firstName,
+                lastName: values.lastName,
+                phoneNumber: values.phoneNumber,
+              };
+
+            await onSubmit(payload as UserFormInput);
           })}
         >
           <FormSection
@@ -245,15 +272,17 @@ export function UserFormModal({
                 required
                 {...register('lastName')}
               />
-              <Input
-                label={t('profile.email')}
-                hint={t('users.field.emailHint')}
-                type="email"
-                placeholder="name@example.com"
-                autoComplete="email"
-                error={errors.email?.message}
-                {...register('email')}
-              />
+              {isStudent ? (
+                <Input
+                  label={t('profile.email')}
+                  hint={t('users.field.emailHint')}
+                  type="email"
+                  placeholder="name@example.com"
+                  autoComplete="email"
+                  error={errors.email?.message}
+                  {...register('email')}
+                />
+              ) : null}
               <Input
                 label={t('profile.phone')}
                 hint={t('users.field.phoneHint')}
@@ -264,82 +293,86 @@ export function UserFormModal({
               />
             </div>
           </FormSection>
-          <FormSection
-            title={t('users.formSection.studentTitle')}
-            description={t('users.formSection.studentDescription')}
-          >
-            <div className="detail-grid">
-              {showGroupSelector ? (
-                <Select
-                  label={t('users.field.group', 'Group')}
-                  hint={groupSelectorHint}
-                  disabled={loading || groupsLoading || groups.length === 0}
-                  fieldClassName="ui-field--quiet"
-                  {...register('groupId')}
-                >
-                  <option value="">{t('users.group.notAssigned', 'No group selected')}</option>
-                  {groups.map(group => (
-                    <option key={group.id} value={group.id}>
-                      {getGroupOptionLabel(group)}
-                    </option>
-                  ))}
-                </Select>
-              ) : null}
-              <Input
-                label={t('users.field.studentYear')}
-                placeholder="2026, 1-kurs, 9-sinf"
-                error={errors.studentYear?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('studentYear')}
-              />
-              <Select
-                label={t('users.field.paymentMethod')}
-                error={errors.paymentMethod?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('paymentMethod')}
+          {isStudent ? (
+            <>
+              <FormSection
+                title={t('users.formSection.studentTitle')}
+                description={t('users.formSection.studentDescription')}
               >
-                <option value="">{t('common.notSet')}</option>
-                <option value="cash">{t('users.paymentMethod.cash')}</option>
-                <option value="card">{t('users.paymentMethod.card')}</option>
-              </Select>
-              <Input
-                label={t('users.field.contactOwner')}
-                placeholder="ota, ona, aka, opa, o'zi"
-                error={errors.contactOwner?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('contactOwner')}
-              />
-              <Input
-                label={t('users.field.contactOwnerFullName')}
-                placeholder="Aliyev Sardor"
-                error={errors.contactOwnerFullName?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('contactOwnerFullName')}
-              />
-              <Input
-                label={t('users.field.contactOwnerRelation')}
-                placeholder="otasi, onasi, akasi, opasi, vasiy, o'zi"
-                error={errors.contactOwnerRelation?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('contactOwnerRelation')}
-              />
-            </div>
-          </FormSection>
-          <FormSection
-            title={t('users.formSection.linksTitle')}
-            description={t('users.formSection.linksDescription')}
-          >
-            <div className="detail-grid">
-              <Input
-                label={t('users.field.telegramId')}
-                hint={t('users.field.telegramHint')}
-                placeholder="@aziza_karimova or 123456789"
-                error={errors.telegramId?.message}
-                fieldClassName="ui-field--quiet"
-                {...register('telegramId')}
-              />
-            </div>
-          </FormSection>
+                <div className="detail-grid">
+                  {showGroupSelector ? (
+                    <Select
+                      label={t('users.field.group', 'Group')}
+                      hint={groupSelectorHint}
+                      disabled={loading || groupsLoading || groups.length === 0}
+                      fieldClassName="ui-field--quiet"
+                      {...register('groupId')}
+                    >
+                      <option value="">{t('users.group.notAssigned', 'No group selected')}</option>
+                      {groups.map(group => (
+                        <option key={group.id} value={group.id}>
+                          {getGroupOptionLabel(group)}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : null}
+                  <Input
+                    label={t('users.field.studentYear')}
+                    placeholder="2026, 1-kurs, 9-sinf"
+                    error={errors.studentYear?.message}
+                    fieldClassName="ui-field--quiet"
+                    {...register('studentYear')}
+                  />
+                  <Select
+                    label={t('users.field.paymentMethod')}
+                    error={errors.paymentMethod?.message}
+                    fieldClassName="ui-field--quiet"
+                    {...register('paymentMethod')}
+                  >
+                    <option value="">{t('common.notSet')}</option>
+                    <option value="cash">{t('users.paymentMethod.cash')}</option>
+                    <option value="card">{t('users.paymentMethod.card')}</option>
+                  </Select>
+                  <Input
+                    label={t('users.field.contactOwner')}
+                    placeholder="ota, ona, aka, opa, o'zi"
+                    error={errors.contactOwner?.message}
+                    fieldClassName="ui-field--quiet"
+                    {...register('contactOwner')}
+                  />
+                  <Input
+                    label={t('users.field.contactOwnerFullName')}
+                    placeholder="Aliyev Sardor"
+                    error={errors.contactOwnerFullName?.message}
+                    fieldClassName="ui-field--quiet"
+                    {...register('contactOwnerFullName')}
+                  />
+                  <Input
+                    label={t('users.field.contactOwnerRelation')}
+                    placeholder="otasi, onasi, akasi, opasi, vasiy, o'zi"
+                    error={errors.contactOwnerRelation?.message}
+                    fieldClassName="ui-field--quiet"
+                    {...register('contactOwnerRelation')}
+                  />
+                </div>
+              </FormSection>
+              <FormSection
+                title={t('users.formSection.linksTitle')}
+                description={t('users.formSection.linksDescription')}
+              >
+                <div className="detail-grid">
+                  <Input
+                    label={t('users.field.telegramId')}
+                    hint={t('users.field.telegramHint')}
+                    placeholder="@aziza_karimova or 123456789"
+                    error={errors.telegramId?.message}
+                    fieldClassName="ui-field--quiet"
+                    {...register('telegramId')}
+                  />
+                </div>
+              </FormSection>
+            </>
+          ) : null}
           <div className="form-actions">
             <span className="subtle">
               {isDirty ? t('common.changesReadyToSave') : mode === 'edit' ? t('users.formHint.edit') : t('common.startWithAccountDetails')}
