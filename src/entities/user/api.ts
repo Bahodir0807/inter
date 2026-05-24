@@ -1,6 +1,7 @@
 import { http } from '../../shared/api/http';
 import { ListQueryParams, PaginatedList } from '../../shared/types/api';
 import { AppUser, Role, StudentPaymentMethod } from '../../shared/types/auth';
+import { studentsApi } from '../student/api';
 
 export type UserStatus = 'active' | 'inactive' | 'blocked';
 
@@ -123,8 +124,13 @@ export const usersApi = {
     return data;
   },
   async getStudents(params?: UsersListParams) {
-    const { data } = await http.get<AppUser[]>('/users/students', { params });
-    return data;
+    const { role: _role, status: _status, ...studentParams } = params ?? {};
+    const data = await studentsApi.getStudents(studentParams);
+    return data.map(student => ({
+      ...student,
+      username: student.fullName || student.id,
+      role: 'student' as Role,
+    })) as AppUser[];
   },
   async search(params: UserSearchParams) {
     const { data } = await http.get<AppUser>('/users/search', { params });

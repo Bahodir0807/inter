@@ -57,7 +57,13 @@ export function GroupsPage() {
 
   const usersQuery = useQuery({
     queryKey: ['groups-form-users', isAdminLike ? 'all' : 'students'],
-    queryFn: () => (isAdminLike ? usersApi.getAll() : usersApi.getStudents()),
+    queryFn: async () => {
+      if (!isAdminLike) {
+        return usersApi.getStudents();
+      }
+      const [users, students] = await Promise.all([usersApi.getAll(), usersApi.getStudents()]);
+      return [...users, ...students];
+    },
     enabled: canManage,
   });
 

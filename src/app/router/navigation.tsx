@@ -4,6 +4,7 @@ import { AppIconName } from '../../shared/ui/icons/app-icon';
 
 const DashboardPage = lazy(() => import('../../pages/dashboard/dashboard-page').then(module => ({ default: module.DashboardPage })));
 const UsersPage = lazy(() => import('../../pages/users/users-page').then(module => ({ default: module.UsersPage })));
+const StudentsPage = lazy(() => import('../../pages/students/students-page').then(module => ({ default: module.StudentsPage })));
 const CoursesPage = lazy(() => import('../../pages/courses/courses-page').then(module => ({ default: module.CoursesPage })));
 const GroupsPage = lazy(() => import('../../pages/groups/groups-page').then(module => ({ default: module.GroupsPage })));
 const SchedulePage = lazy(() => import('../../pages/schedule/schedule-page').then(module => ({ default: module.SchedulePage })));
@@ -27,14 +28,15 @@ export interface AppRouteConfig {
 }
 
 export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda'];
-export const teachingRoles: Role[] = ['teacher', 'admin', 'owner', 'panda'];
-export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda'];
-const allAppRoles: Role[] = ['student', 'teacher', 'admin', 'owner', 'panda'];
+export const teachingRoles: Role[] = ['teacher', 'branch_admin', 'admin', 'owner', 'panda'];
+export const paymentsManagerRoles: Role[] = ['branch_admin', 'admin', 'owner', 'panda'];
+const allAppRoles: Role[] = ['student', 'teacher', 'branch_admin', 'admin', 'owner', 'panda', 'manager', 'staff'];
 const teacherWorkspaceRoles: Role[] = ['teacher', ...adminLikeRoles];
 
 export const appRoutes: AppRouteConfig[] = [
   { path: '/app/dashboard', label: 'Dashboard', labelKey: 'nav.dashboard', description: 'What needs attention now', descriptionKey: 'nav.dashboardDescription', shortLabel: 'DB', icon: 'dashboard', roles: allAppRoles, element: <DashboardPage />, nav: true },
-  { path: '/app/users', label: 'People', labelKey: 'nav.users', description: 'Students, teachers, and access', descriptionKey: 'nav.usersDescription', shortLabel: 'US', icon: 'users', roles: ['teacher', 'admin', 'owner', 'panda'], element: <UsersPage />, nav: true },
+  { path: '/app/users', label: 'People', labelKey: 'nav.users', description: 'Staff and access', descriptionKey: 'nav.usersDescription', shortLabel: 'US', icon: 'users', roles: ['admin', 'owner', 'panda'], element: <UsersPage />, nav: true },
+  { path: '/app/students', label: 'Students', labelKey: 'nav.students', description: 'Student registry', descriptionKey: 'nav.studentsDescription', shortLabel: 'ST', icon: 'users', roles: ['branch_admin', 'admin', 'owner', 'panda'], element: <StudentsPage />, nav: true },
   { path: '/app/courses', label: 'Courses', labelKey: 'nav.courses', description: 'Programs, prices, teachers', descriptionKey: 'nav.coursesDescription', shortLabel: 'CR', icon: 'courses', roles: teacherWorkspaceRoles, element: <CoursesPage />, nav: true },
   { path: '/app/groups', label: 'Groups', labelKey: 'nav.groups', description: 'Cohorts and rosters', descriptionKey: 'nav.groupsDescription', shortLabel: 'GR', icon: 'groups', roles: teacherWorkspaceRoles, element: <GroupsPage />, nav: true },
   { path: '/app/schedule', label: 'Schedule', labelKey: 'nav.schedule', description: 'Lessons and rooms', descriptionKey: 'nav.scheduleDescription', shortLabel: 'SC', icon: 'schedule', roles: teacherWorkspaceRoles, element: <SchedulePage />, nav: true },

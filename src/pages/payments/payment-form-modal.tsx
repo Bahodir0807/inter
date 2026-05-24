@@ -1,198 +1,111 @@
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Course } from '../../entities/course/api';
-import { PaymentFormValues } from '../../entities/payment/api';
+import { Group } from '../../entities/group/api';
+import { CreatePaymentFormValues } from '../../entities/payment/api';
 import { AppUser } from '../../shared/types/auth';
 import { ModalShell } from '../../shared/ui/overlay/modal-shell';
-import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
 import { Select } from '../../shared/ui/forms/select';
 import { Input } from '../../shared/ui/forms/input';
 import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
-import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
-import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
+import { getCourseDisplayName, getGroupDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { useI18n } from '../../shared/i18n/i18n';
 
 const schema = z.object({
-  student: z.string().min(1, 'payments.validation.student'),
+  studentId: z.string().min(1, 'payments.validation.student'),
   courseId: z.string().min(1, 'payments.validation.course'),
-  method: z.string().optional(),
-  paidAt: z.string().optional(),
+  groupId: z.string().min(1, 'payments.validation.group'),
+  branchId: z.string().min(1, 'payments.validation.branch'),
+  month: z.number().min(1).max(12),
+  year: z.number().min(2000).max(2100),
+  expectedAmount: z.number().min(0),
+  paidAmount: z.number().min(0),
+  paymentMethod: z.enum(['cash', 'card', 'transfer']).optional(),
+  comment: z.string().optional(),
 });
 
 type PaymentFormInput = z.infer<typeof schema>;
 
-function toLocalDateTime(value?: string) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
-function getDefaultPaymentValues(defaultStudentId: string, defaultCourseId: string) {
-  return {
-    student: defaultStudentId,
-    courseId: defaultCourseId,
-    method: '',
-    paidAt: toLocalDateTime(new Date().toISOString()),
-  };
-}
-
 export function PaymentFormModal({
-  open,
-  students,
-  courses,
-  loading,
-  onClose,
+  students = [],
+  courses = [],
+  groups = [],
   onSubmit,
+  onClose,
+  isLoading = false,
 }: {
-  open: boolean;
   students: AppUser[];
   courses: Course[];
-  loading: boolean;
+  groups: Group[];
+  onSubmit: (values: CreatePaymentFormValues) => Promise<void> | void;
   onClose: () => void;
-  onSubmit: (values: PaymentFormValues) => Promise<void>;
+  isLoading?: boolean;
 }) {
   const { t } = useI18n();
-  const resolveErrorMessage = (key: string | undefined) => (key ? t(key) : undefined);
-  const {
-    register,
-    reset,
-    handleSubmit,
-    setFocus,
-    formState: { errors, isDirty, isValid },
-  } = useForm<PaymentFormInput>({
+  const { register, handleSubmit, formState: { errors } } = useForm<PaymentFormInput>({
     resolver: zodResolver(schema),
-    mode: 'onChange',
     defaultValues: {
-      student: '',
+      studentId: '',
       courseId: '',
-      method: '',
-      paidAt: '',
+      groupId: '',
+      branchId: '',
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
+      expectedAmount: 0,
+      paidAmount: 0,
+      paymentMethod: 'transfer',
+      comment: '',
     },
   });
 
-  const closeGuard = useUnsavedChangesGuard({
-    open,
-    isDirty,
-    onDiscard: onClose,
-  });
-
-  const defaultStudentId = students.length === 1 ? students[0]?.id ?? '' : '';
-  const defaultCourseId = courses.length === 1 ? courses[0]?.id ?? '' : '';
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    reset(getDefaultPaymentValues(defaultStudentId, defaultCourseId));
-
-    window.setTimeout(() => setFocus('student'), 0);
-  }, [defaultCourseId, defaultStudentId, open, reset, setFocus]);
-
   return (
-    <>
-      <ModalShell
-        open={open}
-        onClose={closeGuard.requestClose}
-        closeOnBackdrop={!loading}
-        closeOnEscape={!loading}
-        closeDisabled={loading}
-        title={t('payments.createPayment')}
-        description={t('payments.formDescription')}
-      >
-        <form
-          className="modal-form"
-          onSubmit={handleSubmit(async values =>
-            onSubmit({
-              ...values,
-              paidAt: values.paidAt ? new Date(values.paidAt).toISOString() : undefined,
-            }))}
-        >
-          <FormSection
-            title={t('payments.formSection.recordTitle')}
-            description={t('payments.formSection.recordDescription')}
-          >
-            <div className="detail-grid">
-              <Select
-                label={t('academic.student')}
-                hint={t('payments.field.studentHint')}
-                error={resolveErrorMessage(errors.student?.message)}
-                fieldClassName="ui-field--primary"
-                {...register('student')}
-              >
-                <option value="">{t('academic.selectStudent')}</option>
-                {students.map(student => (
-                  <option key={student.id} value={student.id}>
-                    {getUserDisplayName(student)}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label={t('dashboard.table.course')}
-                hint={t('payments.field.courseHint')}
-                error={resolveErrorMessage(errors.courseId?.message)}
-                {...register('courseId')}
-              >
-                <option value="">{t('payments.selectCourse')}</option>
-                {courses.map(course => (
-                  <option key={course.id} value={course.id}>
-                    {getCourseDisplayName(course)}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </FormSection>
-          <FormSection
-            title={t('payments.formSection.timingTitle')}
-            description={t('payments.formSection.timingDescription')}
-          >
-            <Input
-              label={t('payments.method')}
-              hint={t('payments.methodHint')}
-              placeholder={t('payments.methodPlaceholder')}
-              error={resolveErrorMessage(errors.method?.message)}
-              {...register('method')}
-            />
-            <Input
-              label={t('payments.paidAt')}
-              hint={t('payments.paidAtHint')}
-              type="datetime-local"
-              error={resolveErrorMessage(errors.paidAt?.message)}
-              {...register('paidAt')}
-            />
-          </FormSection>
-          <div className="form-actions">
-            <span className="subtle">
-              {isDirty ? t('common.changesReadyToSave') : t('payments.formHint.create')}
-            </span>
-            <div className="inline-actions">
-              <Button type="submit" disabled={loading || !isValid}>
-                {loading ? t('common.saving') : t('payments.createPayment')}
-              </Button>
-              <Button type="button" variant="ghost" onClick={closeGuard.requestClose} disabled={loading}>
-                {t('common.cancel')}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </ModalShell>
-      <ConfirmModal
-        open={closeGuard.confirmOpen}
-        title={t('common.discardChangesTitle')}
-        description={t('common.discardChangesDescription')}
-        confirmLabel={t('common.discardChangesConfirm')}
-        cancelLabel={t('common.keepEditing')}
-        tone="danger"
-        onConfirm={closeGuard.confirmDiscard}
-        onClose={closeGuard.cancelDiscard}
-      />
-    </>
+    <ModalShell open title={t('payments.createTitle')} onClose={onClose}>
+      <form onSubmit={handleSubmit(async values => onSubmit(values as CreatePaymentFormValues))}>
+        <FormSection title={t('payments.studentInfo')}>
+          <Select {...register('studentId')} error={errors.studentId?.message}>
+            <option value="">{t('payments.validation.student')}</option>
+            {students.map(s => <option key={s.id} value={s.id}>{getUserDisplayName(s)}</option>)}
+          </Select>
+          <Input {...register('branchId')} error={errors.branchId?.message} label={t('payments.branch')} />
+        </FormSection>
+
+        <FormSection title={t('payments.courseInfo')}>
+          <Select {...register('courseId')} error={errors.courseId?.message}>
+            <option value="">{t('payments.validation.course')}</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{getCourseDisplayName(c)}</option>)}
+          </Select>
+          <Select {...register('groupId')} error={errors.groupId?.message}>
+            <option value="">{t('payments.validation.group')}</option>
+            {groups.map(g => <option key={g.id} value={g.id}>{getGroupDisplayName(g)}</option>)}
+          </Select>
+        </FormSection>
+
+        <FormSection title={t('payments.period')}>
+          <Input type="number" label={t('payments.month')} {...register('month', { valueAsNumber: true })} error={errors.month?.message} />
+          <Input type="number" label={t('payments.year')} {...register('year', { valueAsNumber: true })} error={errors.year?.message} />
+        </FormSection>
+
+        <FormSection title={t('payments.amounts')}>
+          <Input type="number" label={t('payments.expectedAmount')} {...register('expectedAmount', { valueAsNumber: true })} error={errors.expectedAmount?.message} />
+          <Input type="number" label={t('payments.paidAmount')} {...register('paidAmount', { valueAsNumber: true })} error={errors.paidAmount?.message} />
+        </FormSection>
+
+        <FormSection title={t('payments.paymentDetails')}>
+          <Select {...register('paymentMethod')} error={errors.paymentMethod?.message}>
+            <option value="transfer">transfer</option>
+            <option value="cash">cash</option>
+            <option value="card">card</option>
+          </Select>
+          <Input type="text" label={t('common.comment')} {...register('comment')} />
+        </FormSection>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>{t('common.cancel')}</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? t('common.saving') : t('common.create')}</Button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }

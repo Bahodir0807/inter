@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { studentProfileFields, usersApi, UserFormValues } from '../../entities/user/api';
 import { groupsApi, Group } from '../../entities/group/api';
@@ -27,11 +28,7 @@ import { useI18n } from '../../shared/i18n/i18n';
 
 const pageSize = 8;
 
-function omitStudentProfileForNonStudent<T extends UserFormValues>(payload: T, role: Role | undefined) {
-  if (role === 'student') {
-    return payload;
-  }
-
+function omitStudentProfileForNonStudent<T extends UserFormValues>(payload: T, _role: Role | undefined) {
   for (const field of studentProfileFields) {
     delete payload[field];
   }
@@ -56,8 +53,10 @@ function getGroupStudentIds(group: Group) {
 export function UsersPage() {
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore(state => state.user);
+  const location = useLocation();
   const { t } = useI18n();
   const isAdminLike = !!sessionUser && adminLikeRoles.includes(sessionUser.role);
+  const isStudentsPage = location.pathname.includes('/students');
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | Role>('all');
@@ -70,8 +69,8 @@ export function UsersPage() {
   const [deleteCandidate, setDeleteCandidate] = useState<AppUser | null>(null);
 
   const query = useQuery({
-    queryKey: ['users', isAdminLike ? 'all' : 'students'],
-    queryFn: () => (isAdminLike ? usersApi.getAll() : usersApi.getStudents()),
+    queryKey: [isStudentsPage ? 'students' : 'users', isAdminLike ? 'all' : 'students'],
+    queryFn: () => (isStudentsPage || !isAdminLike ? usersApi.getStudents() : usersApi.getAll()),
     enabled: !!sessionUser,
   });
 
@@ -116,19 +115,8 @@ export function UsersPage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: async ({ payload, groupId }: { payload: UserFormValues & { password: string }; groupId?: string }) => {
+    mutationFn: async ({ payload }: { payload: UserFormValues & { password: string }; groupId?: string }) => {
       const created = await usersApi.create(payload);
-      if (payload.role === 'student') {
-        try {
-          await syncStudentGroupMembership(created.id, groupId);
-        } catch (error) {
-          await invalidateUsersAndGroups();
-          const detail = error instanceof Error ? ` ${error.message}` : '';
-          throw new Error(t(
-            'users.group.attachFailedAfterCreate',
-          ) + detail);
-        }
-      }
       return created;
     },
     onSuccess: async () => {
@@ -219,7 +207,7 @@ export function UsersPage() {
   const filteredUsers = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     const filtered = users.filter(item => {
-      const matchesRole = !isAdminLike || roleFilter === 'all' || item.role === roleFilter;
+      const matchesRole = isStudentsPage || !isAdminLike || roleFilter === 'all' || item.role === roleFilter;
       const haystack = [
         item.username,
         item.firstName,
@@ -240,10 +228,10 @@ export function UsersPage() {
     });
 
     return sortBy(filtered, item => getUserDisplayName(item).toLowerCase(), sortDirection);
-  }, [isAdminLike, roleFilter, search, sortDirection, users]);
+  }, [isAdminLike, isStudentsPage, roleFilter, search, sortDirection, users]);
 
   const toolbarFilters = [
-    ...(isAdminLike && roleFilter !== 'all'
+    ...(isAdminLike && !isStudentsPage && roleFilter !== 'all'
       ? [t('users.filterRole', { role: roleOptions.find(option => option.value === roleFilter)?.label ?? roleFilter })]
       : []),
     ...(sortDirection === 'desc' ? [t('users.sortOrderDesc')] : []),
@@ -346,7 +334,7 @@ export function UsersPage() {
           <Button size="sm" variant="ghost" onClick={() => openDetail(item)}>
             {t('users.viewButton')}
           </Button>
-          {isAdminLike ? (
+          {isAdminLike && !isStudentsPage ? (
             <>
               <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
                 {t('users.editButton')}
@@ -383,11 +371,11 @@ export function UsersPage() {
       eyebrow={t('users.eyebrow')}
       title={t('users.title')}
       description={
-        isAdminLike
+        isAdminLike && !isStudentsPage
           ? t('users.description.admin')
           : t('users.description.student')
       }
-      actions={isAdminLike ? <Button onClick={openCreate}>{t('users.newUser')}</Button> : undefined}
+      actions={isAdminLike && !isStudentsPage ? <Button onClick={openCreate}>{t('users.newUser')}</Button> : undefined}
     >
       <div className="dashboard-grid">
         <Card className="metric-card">
@@ -396,9 +384,9 @@ export function UsersPage() {
           <span className="subtle">{t('users.afterFilters')}</span>
         </Card>
         <Card className="metric-card">
-          <span className="subtle">{isAdminLike ? t('users.activeAccounts') : t('users.withContactInfo')}</span>
-          <strong>{isAdminLike ? users.filter(item => item.isActive).length : usersWithContact}</strong>
-          <span className="subtle">{isAdminLike ? t('users.activeAccountsMeta') : t('users.withContactInfoMeta')}</span>
+          <span className="subtle">{isAdminLike && !isStudentsPage ? t('users.activeAccounts') : t('users.withContactInfo')}</span>
+          <strong>{isAdminLike && !isStudentsPage ? users.filter(item => item.isActive).length : usersWithContact}</strong>
+          <span className="subtle">{isAdminLike && !isStudentsPage ? t('users.activeAccountsMeta') : t('users.withContactInfoMeta')}</span>
         </Card>
       </div>
 
@@ -414,7 +402,7 @@ export function UsersPage() {
       ) : (
         <TableShell
           title={t('users.userDirectory')}
-          description={isAdminLike ? t('users.directoryDescription.admin') : t('users.directoryDescription.student')}
+          description={isAdminLike && !isStudentsPage ? t('users.directoryDescription.admin') : t('users.directoryDescription.student')}
           actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}
         >
           <TableToolbar
@@ -423,12 +411,12 @@ export function UsersPage() {
               setSearch(value);
               setPage(1);
             }}
-            searchPlaceholder={isAdminLike ? t('users.searchPlaceholder.admin') : t('users.searchPlaceholder.student')}
+            searchPlaceholder={isAdminLike && !isStudentsPage ? t('users.searchPlaceholder.admin') : t('users.searchPlaceholder.student')}
             resultsLabel={t('common.resultsLabel', { count: filteredUsers.length })}
             activeFilters={toolbarFilters}
             filters={
               <>
-                {isAdminLike ? (
+                {isAdminLike && !isStudentsPage ? (
                   <Select
                     aria-label={t('users.filterByRoleLabel')}
                     value={roleFilter}

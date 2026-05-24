@@ -1,27 +1,32 @@
-export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'panda' | 'guest';
+export type Role = 'owner' | 'admin' | 'branch_admin' | 'teacher' | 'manager' | 'panda' | 'staff' | 'student' | 'guest';
 export type StudentPaymentMethod = 'cash' | 'card';
 
 export const roleLabels: Record<Role, string> = {
   owner: 'Owner',
   admin: 'Admin',
+  branch_admin: 'Branch admin',
   teacher: 'Teacher',
+  manager: 'Manager',
   student: 'Student',
   panda: 'Panda',
+  staff: 'Staff',
   guest: 'Guest',
 };
 
 export const roleOptions: Array<{ value: Role; label: string }> = [
   { value: 'owner', label: roleLabels.owner },
   { value: 'admin', label: roleLabels.admin },
+  { value: 'branch_admin', label: roleLabels.branch_admin },
   { value: 'teacher', label: roleLabels.teacher },
-  { value: 'student', label: roleLabels.student },
+  { value: 'manager', label: roleLabels.manager },
   { value: 'panda', label: roleLabels.panda },
-  { value: 'guest', label: roleLabels.guest },
+  { value: 'staff', label: roleLabels.staff },
 ];
 
 export interface AppUser {
   id: string;
   username: string;
+  fullName?: string;
   telegramId?: string;
   email?: string;
   firstName?: string;

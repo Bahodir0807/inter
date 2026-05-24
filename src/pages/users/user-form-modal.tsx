@@ -21,7 +21,7 @@ const paymentMethodSchema = z.enum(['cash', 'card']).optional().or(z.literal('')
 const createSchema = z.object({
   username: z.string().trim().min(3, 'users.validation.username'),
   password: z.string().min(8, 'users.validation.password'),
-  role: z.enum(['owner', 'admin', 'teacher', 'student', 'panda', 'guest']).optional(),
+  role: z.enum(['owner', 'admin', 'branch_admin', 'teacher', 'manager', 'panda', 'staff']).optional(),
   email: z.string().email('validation.email').optional().or(z.literal('')),
   firstName: requiredText('users.validation.firstName'),
   lastName: requiredText('users.validation.lastName'),
@@ -103,7 +103,7 @@ export function UserFormModal({
     defaultValues: {
       username: '',
       password: '',
-      role: 'student',
+      role: 'staff',
       email: '',
       firstName: '',
       lastName: '',
@@ -133,7 +133,7 @@ export function UserFormModal({
     reset({
       username: user?.username ?? '',
       password: '',
-      role: user?.role ?? 'student',
+      role: user?.role && roleOptions.some(option => option.value === user.role) ? user.role as UserFormInput['role'] : 'staff',
       email: user?.email ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
@@ -151,19 +151,15 @@ export function UserFormModal({
   }, [currentGroupId, open, reset, setFocus, user]);
 
   const selectedRole = watch('role');
-  const isStudent = selectedRole === 'student';
+  const isStudent = false;
 
   useEffect(() => {
-    if (selectedRole !== 'student') {
-      setValue('groupId', '');
-      setValue('studentYear', '');
-      setValue('paymentMethod', '');
-      setValue('contactOwner', '');
-      setValue('contactOwnerFullName', '');
-      setValue('contactOwnerRelation', '');
-      setValue('telegramId', '');
-      setValue('email', '');
-    }
+    setValue('groupId', '');
+    setValue('studentYear', '');
+    setValue('paymentMethod', '');
+    setValue('contactOwner', '');
+    setValue('contactOwnerFullName', '');
+    setValue('contactOwnerRelation', '');
   }, [selectedRole, setValue]);
 
   const showGroupSelector = isStudent;

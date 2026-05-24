@@ -341,7 +341,10 @@ const studentCapabilities: RoleCapabilities = {
 const roleCapabilityMap: Record<Role, RoleCapabilities> = {
   owner: adminLikeCapabilities,
   admin: adminLikeCapabilities,
+  branch_admin: adminLikeCapabilities,
   panda: adminLikeCapabilities,
+  manager: adminLikeCapabilities,
+  staff: guestCapabilities,
   teacher: teacherCapabilities,
   student: studentCapabilities,
   guest: guestCapabilities,

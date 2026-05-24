@@ -1,5 +1,25 @@
 # FINAL AUDIT
 
+## Payments Refactor Verification Addendum (2026-05-21)
+
+Status after re-check:
+- Backend build: pass.
+- Backend tests: pass.
+- `src/payments/payments.service.spec.ts`: active, not skipped, passing.
+- Frontend build (`D:\MyProjects\frontе`): pass.
+
+Payments API alignment update:
+- Legacy `confirm/cancel` workflow references in frontend were removed from active flow.
+- Active payment flow uses current endpoints:
+  - `POST /payments`
+  - `POST /payments/:id/add-payment`
+  - `PATCH /payments/:id/freeze`
+  - `PATCH /payments/:id/unfreeze`
+  - `PATCH /payments/:id`
+  - `DELETE /payments/:id`
+
+Verification verdict: READY.
+
 Date: 2026-05-06
 
 Scope:

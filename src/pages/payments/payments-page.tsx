@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { coursesApi } from '../../entities/course/api';
-import { Payment, paymentsApi, PaymentFormValues, PaymentStatus } from '../../entities/payment/api';
+import { AddPaymentFormValues, CreatePaymentFormValues, Payment, PaymentStatus, paymentsApi } from '../../entities/payment/api';
+import { groupsApi } from '../../entities/group/api';
 import { usersApi } from '../../entities/user/api';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { paymentsManagerRoles } from '../../app/router/navigation';
@@ -13,29 +14,40 @@ import { TableShell } from '../../shared/ui/data-display/table-shell';
 import { DataTable, type Column } from '../../shared/ui/data-display/data-table';
 import { Badge } from '../../shared/ui/badges/badge';
 import { Card } from '../../shared/ui/surfaces/card';
-import { formatDate, formatMoney } from '../../shared/lib/date';
+import { formatMoney } from '../../shared/lib/date';
 import { TableToolbar } from '../../shared/ui/data-display/table-toolbar';
 import { Pagination } from '../../shared/ui/data-display/pagination';
 import { Select } from '../../shared/ui/forms/select';
 import { Button } from '../../shared/ui/buttons/button';
-import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
+import { getCourseDisplayName, getGroupDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { SortDirection } from '../../shared/lib/table';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { PaymentFormModal } from './payment-form-modal';
+import { PaymentDetailModal } from './payment-detail-modal';
+import { AddPaymentModal } from './add-payment-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
-import { useDebouncedValue } from '../../shared/hooks/use-debounced-value';
 import { useUrlState } from '../../shared/hooks/use-url-state';
 import { useI18n } from '../../shared/i18n/i18n';
 
-const pageSize = 8;
-const statusToneMap: Record<PaymentStatus, 'success' | 'warning' | 'danger'> = {
-  confirmed: 'success',
+const pageSize = 10;
+
+const statusColorMap: Record<PaymentStatus, 'success' | 'warning' | 'danger' | 'neutral' | 'info'> = {
+  paid: 'success',
+  partial: 'warning',
+  debt: 'danger',
   pending: 'warning',
-  cancelled: 'danger',
+  frozen: 'neutral',
+  overpaid: 'info',
 };
-function getPaymentCourse(payment: Payment) {
-  return payment.course ?? payment.courseId;
-}
+
+const statusLabels: Record<PaymentStatus, string> = {
+  paid: 'Оплачено',
+  partial: 'Частично',
+  debt: 'Долг',
+  pending: 'Ожидание',
+  frozen: 'Заморожено',
+  overpaid: 'Переплата',
+};
 
 export function PaymentsPage() {
   const queryClient = useQueryClient();
@@ -46,13 +58,12 @@ export function PaymentsPage() {
 
   const [search, setSearchState] = useState(urlState.getString('search'));
   const [studentFilter, setStudentFilterState] = useState<'all' | string>(urlState.getString('student', 'all'));
-  const [courseFilter, setCourseFilterState] = useState<'all' | string>(urlState.getString('course', 'all'));
   const [statusFilter, setStatusFilterState] = useState<'all' | PaymentStatus>(urlState.getString('status', 'all') as 'all' | PaymentStatus);
   const [sortDirection, setSortDirectionState] = useState<SortDirection>(urlState.getString('sort', 'desc') as SortDirection);
   const [page, setPageState] = useState(urlState.getNumber('page', 1));
-  const debouncedSearch = useDebouncedValue(search);
   const [formOpen, setFormOpen] = useState(false);
-  const [confirmCandidate, setConfirmCandidate] = useState<Payment | null>(null);
+  const [detailOpen, setDetailOpen] = useState<Payment | null>(null);
+  const [addPaymentOpen, setAddPaymentOpen] = useState<Payment | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<Payment | null>(null);
 
   const setPage = (value: number) => {
@@ -69,11 +80,6 @@ export function PaymentsPage() {
     setPageState(1);
     urlState.setValues({ student: value === 'all' ? undefined : value, page: undefined });
   };
-  const setCourseFilter = (value: string) => {
-    setCourseFilterState(value);
-    setPageState(1);
-    urlState.setValues({ course: value === 'all' ? undefined : value, page: undefined });
-  };
   const setStatusFilter = (value: 'all' | PaymentStatus) => {
     setStatusFilterState(value);
     setPageState(1);
@@ -85,16 +91,17 @@ export function PaymentsPage() {
     urlState.setValues({ sort: value === 'desc' ? undefined : value, page: undefined });
   };
 
-  const paymentParams = useMemo(() => ({
-    page,
-    limit: pageSize,
-    search: debouncedSearch || undefined,
-    studentId: isAdminLike && studentFilter !== 'all' ? studentFilter : undefined,
-    courseId: isAdminLike && courseFilter !== 'all' ? courseFilter : undefined,
-    status: statusFilter === 'all' ? undefined : statusFilter,
-    sortBy: 'paidAt',
-    sortOrder: sortDirection,
-  }), [courseFilter, debouncedSearch, isAdminLike, page, sortDirection, statusFilter, studentFilter]);
+  const paymentParams = useMemo(
+    () => ({
+      page,
+      limit: pageSize,
+      studentId: isAdminLike && studentFilter !== 'all' ? studentFilter : undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      sortBy: 'paymentPeriod',
+      sortOrder: sortDirection,
+    }),
+    [isAdminLike, page, sortDirection, statusFilter, studentFilter],
+  );
 
   const paymentsQuery = useQuery({
     queryKey: ['payments', isAdminLike ? 'all' : 'me', paymentParams],
@@ -105,14 +112,14 @@ export function PaymentsPage() {
   const supportQuery = useQuery({
     queryKey: ['payments-support'],
     queryFn: async () => {
-      const [students, courses] = await Promise.all([usersApi.getStudents(), coursesApi.getAll()]);
-      return { students, courses };
+      const [students, courses, groups] = await Promise.all([usersApi.getStudents(), coursesApi.getAll(), groupsApi.getAll()]);
+      return { students, courses, groups };
     },
     enabled: isAdminLike,
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload: PaymentFormValues) => paymentsApi.create(payload),
+    mutationFn: (payload: CreatePaymentFormValues) => paymentsApi.create(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
       toast.success(t('payments.created'));
@@ -120,21 +127,37 @@ export function PaymentsPage() {
     },
     onError: error => toast.error(error.message),
   });
-
-  const confirmMutation = useMutation({
-    mutationFn: (id: string) => paymentsApi.confirm(id),
+  const addPaymentMutation = useMutation({
+    mutationFn: (values: { id: string; payload: AddPaymentFormValues }) => paymentsApi.addPayment(values.id, values.payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
-      toast.success(t('payments.confirmed'));
+      toast.success(t('payments.paymentAdded'));
+      setAddPaymentOpen(null);
     },
     onError: error => toast.error(error.message),
   });
-
+  const freezeMutation = useMutation({
+    mutationFn: (values: { id: string; reason: string }) => paymentsApi.freeze(values.id, values.reason),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      toast.success(t('payments.paymentFrozen'));
+    },
+    onError: error => toast.error(error.message),
+  });
+  const unfreezeMutation = useMutation({
+    mutationFn: (id: string) => paymentsApi.unfreeze(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      toast.success(t('payments.paymentUnfrozen'));
+    },
+    onError: error => toast.error(error.message),
+  });
   const removeMutation = useMutation({
     mutationFn: (id: string) => paymentsApi.remove(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
       toast.success(t('payments.deleted'));
+      setDeleteCandidate(null);
     },
     onError: error => toast.error(error.message),
   });
@@ -143,296 +166,176 @@ export function PaymentsPage() {
   const pagination = paymentsQuery.data?.pagination;
   const students = supportQuery.data?.students ?? [];
   const courses = supportQuery.data?.courses ?? [];
-  const supportUnavailable = isAdminLike && !!supportQuery.error;
-  const supportLoading = isAdminLike && supportQuery.isLoading;
-
-  const selectedStudentLabel =
-    studentFilter === 'all' ? '' : getUserDisplayName(students.find(student => student.id === studentFilter));
-  const selectedCourseLabel =
-    courseFilter === 'all' ? '' : getCourseDisplayName(courses.find(course => course.id === courseFilter));
-
+  const groups = supportQuery.data?.groups ?? [];
+  const selectedStudent = students.find(s => s.id === studentFilter);
   const toolbarFilters = [
-    ...(isAdminLike && studentFilter !== 'all' ? [t('payments.filterStudent', { student: selectedStudentLabel })] : []),
-    ...(isAdminLike && courseFilter !== 'all' ? [t('payments.filterCourse', { course: selectedCourseLabel })] : []),
-    ...(statusFilter !== 'all' ? [t('payments.filterStatus', { status: t(`paymentStatus.${statusFilter}`) })] : []),
+    ...(isAdminLike && studentFilter !== 'all' ? [t('payments.filterStudent', { student: getUserDisplayName(selectedStudent) })] : []),
+    ...(statusFilter !== 'all' ? [statusLabels[statusFilter]] : []),
     ...(sortDirection === 'asc' ? [t('payments.orderOldestFirst')] : []),
   ];
 
-  if (paymentsQuery.isLoading) {
-    return <LoadingState label={t('payments.loading')} />;
+  if (paymentsQuery.isLoading) return <LoadingState label={t('payments.loading')} />;
+  if (paymentsQuery.error) return <ErrorState description={paymentsQuery.error.message} onRetry={() => void paymentsQuery.refetch()} />;
+  if (payments.length === 0) {
+    return (
+      <PageLayout title={t('payments.title')} description={t('payments.description.admin')}>
+        <EmptyState title={t('payments.noPaymentsFound')} description={t('payments.empty')} />
+      </PageLayout>
+    );
   }
 
-  if (paymentsQuery.error) {
-    return <ErrorState description={paymentsQuery.error.message} onRetry={() => void paymentsQuery.refetch()} />;
-  }
-
-  const confirmedPayments = payments.filter(item => item.status === 'confirmed').length;
   const columns: Column<Payment>[] = [
     {
-      key: 'payment',
-      header: t('payments.payment'),
+      key: 'period',
+      header: t('payments.period'),
       className: 'data-table__cell--primary',
       cell: item => (
-        <div className="cell-stack cell-stack--primary cell-stack--relation">
-          <span className="cell-title">{formatMoney(item.amount)}</span>
-          <span className="cell-meta cell-meta--strong">{formatDate(item.paidAt)}</span>
-          <div className="cell-badges">
-            <Badge tone={statusToneMap[item.status]}>
-              {t(`paymentStatus.${item.status}`)}
-            </Badge>
-          </div>
+        <div className="cell-stack cell-stack--primary">
+          <span className="cell-title">{item.paymentPeriod}</span>
+          <span className="cell-meta">{item.month}/{item.year}</span>
         </div>
       ),
     },
-    ...(isAdminLike
-      ? [
-          {
-            key: 'student',
-            header: t('academic.student'),
-            className: 'data-table__cell--relation',
-            cell: (item: Payment) => (
-              <div className="cell-stack cell-stack--relation">
-                <span className="cell-title">{getUserDisplayName(item.student)}</span>
-                <span className="cell-meta">{t('payments.linkedPayer')}</span>
-              </div>
-            ),
-          },
-        ]
-      : []),
+    ...(isAdminLike ? [{
+      key: 'student',
+      header: t('academic.student'),
+      className: 'data-table__cell--relation',
+      cell: (item: Payment) => <span>{getUserDisplayName(students.find(s => s.id === item.studentId))}</span>,
+    } satisfies Column<Payment>] : []),
     {
       key: 'course',
-      header: t('dashboard.table.course'),
+      header: t('academic.course'),
       className: 'data-table__cell--relation',
       cell: item => (
         <div className="cell-stack cell-stack--relation">
-          <span className="cell-title">{getCourseDisplayName(getPaymentCourse(item))}</span>
-          <span className="cell-meta">{isAdminLike ? t('payments.linkedOffer') : t('payments.coveredCourse')}</span>
+          <span className="cell-title">{getCourseDisplayName(courses.find(c => c.id === item.courseId))}</span>
+          <span className="cell-meta">{getGroupDisplayName(groups.find(g => g.id === item.groupId))}</span>
         </div>
       ),
     },
-    ...(isAdminLike
-      ? [
-          {
-            key: 'actions',
-            header: t('common.actions'),
-            className: 'data-table__cell--actions',
-            headClassName: 'data-table__head--actions',
-            cell: (item: Payment) => (
-              <div className="row-actions">
-                {item.status === 'pending' && (
-                  <>
-                    <Button size="sm" variant="secondary" onClick={() => setConfirmCandidate(item)}>
-                      {t('common.confirm')}
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => setDeleteCandidate(item)}>
-                      {t('common.delete')}
-                    </Button>
-                  </>
-                )}
-                {item.status === 'cancelled' && (
-                  <Button size="sm" variant="ghost" disabled>
-                    {t('paymentStatus.cancelled')}
-                  </Button>
-                )}
-                {item.status === 'confirmed' && (
-                  <Button size="sm" variant="ghost" disabled>
-                    {t('paymentStatus.confirmed')}
-                  </Button>
-                )}
-              </div>
-            ),
-          },
-        ]
-      : []),
+    {
+      key: 'amounts',
+      header: t('payments.amounts'),
+      cell: item => (
+        <div className="cell-stack cell-stack--amount">
+          <span>Ожидается: {formatMoney(item.expectedAmount)}</span>
+          <span>Оплачено: {formatMoney(item.paidAmount)}</span>
+          <span>Осталось: {formatMoney(item.remainingAmount)}</span>
+          {item.overpaidAmount > 0 ? <span>Переплата: {formatMoney(item.overpaidAmount)}</span> : null}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('payments.status'),
+      cell: item => (
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          <Badge tone={statusColorMap[item.status]}>{statusLabels[item.status]}</Badge>
+          {item.isFrozen ? <Badge tone="neutral">Заморожено</Badge> : null}
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: t('common.actions'),
+      className: 'data-table__cell--actions',
+      cell: item => (
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button size="sm" variant="secondary" onClick={() => setDetailOpen(item)}>{t('common.view')}</Button>
+          {item.status !== 'paid' && !item.isFrozen ? (
+            <Button size="sm" onClick={() => setAddPaymentOpen(item)}>+</Button>
+          ) : null}
+          {!item.isFrozen && isAdminLike ? (
+            <Button size="sm" variant="secondary" onClick={() => setDeleteCandidate(item)}>{t('common.delete')}</Button>
+          ) : null}
+        </div>
+      ),
+    },
   ];
 
   return (
-    <PageLayout
-      eyebrow={t('payments.eyebrow')}
-      title={t('payments.title')}
-      description={
-        isAdminLike
-          ? t('payments.description.admin')
-          : t('payments.description.student')
-      }
-      actions={isAdminLike ? (
-        <Button onClick={() => setFormOpen(true)} disabled={supportLoading || supportUnavailable}>
-          {supportLoading ? t('common.loading') : t('payments.newPayment')}
-        </Button>
-      ) : undefined}
-    >
-      {supportUnavailable ? (
-        <ErrorState
-          title={t('payments.supportLoadFailedTitle')}
-          description={supportQuery.error.message}
-          onRetry={() => void supportQuery.refetch()}
+    <PageLayout title={t('payments.title')} description={t('payments.description.admin')}>
+      <Card>
+        <TableToolbar
+          search={search}
+          onSearchChange={setSearch}
+          activeFilters={toolbarFilters}
+          filters={isAdminLike ? (
+            <>
+              <Select value={studentFilter} onChange={event => setStudentFilter(event.target.value)}>
+                <option value="all">{t('common.all')}</option>
+                {students.map(s => <option key={s.id} value={s.id}>{getUserDisplayName(s)}</option>)}
+              </Select>
+              <Select value={statusFilter} onChange={event => setStatusFilter(event.target.value as 'all' | PaymentStatus)}>
+                <option value="all">{t('common.all')}</option>
+                {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </Select>
+              <Select value={sortDirection} onChange={event => setSortDirection(event.target.value as SortDirection)}>
+                <option value="desc">{t('payments.newestFirst')}</option>
+                <option value="asc">{t('payments.oldestFirst')}</option>
+              </Select>
+            </>
+          ) : undefined}
+          actions={isAdminLike ? <Button onClick={() => setFormOpen(true)}>{t('common.create')}</Button> : undefined}
+        />
+
+        <TableShell title={t('payments.ledgerTitle')} description={isAdminLike ? t('payments.ledgerDescription.admin') : t('payments.ledgerDescription.student')}>
+          <DataTable columns={columns} rows={payments} />
+        </TableShell>
+
+        {pagination && pagination.total > pageSize ? (
+          <Pagination
+            page={page}
+            totalPages={Math.max(1, Math.ceil(pagination.total / pageSize))}
+            onChange={setPage}
+          />
+        ) : null}
+      </Card>
+
+      {formOpen ? (
+        <PaymentFormModal
+          students={students}
+          courses={courses}
+          groups={groups}
+          onSubmit={values => createMutation.mutate(values)}
+          onClose={() => setFormOpen(false)}
+          isLoading={createMutation.isPending}
         />
       ) : null}
-      <div className="dashboard-grid">
-        <Card className="metric-card">
-          <span className="subtle">{t('payments.visiblePayments')}</span>
-          <strong>{pagination?.total ?? payments.length}</strong>
-          <span className="subtle">{t('users.afterFilters')}</span>
-        </Card>
-        <Card className="metric-card">
-          <span className="subtle">{t('dashboard.metric.confirmed')}</span>
-          <strong>{confirmedPayments}</strong>
-          <span className="subtle">{t('payments.markedVerified')}</span>
-        </Card>
-      </div>
-      {payments.length === 0 ? (
-        <EmptyState
-          title={t('dashboard.noPaymentsYet')}
-          description={
-            isAdminLike
-              ? t('payments.recordsAppearAdmin')
-              : t('payments.recordsAppearStudent')
-          }
+
+      {detailOpen ? (
+        <PaymentDetailModal
+          payment={detailOpen}
+          onClose={() => setDetailOpen(null)}
+          onFreeze={reason => freezeMutation.mutate({ id: detailOpen.id, reason })}
+          onUnfreeze={() => unfreezeMutation.mutate(detailOpen.id)}
+          isFreezing={freezeMutation.isPending}
+          isUnfreezing={unfreezeMutation.isPending}
         />
-      ) : (
-        <TableShell
-          title={t('payments.ledgerTitle')}
-          description={isAdminLike ? t('payments.ledgerDescription.admin') : t('payments.ledgerDescription.student')}
-          actions={<Pagination page={pagination?.page ?? page} totalPages={pagination?.totalPages ?? 1} onChange={setPage} />}
-        >
-          <TableToolbar
-            search={search}
-            onSearchChange={value => {
-              setSearch(value);
-            }}
-            searchPlaceholder={isAdminLike ? t('payments.searchPlaceholder.admin') : t('payments.searchPlaceholder.student')}
-            resultsLabel={t('common.resultsLabel', { count: pagination?.total ?? payments.length })}
-            activeFilters={toolbarFilters}
-            filters={
-              isAdminLike ? (
-                <>
-                  <Select
-                    aria-label={t('payments.filterByStudent')}
-                    value={studentFilter}
-                    onChange={event => {
-                      setStudentFilter(event.target.value);
-                    }}
-                  >
-                    <option value="all">{t('payments.allStudents')}</option>
-                    {students.map(student => (
-                      <option key={student.id} value={student.id}>
-                        {getUserDisplayName(student)}
-                      </option>
-                    ))}
-                  </Select>
-                  <Select
-                    aria-label={t('payments.filterByStatus')}
-                    value={statusFilter}
-                    onChange={event => {
-                      setStatusFilter(event.target.value as 'all' | PaymentStatus);
-                    }}
-                  >
-                    <option value="all">{t('payments.allStatuses')}</option>
-                    <option value="pending">{t('paymentStatus.pending')}</option>
-                    <option value="confirmed">{t('paymentStatus.confirmed')}</option>
-                    <option value="cancelled">{t('paymentStatus.cancelled')}</option>
-                  </Select>
-                  <Select
-                    aria-label={t('payments.filterByCourse')}
-                    value={courseFilter}
-                    onChange={event => {
-                      setCourseFilter(event.target.value);
-                    }}
-                  >
-                    <option value="all">{t('payments.allCourses')}</option>
-                    {courses.map(course => (
-                      <option key={course.id} value={course.id}>
-                        {getCourseDisplayName(course)}
-                      </option>
-                    ))}
-                  </Select>
-                  <Select
-                    aria-label={t('payments.sortPayments')}
-                    value={sortDirection}
-                    onChange={event => {
-                      setSortDirection(event.target.value as SortDirection);
-                    }}
-                  >
-                    <option value="desc">{t('payments.newestFirst')}</option>
-                    <option value="asc">{t('payments.oldestFirst')}</option>
-                  </Select>
-                </>
-              ) : (
-                <Select
-                  aria-label={t('payments.sortPayments')}
-                  value={sortDirection}
-                  onChange={event => {
-                    setSortDirection(event.target.value as SortDirection);
-                  }}
-                >
-                  <option value="desc">{t('payments.newestFirst')}</option>
-                  <option value="asc">{t('payments.oldestFirst')}</option>
-                </Select>
-              )
-            }
-          />
-          <DataTable
-            getRowKey={item => item.id}
-            emptyTitle={t('payments.noPaymentsFound')}
-            emptyDescription={isAdminLike ? t('common.tryAnotherSearch') : t('common.trySearch')}
-            columns={columns}
-            rows={payments}
-          />
-        </TableShell>
-      )}
+      ) : null}
 
-      <PaymentFormModal
-        open={formOpen}
-        students={students}
-        courses={courses}
-        loading={createMutation.isPending || supportLoading}
-        onClose={() => setFormOpen(false)}
-        onSubmit={async values => {
-          await createMutation.mutateAsync(values);
-        }}
-      />
-      <ConfirmModal
-        open={!!confirmCandidate}
-        title={t('payments.confirmPaymentTitle')}
-        description={
-          confirmCandidate
-            ? t('payments.confirmPaymentDescription', { amount: formatMoney(confirmCandidate.amount), student: getUserDisplayName(confirmCandidate.student), course: getCourseDisplayName(getPaymentCourse(confirmCandidate)) })
-            : ''
-        }
-        confirmLabel={t('payments.confirmPaymentConfirm')}
-        cancelLabel={t('payments.keepPending')}
-        loading={confirmMutation.isPending}
-        onClose={() => setConfirmCandidate(null)}
-        onConfirm={async () => {
-          if (!confirmCandidate) {
-            return;
-          }
+      {addPaymentOpen ? (
+        <AddPaymentModal
+          payment={addPaymentOpen}
+          onSubmit={values => addPaymentMutation.mutate({ id: addPaymentOpen.id, payload: values })}
+          onClose={() => setAddPaymentOpen(null)}
+          isLoading={addPaymentMutation.isPending}
+        />
+      ) : null}
 
-          await confirmMutation.mutateAsync(confirmCandidate.id);
-          setConfirmCandidate(null);
-        }}
-      />
       <ConfirmModal
         open={!!deleteCandidate}
-        title={t('payments.deletePaymentTitle')}
-        description={
-          deleteCandidate
-            ? t('payments.deletePaymentDescription', { amount: formatMoney(deleteCandidate.amount), student: getUserDisplayName(deleteCandidate.student), course: getCourseDisplayName(getPaymentCourse(deleteCandidate)), paidAt: formatDate(deleteCandidate.paidAt) })
-            : ''
-        }
-        confirmLabel={t('payments.deletePaymentConfirm')}
-        cancelLabel={t('payments.keepPayment')}
-        tone="danger"
-        loading={removeMutation.isPending}
-        onClose={() => setDeleteCandidate(null)}
-        onConfirm={async () => {
-          if (!deleteCandidate) {
-            return;
+        title={t('payments.deleteConfirmTitle')}
+        description={t('payments.deleteConfirmDescription')}
+        onConfirm={() => {
+          if (deleteCandidate) {
+            removeMutation.mutate(deleteCandidate.id);
           }
-
-          await removeMutation.mutateAsync(deleteCandidate.id);
-          setDeleteCandidate(null);
         }}
+        onClose={() => setDeleteCandidate(null)}
+        confirmLabel={t('common.delete')}
+        loading={removeMutation.isPending}
+        tone="danger"
       />
     </PageLayout>
   );

@@ -62,13 +62,14 @@ export function SchedulePage() {
   const supportQuery = useQuery({
     queryKey: ['schedule-support', isAdminLike ? 'all' : 'students'],
     queryFn: async () => {
-      const [courses, rooms, groups, users] = await Promise.all([
+      const [courses, rooms, groups, users, students] = await Promise.all([
         coursesApi.getAll(),
         roomsApi.getAll(),
         groupsApi.getAll(),
-        isAdminLike ? usersApi.getAll() : usersApi.getStudents(),
+        isAdminLike ? usersApi.getAll() : Promise.resolve([]),
+        usersApi.getStudents(),
       ]);
-      return { courses, rooms, groups, users };
+      return { courses, rooms, groups, users: [...users, ...students] };
     },
     enabled: canManage,
   });
