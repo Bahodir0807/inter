@@ -1,26 +1,25 @@
-export type Role = 'owner' | 'admin' | 'branch_admin' | 'teacher' | 'manager' | 'panda' | 'staff' | 'student' | 'guest';
+export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'panda';
 export type StudentPaymentMethod = 'cash' | 'card';
 
 export const roleLabels: Record<Role, string> = {
   owner: 'Owner',
   admin: 'Admin',
-  branch_admin: 'Branch admin',
   teacher: 'Teacher',
-  manager: 'Manager',
   student: 'Student',
-  panda: 'Panda',
-  staff: 'Staff',
-  guest: 'Guest',
+  panda: 'Internal',
 };
 
 export const roleOptions: Array<{ value: Role; label: string }> = [
   { value: 'owner', label: roleLabels.owner },
   { value: 'admin', label: roleLabels.admin },
-  { value: 'branch_admin', label: roleLabels.branch_admin },
   { value: 'teacher', label: roleLabels.teacher },
-  { value: 'manager', label: roleLabels.manager },
-  { value: 'panda', label: roleLabels.panda },
-  { value: 'staff', label: roleLabels.staff },
+  { value: 'student', label: roleLabels.student },
+];
+
+export const assignableRoleOptions: Array<{ value: Exclude<Role, 'student' | 'panda'>; label: string }> = [
+  { value: 'owner', label: roleLabels.owner },
+  { value: 'admin', label: roleLabels.admin },
+  { value: 'teacher', label: roleLabels.teacher },
 ];
 
 export interface AppUser {

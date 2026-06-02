@@ -19,7 +19,7 @@ export function AppRouter() {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute roles={['student', 'teacher', 'branch_admin', 'admin', 'owner', 'panda', 'manager', 'staff']} />}>
+      <Route element={<ProtectedRoute roles={['teacher', 'admin', 'owner', 'panda']} />}>
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Navigate to="/app/dashboard" replace />} />
           <Route path="homework" element={<Navigate to="/app/dashboard" replace />} />

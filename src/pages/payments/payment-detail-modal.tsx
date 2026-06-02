@@ -22,6 +22,7 @@ export function PaymentDetailModal({
   onClose,
   onFreeze,
   onUnfreeze,
+  canManage = false,
   isFreezing = false,
   isUnfreezing = false,
 }: {
@@ -29,6 +30,7 @@ export function PaymentDetailModal({
   onClose: () => void;
   onFreeze: (reason: string) => void;
   onUnfreeze: () => void;
+  canManage?: boolean;
   isFreezing?: boolean;
   isUnfreezing?: boolean;
 }) {
@@ -63,14 +65,14 @@ export function PaymentDetailModal({
             </div>
           </Card>
         ) : null}
-        {!payment.isFrozen ? (
+        {canManage && !payment.isFrozen ? (
           <div style={{ display: 'flex', gap: 8 }}>
             <Input value={freezeReason} onChange={event => setFreezeReason(event.target.value)} />
             <Button onClick={() => onFreeze(freezeReason)} disabled={isFreezing || !freezeReason.trim()}>{isFreezing ? t('common.saving') : 'Freeze'}</Button>
           </div>
-        ) : (
+        ) : canManage ? (
           <Button onClick={onUnfreeze} disabled={isUnfreezing}>{isUnfreezing ? t('common.saving') : 'Unfreeze'}</Button>
-        )}
+        ) : null}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant="secondary" onClick={onClose}>{t('common.close')}</Button>
         </div>

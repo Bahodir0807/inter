@@ -9,9 +9,14 @@ interface RoleGateProps extends PropsWithChildren {
 
 export function RoleGate({ roles, children }: RoleGateProps) {
   const user = useAuthStore(state => state.user);
+  const publicRoles: Role[] = ['owner', 'admin', 'teacher', 'student'];
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!publicRoles.includes(user.role)) {
+    return <>{children}</>;
   }
 
   if (!roles.includes(user.role)) {

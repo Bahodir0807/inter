@@ -12,7 +12,7 @@ export interface RegisterPayload {
   password: string;
   firstName: string;
   lastName: string;
-  role?: 'student' | 'guest';
+  role?: 'student';
   roleKey?: string;
   phoneNumber?: string;
 }

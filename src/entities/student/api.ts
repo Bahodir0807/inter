@@ -5,6 +5,8 @@ export type StudentStatus = 'active' | 'inactive' | 'archived' | 'deleted';
 
 export interface Student {
   id: string;
+  studentNumber?: string;
+  userAccountId?: string;
   fullName?: string;
   firstName: string;
   lastName: string;

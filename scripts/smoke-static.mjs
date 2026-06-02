@@ -20,6 +20,8 @@ const navigation = read('src/app/router/navigation.tsx');
 const capabilities = read('src/shared/lib/capabilities.ts');
 const dashboard = read('src/pages/dashboard/dashboard-page.tsx');
 const rooms = read('src/pages/rooms/rooms-page.tsx');
+const branchesPage = read('src/pages/branches/branches-page.tsx');
+const branchesApi = read('src/entities/branch/api.ts');
 const payments = read('src/pages/payments/payments-page.tsx');
 const courses = read('src/pages/courses/courses-page.tsx');
 const groups = read('src/pages/groups/groups-page.tsx');
@@ -51,8 +53,14 @@ const adminToolsPage = read('src/pages/admin-tools/admin-tools-page.tsx');
 check('admin-like includes panda', navigation.includes("export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda']"), 'adminLikeRoles must include panda');
 check('payment managers include panda', navigation.includes("export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda']"), 'paymentsManagerRoles must include panda');
 check('student blocked from management routes', navigation.includes("roles: teacherWorkspaceRoles, element: <CoursesPage />") && navigation.includes("roles: teacherWorkspaceRoles, element: <GroupsPage />") && navigation.includes("roles: teacherWorkspaceRoles, element: <SchedulePage />") && navigation.includes("roles: adminLikeRoles, element: <RoomsPage />"), 'student must not have management route access');
+check('student removed from active app routes', navigation.includes("const allAppRoles: Role[] = ['teacher', 'admin', 'owner', 'panda']"), 'student portal routes must remain disabled');
 check('student management capabilities disabled', capabilities.includes('courses: false') && capabilities.includes('groups: false') && capabilities.includes('schedule: false') && capabilities.includes('rooms: false'), 'student capabilities must block management routes');
 check('admin tools capability', capabilities.includes('adminTools: true'), 'admin-like capabilities must allow admin tools');
+check('branches route is admin-like only', navigation.includes("roles: adminLikeRoles, element: <BranchesPage />"), 'branches page must be visible only to admin-like roles');
+check('branches capabilities split view and edit', capabilities.includes('branches: {') && capabilities.includes('edit: false') && capabilities.includes('edit: true'), 'branches view/edit capabilities must be separate');
+check('teacher branches route hidden', capabilities.includes('branches: false') && capabilities.includes('view: false'), 'teacher/student branch management must remain hidden');
+check('branches api supports read update only', branchesApi.includes("http.get<Branch>(`/branches/${id}`)") && branchesApi.includes("http.patch<Branch>(`/branches/${id}`, payload)") && !branchesApi.includes('http.post<Branch>') && !branchesApi.includes('http.delete<Branch>'), 'branches API must expose get/update without create/delete');
+check('branch edit action capability gated', branchesPage.includes('capabilities.branches.edit') && branchesPage.includes('setEditingBranch(item)'), 'branch edit controls must be gated by edit capability');
 
 check('dashboard guards student-only endpoints', dashboard.includes('const [grades, attendance, payments] = isStudent'), 'dashboard must guard student-only endpoints by role');
 check('dashboard hides homework endpoint while disabled', !dashboard.includes('homeworkApi'), 'dashboard must not call homework while the feature is hidden');
@@ -72,7 +80,7 @@ check('teacher cannot manage schedule UI', schedule.includes('const canManage = 
 check('teacher groups use server scope', groups.includes("groupsApi.getAll(isTeacher && sessionUser ? { teacherId: sessionUser.id } : undefined)"), 'teacher groups view must request teacher-scoped data');
 check('teacher courses use server scope', courses.includes("coursesApi.getAll(isTeacher && sessionUser ? { teacherId: sessionUser.id } : undefined)"), 'teacher courses view must request teacher-scoped data');
 check('teacher cannot delete grades in UI', academic.includes('capabilities.academic.deleteGrades'), 'grade delete action must have a separate admin-like capability');
-check('staff academic scope starts empty', academic.includes("const [selectedUserId, setSelectedUserId] = useState('')"), 'staff academic queries must wait for explicit student selection');
+check('admin academic scope starts empty', academic.includes("const [selectedUserId, setSelectedUserId] = useState('')"), 'admin academic queries must wait for explicit student selection');
 check('academic hides homework while disabled', !academic.includes('homeworkApi') && !academic.includes('manageHomework'), 'academic page must not expose homework UI while the feature is hidden');
 check('homework route redirects to dashboard', appRouter.includes('path="homework" element={<Navigate to="/app/dashboard" replace />}'), 'manual /app/homework route must redirect to dashboard');
 check('teacher avoids user schedule lookup', academic.includes('canLookupUserSchedule ? scheduleApi.getByUser(effectiveUserId) : scheduleApi.getMine()') && academic.includes("enabled: !!effectiveUserId && (canLookupUserSchedule || user?.role === 'teacher')"), 'teacher academic view must use /schedule/me instead of /schedule/user/:id');
@@ -107,8 +115,9 @@ check('role labels translated', i18n.includes('roles.owner') && i18n.includes('r
 
 check('app shell is nested route layout', appRouter.includes('path="/app" element={<AppShell />}') && appShell.includes('<Outlet />'), 'AppShell must be a persistent nested route layout that renders Outlet');
 check('app shell does not own nested Routes', !appShell.includes('<Routes') && !appRouter.includes('function AppLayout()'), 'AppShell must not recreate page Routes internally');
-check('authenticated app routes are protected before shell', appRouter.includes('<Route element={<ProtectedRoute roles={[\'student\', \'teacher\', \'admin\', \'owner\', \'panda\']} />}>') && appRouter.indexOf('<Route element={<ProtectedRoute') < appRouter.indexOf('path="/app" element={<AppShell />}'), 'ProtectedRoute must wrap authenticated AppShell routes');
+check('authenticated app routes are protected before shell', appRouter.includes('<Route element={<ProtectedRoute roles={[\'teacher\', \'admin\', \'owner\', \'panda\']} />}>') && appRouter.indexOf('<Route element={<ProtectedRoute') < appRouter.indexOf('path="/app" element={<AppShell />}'), 'ProtectedRoute must wrap authenticated AppShell routes');
 check('app route permissions still use RoleGate', appRouter.includes('<RoleGate roles={route.roles}>') && roleGate.includes('!roles.includes(user.role)') && protectedRoute.includes('return <Outlet />'), 'RoleGate and ProtectedRoute must preserve role access through nested outlets');
+check('user form does not offer student role', !userFormModal.includes("z.enum(['owner', 'admin', 'teacher', 'student'])") && !userFormModal.includes("value: 'student'"), 'user form role selector must exclude student');
 check('sidebar and topbar mounted once in shell', (appShell.match(/<Sidebar/g) ?? []).length === 1 && (appShell.match(/<Topbar/g) ?? []).length === 1 && appShell.indexOf('<Sidebar') < appShell.indexOf('<Outlet />'), 'Sidebar and Topbar must be mounted once outside route content');
 
 const persistedStudentUserFields = [

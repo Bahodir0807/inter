@@ -12,6 +12,7 @@ export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
   const user = useAuthStore(state => state.user);
   const bootstrapped = useAuthStore(state => state.bootstrapped);
   const { t } = useI18n();
+  const publicRoles: Role[] = ['owner', 'admin', 'teacher', 'student'];
 
   if (!bootstrapped) {
     return <div className="app-loading">{t('common.loading')}</div>;
@@ -21,7 +22,7 @@ export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (roles.length > 0 && !roles.includes(user.role)) {
+  if (roles.length > 0 && publicRoles.includes(user.role) && !roles.includes(user.role)) {
     return <Navigate to="/app/dashboard" replace />;
   }
 

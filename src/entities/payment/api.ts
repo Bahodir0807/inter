@@ -62,6 +62,57 @@ export interface PaymentsListParams extends ListQueryParams {
   status?: PaymentStatus;
 }
 
+export interface PaymentReportsSummaryFilters {
+  branchId?: string;
+  courseId?: string;
+  year?: number;
+  month?: number;
+  status?: PaymentStatus;
+}
+
+export interface PaymentReportsSummary {
+  totalExpectedAmount: number;
+  totalPaidAmount: number;
+  totalRemainingAmount: number;
+  totalOverpaidAmount: number;
+  totalDebtAmount: number;
+  totalPaymentsCount: number;
+  paidCount: number;
+  partialCount: number;
+  pendingCount: number;
+  debtCount: number;
+  frozenCount: number;
+  overpaidCount: number;
+}
+
+export interface PaymentDebtorsFilters extends PaymentReportsSummaryFilters {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaymentDebtor {
+  paymentId: string;
+  studentId: string;
+  studentNumber: string;
+  studentName: string;
+  phone?: string | null;
+  parentPhone?: string | null;
+  courseId: string;
+  courseName: string;
+  groupId?: string | null;
+  groupName?: string | null;
+  branchId?: string | null;
+  branchName: string | null;
+  expectedAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: PaymentStatus;
+  dueDate: string;
+  year: number;
+  month: number;
+}
+
 export const paymentsApi = {
   async getAll(params?: PaymentsListParams) {
     const { data } = await http.get<Payment[]>('/payments', { params });
@@ -135,5 +186,15 @@ export const paymentsApi = {
     const params = branchId ? { branchId } : {};
     const { data } = await http.get('/payments/statistics/summary', { params });
     return data;
+  },
+
+  async getPaymentReportsSummary(params?: PaymentReportsSummaryFilters) {
+    const { data } = await http.get<PaymentReportsSummary>('/payments/reports/summary', { params });
+    return data;
+  },
+
+  async getPaymentDebtors(params?: PaymentDebtorsFilters): Promise<PaginatedList<PaymentDebtor>> {
+    const response = await http.get<PaginatedList<PaymentDebtor>>('/payments/reports/debtors', { params });
+    return { items: response.data.items || [], pagination: response.apiMeta?.pagination ?? response.data.pagination };
   },
 };

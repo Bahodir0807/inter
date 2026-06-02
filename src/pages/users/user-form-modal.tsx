@@ -8,7 +8,7 @@ import { Input } from '../../shared/ui/forms/input';
 import { Select } from '../../shared/ui/forms/select';
 import { FormSection } from '../../shared/ui/forms/form-section';
 import { Button } from '../../shared/ui/buttons/button';
-import { AppUser, roleOptions } from '../../shared/types/auth';
+import { AppUser, assignableRoleOptions } from '../../shared/types/auth';
 import { Group } from '../../entities/group/api';
 import { useUnsavedChangesGuard } from '../../shared/hooks/use-unsaved-changes-guard';
 import { getCourseDisplayName, getRoleDisplayName, getUserListSummary } from '../../shared/lib/entity-display';
@@ -21,7 +21,7 @@ const paymentMethodSchema = z.enum(['cash', 'card']).optional().or(z.literal('')
 const createSchema = z.object({
   username: z.string().trim().min(3, 'users.validation.username'),
   password: z.string().min(8, 'users.validation.password'),
-  role: z.enum(['owner', 'admin', 'branch_admin', 'teacher', 'manager', 'panda', 'staff']).optional(),
+  role: z.enum(['owner', 'admin', 'teacher']).optional(),
   email: z.string().email('validation.email').optional().or(z.literal('')),
   firstName: requiredText('users.validation.firstName'),
   lastName: requiredText('users.validation.lastName'),
@@ -103,7 +103,7 @@ export function UserFormModal({
     defaultValues: {
       username: '',
       password: '',
-      role: 'staff',
+      role: 'teacher',
       email: '',
       firstName: '',
       lastName: '',
@@ -133,7 +133,7 @@ export function UserFormModal({
     reset({
       username: user?.username ?? '',
       password: '',
-      role: user?.role && roleOptions.some(option => option.value === user.role) ? user.role as UserFormInput['role'] : 'staff',
+      role: user?.role && assignableRoleOptions.some(option => option.value === user.role) ? user.role as UserFormInput['role'] : 'teacher',
       email: user?.email ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
@@ -240,7 +240,7 @@ export function UserFormModal({
                 error={resolveErrorMessage(errors.role?.message)}
                 {...register('role')}
               >
-                {roleOptions.map(option => (
+                {assignableRoleOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {getRoleDisplayName(option.value)}
                   </option>

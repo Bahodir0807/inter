@@ -44,7 +44,7 @@ export function AcademicPage() {
   const { t } = useI18n();
 
   const canSelectUser = capabilities.academic.manageAttendance || capabilities.academic.manageGrades;
-  const canLookupUserSchedule = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'panda';
+  const canLookupUserSchedule = user?.role === 'admin' || user?.role === 'owner';
   const usersQuery = useQuery({
     queryKey: ['academic-users'],
     queryFn: () => usersApi.getStudents({ limit: 100, sortBy: 'username', sortOrder: 'asc' }),

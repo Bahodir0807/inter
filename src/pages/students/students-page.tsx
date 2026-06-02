@@ -157,7 +157,7 @@ export function StudentsPage() {
       description="Student registry, contacts, enrolment, and payment settings."
       actions={<Button onClick={() => { setSelected(null); setFormOpen(true); }}>New student</Button>}
     >
-      <TableShell title="Student list" description="Students are stored separately from staff users." actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}>
+      <TableShell title="Student list" description="Students are stored separately from operational users." actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}>
         <TableToolbar
           search={search}
           onSearchChange={value => { setSearch(value); setPage(1); }}

@@ -7,6 +7,7 @@ export type AppRouteKey =
   | 'groups'
   | 'schedule'
   | 'rooms'
+  | 'branches'
   | 'payments'
   | 'academic'
   | 'adminTools'
@@ -17,6 +18,7 @@ export interface RoleCapabilities {
   routes: Record<AppRouteKey, boolean>;
   dashboard: {
     operationalOverview: boolean;
+    finance: boolean;
   };
   users: {
     viewAll: boolean;
@@ -47,6 +49,10 @@ export interface RoleCapabilities {
   rooms: {
     manage: boolean;
   };
+  branches: {
+    view: boolean;
+    edit: boolean;
+  };
   payments: {
     manage: boolean;
     delete: boolean;
@@ -75,17 +81,19 @@ const noRoutes: Record<AppRouteKey, boolean> = {
   groups: false,
   schedule: false,
   rooms: false,
+  branches: false,
   payments: false,
   academic: false,
   adminTools: false,
   profile: false,
 };
 
-const guestCapabilities: RoleCapabilities = {
+const fallbackCapabilities: RoleCapabilities = {
   app: false,
   routes: noRoutes,
   dashboard: {
     operationalOverview: false,
+    finance: false,
   },
   users: {
     viewAll: false,
@@ -115,6 +123,10 @@ const guestCapabilities: RoleCapabilities = {
   },
   rooms: {
     manage: false,
+  },
+  branches: {
+    view: false,
+    edit: false,
   },
   payments: {
     manage: false,
@@ -146,6 +158,7 @@ const adminLikeCapabilities: RoleCapabilities = {
     groups: true,
     schedule: true,
     rooms: true,
+    branches: true,
     payments: true,
     academic: true,
     adminTools: true,
@@ -153,6 +166,7 @@ const adminLikeCapabilities: RoleCapabilities = {
   },
   dashboard: {
     operationalOverview: true,
+    finance: true,
   },
   users: {
     viewAll: true,
@@ -183,6 +197,10 @@ const adminLikeCapabilities: RoleCapabilities = {
   rooms: {
     manage: true,
   },
+  branches: {
+    view: true,
+    edit: false,
+  },
   payments: {
     manage: true,
     delete: true,
@@ -204,6 +222,14 @@ const adminLikeCapabilities: RoleCapabilities = {
   },
 };
 
+const ownerCapabilities: RoleCapabilities = {
+  ...adminLikeCapabilities,
+  branches: {
+    view: true,
+    edit: true,
+  },
+};
+
 const teacherCapabilities: RoleCapabilities = {
   app: true,
   routes: {
@@ -213,6 +239,7 @@ const teacherCapabilities: RoleCapabilities = {
     groups: true,
     schedule: true,
     rooms: true,
+    branches: false,
     payments: false,
     academic: true,
     adminTools: false,
@@ -220,6 +247,7 @@ const teacherCapabilities: RoleCapabilities = {
   },
   dashboard: {
     operationalOverview: false,
+    finance: false,
   },
   users: {
     viewAll: false,
@@ -250,6 +278,10 @@ const teacherCapabilities: RoleCapabilities = {
   rooms: {
     manage: false,
   },
+  branches: {
+    view: false,
+    edit: false,
+  },
   payments: {
     manage: false,
     delete: false,
@@ -272,21 +304,23 @@ const teacherCapabilities: RoleCapabilities = {
 };
 
 const studentCapabilities: RoleCapabilities = {
-  app: true,
+  app: false,
   routes: {
-    dashboard: true,
+    dashboard: false,
     users: false,
     courses: false,
     groups: false,
     schedule: false,
     rooms: false,
-    payments: true,
-    academic: true,
+    branches: false,
+    payments: false,
+    academic: false,
     adminTools: false,
-    profile: true,
+    profile: false,
   },
   dashboard: {
     operationalOverview: false,
+    finance: false,
   },
   users: {
     viewAll: false,
@@ -317,6 +351,10 @@ const studentCapabilities: RoleCapabilities = {
   rooms: {
     manage: false,
   },
+  branches: {
+    view: false,
+    edit: false,
+  },
   payments: {
     manage: false,
     delete: false,
@@ -339,25 +377,21 @@ const studentCapabilities: RoleCapabilities = {
 };
 
 const roleCapabilityMap: Record<Role, RoleCapabilities> = {
-  owner: adminLikeCapabilities,
+  owner: ownerCapabilities,
   admin: adminLikeCapabilities,
-  branch_admin: adminLikeCapabilities,
-  panda: adminLikeCapabilities,
-  manager: adminLikeCapabilities,
-  staff: guestCapabilities,
+  panda: ownerCapabilities,
   teacher: teacherCapabilities,
   student: studentCapabilities,
-  guest: guestCapabilities,
 };
 
 export const appRoles = (Object.keys(roleCapabilityMap) as Role[]).filter(role => roleCapabilityMap[role].app);
 
 export function getRoleCapabilities(role?: Role | null) {
   if (!role) {
-    return guestCapabilities;
+    return fallbackCapabilities;
   }
 
-  return roleCapabilityMap[role] ?? guestCapabilities;
+  return roleCapabilityMap[role] ?? adminLikeCapabilities;
 }
 
 export function canAccessRoute(role: Role | undefined | null, routeKey: AppRouteKey) {

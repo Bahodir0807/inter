@@ -54,6 +54,7 @@ export function PaymentsPage() {
   const { t } = useI18n();
   const user = useAuthStore(state => state.user);
   const isAdminLike = !!user && paymentsManagerRoles.includes(user.role);
+  const canManagePayments = user?.role === 'owner';
   const urlState = useUrlState();
 
   const [search, setSearchState] = useState(urlState.getString('search'));
@@ -242,10 +243,10 @@ export function PaymentsPage() {
       cell: item => (
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button size="sm" variant="secondary" onClick={() => setDetailOpen(item)}>{t('common.view')}</Button>
-          {item.status !== 'paid' && !item.isFrozen ? (
+          {canManagePayments && item.status !== 'paid' && !item.isFrozen ? (
             <Button size="sm" onClick={() => setAddPaymentOpen(item)}>+</Button>
           ) : null}
-          {!item.isFrozen && isAdminLike ? (
+          {canManagePayments && !item.isFrozen ? (
             <Button size="sm" variant="secondary" onClick={() => setDeleteCandidate(item)}>{t('common.delete')}</Button>
           ) : null}
         </div>
@@ -276,7 +277,7 @@ export function PaymentsPage() {
               </Select>
             </>
           ) : undefined}
-          actions={isAdminLike ? <Button onClick={() => setFormOpen(true)}>{t('common.create')}</Button> : undefined}
+          actions={canManagePayments ? <Button onClick={() => setFormOpen(true)}>{t('common.create')}</Button> : undefined}
         />
 
         <TableShell title={t('payments.ledgerTitle')} description={isAdminLike ? t('payments.ledgerDescription.admin') : t('payments.ledgerDescription.student')}>
@@ -309,6 +310,7 @@ export function PaymentsPage() {
           onClose={() => setDetailOpen(null)}
           onFreeze={reason => freezeMutation.mutate({ id: detailOpen.id, reason })}
           onUnfreeze={() => unfreezeMutation.mutate(detailOpen.id)}
+          canManage={canManagePayments}
           isFreezing={freezeMutation.isPending}
           isUnfreezing={unfreezeMutation.isPending}
         />

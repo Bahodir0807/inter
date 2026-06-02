@@ -10,7 +10,7 @@ try {
   $env:SMOKE_ALLOW_MUTATION = if ($Mutate) { "true" } else { "false" }
   $env:SMOKE_OWNER_USERNAME = "owner"
   $env:SMOKE_OWNER_PASSWORD = "ChangeMe123!"
-  $env:SMOKE_ADMIN_USERNAME = "branch_admin"
+  $env:SMOKE_ADMIN_USERNAME = "admin"
   $env:SMOKE_ADMIN_PASSWORD = "ChangeMe123!"
   $env:SMOKE_TEACHER_USERNAME = "teacher"
   $env:SMOKE_TEACHER_PASSWORD = "ChangeMe123!"
