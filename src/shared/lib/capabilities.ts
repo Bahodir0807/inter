@@ -8,6 +8,7 @@ export type AppRouteKey =
   | 'schedule'
   | 'rooms'
   | 'branches'
+  | 'notificationDeliveries'
   | 'payments'
   | 'academic'
   | 'adminTools'
@@ -53,6 +54,9 @@ export interface RoleCapabilities {
     view: boolean;
     edit: boolean;
   };
+  notifications: {
+    viewDeliveries: boolean;
+  };
   payments: {
     manage: boolean;
     delete: boolean;
@@ -82,6 +86,7 @@ const noRoutes: Record<AppRouteKey, boolean> = {
   schedule: false,
   rooms: false,
   branches: false,
+  notificationDeliveries: false,
   payments: false,
   academic: false,
   adminTools: false,
@@ -128,6 +133,9 @@ const fallbackCapabilities: RoleCapabilities = {
     view: false,
     edit: false,
   },
+  notifications: {
+    viewDeliveries: false,
+  },
   payments: {
     manage: false,
     delete: false,
@@ -159,6 +167,7 @@ const adminLikeCapabilities: RoleCapabilities = {
     schedule: true,
     rooms: true,
     branches: true,
+    notificationDeliveries: true,
     payments: true,
     academic: true,
     adminTools: true,
@@ -201,6 +210,9 @@ const adminLikeCapabilities: RoleCapabilities = {
     view: true,
     edit: false,
   },
+  notifications: {
+    viewDeliveries: true,
+  },
   payments: {
     manage: true,
     delete: true,
@@ -240,6 +252,7 @@ const teacherCapabilities: RoleCapabilities = {
     schedule: true,
     rooms: true,
     branches: false,
+    notificationDeliveries: false,
     payments: false,
     academic: true,
     adminTools: false,
@@ -282,6 +295,9 @@ const teacherCapabilities: RoleCapabilities = {
     view: false,
     edit: false,
   },
+  notifications: {
+    viewDeliveries: false,
+  },
   payments: {
     manage: false,
     delete: false,
@@ -313,6 +329,7 @@ const studentCapabilities: RoleCapabilities = {
     schedule: false,
     rooms: false,
     branches: false,
+    notificationDeliveries: false,
     payments: false,
     academic: false,
     adminTools: false,
@@ -354,6 +371,9 @@ const studentCapabilities: RoleCapabilities = {
   branches: {
     view: false,
     edit: false,
+  },
+  notifications: {
+    viewDeliveries: false,
   },
   payments: {
     manage: false,

@@ -22,6 +22,8 @@ const dashboard = read('src/pages/dashboard/dashboard-page.tsx');
 const rooms = read('src/pages/rooms/rooms-page.tsx');
 const branchesPage = read('src/pages/branches/branches-page.tsx');
 const branchesApi = read('src/entities/branch/api.ts');
+const notificationDeliveriesPage = read('src/pages/notification-deliveries/notification-deliveries-page.tsx');
+const notificationsApi = read('src/entities/notification/api.ts');
 const payments = read('src/pages/payments/payments-page.tsx');
 const courses = read('src/pages/courses/courses-page.tsx');
 const groups = read('src/pages/groups/groups-page.tsx');
@@ -61,6 +63,12 @@ check('branches capabilities split view and edit', capabilities.includes('branch
 check('teacher branches route hidden', capabilities.includes('branches: false') && capabilities.includes('view: false'), 'teacher/student branch management must remain hidden');
 check('branches api supports read update only', branchesApi.includes("http.get<Branch>(`/branches/${id}`)") && branchesApi.includes("http.patch<Branch>(`/branches/${id}`, payload)") && !branchesApi.includes('http.post<Branch>') && !branchesApi.includes('http.delete<Branch>'), 'branches API must expose get/update without create/delete');
 check('branch edit action capability gated', branchesPage.includes('capabilities.branches.edit') && branchesPage.includes('setEditingBranch(item)'), 'branch edit controls must be gated by edit capability');
+check('notification deliveries route is admin-like only', navigation.includes("roles: adminLikeRoles, element: <NotificationDeliveriesPage />"), 'notification delivery history must be visible only to admin-like roles');
+
+check('notification deliveries capability exists', capabilities.includes('notifications: {') && capabilities.includes('viewDeliveries: true') && capabilities.includes('viewDeliveries: false'), 'notification delivery history must have explicit capability gates');
+check('notification deliveries api is read-only', notificationsApi.includes("'/notifications/deliveries'") && notificationsApi.includes('http.get<PaginatedList<NotificationDelivery>>') && !notificationsApi.includes("http.post('/notifications/deliveries") && !notificationsApi.includes("http.patch('/notifications/deliveries") && !notificationsApi.includes("http.delete('/notifications/deliveries"), 'notification delivery API must be read-only');
+check('notification deliveries page has no resend action', !notificationDeliveriesPage.toLowerCase().includes('resend') && !notificationDeliveriesPage.includes('sendSms') && !notificationDeliveriesPage.includes('delete'), 'notification delivery page must not expose resend/delete actions');
+check('notification deliveries statuses render', notificationDeliveriesPage.includes("status === 'dry_run'") && notificationDeliveriesPage.includes("status === 'failed'") && notificationDeliveriesPage.includes('notifications.status.'), 'notification delivery page must render delivery statuses');
 
 check('dashboard guards student-only endpoints', dashboard.includes('const [grades, attendance, payments] = isStudent'), 'dashboard must guard student-only endpoints by role');
 check('dashboard hides homework endpoint while disabled', !dashboard.includes('homeworkApi'), 'dashboard must not call homework while the feature is hidden');

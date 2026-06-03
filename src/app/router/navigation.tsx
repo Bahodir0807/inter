@@ -10,6 +10,7 @@ const GroupsPage = lazy(() => import('../../pages/groups/groups-page').then(modu
 const SchedulePage = lazy(() => import('../../pages/schedule/schedule-page').then(module => ({ default: module.SchedulePage })));
 const RoomsPage = lazy(() => import('../../pages/rooms/rooms-page').then(module => ({ default: module.RoomsPage })));
 const BranchesPage = lazy(() => import('../../pages/branches/branches-page').then(module => ({ default: module.BranchesPage })));
+const NotificationDeliveriesPage = lazy(() => import('../../pages/notification-deliveries/notification-deliveries-page').then(module => ({ default: module.NotificationDeliveriesPage })));
 const PaymentsPage = lazy(() => import('../../pages/payments/payments-page').then(module => ({ default: module.PaymentsPage })));
 const ProfilePage = lazy(() => import('../../pages/profile/profile-page').then(module => ({ default: module.ProfilePage })));
 const AcademicPage = lazy(() => import('../../pages/academic/academic-page').then(module => ({ default: module.AcademicPage })));
@@ -43,6 +44,7 @@ export const appRoutes: AppRouteConfig[] = [
   { path: '/app/schedule', label: 'Schedule', labelKey: 'nav.schedule', description: 'Lessons and rooms', descriptionKey: 'nav.scheduleDescription', shortLabel: 'SC', icon: 'schedule', roles: teacherWorkspaceRoles, element: <SchedulePage />, nav: true },
   { path: '/app/rooms', label: 'Rooms', labelKey: 'nav.rooms', description: 'Classroom availability', descriptionKey: 'nav.roomsDescription', shortLabel: 'RM', icon: 'rooms', roles: adminLikeRoles, element: <RoomsPage />, nav: true },
   { path: '/app/branches', label: 'Branches', labelKey: 'nav.branches', description: 'Branch directory', descriptionKey: 'nav.branchesDescription', shortLabel: 'BR', icon: 'rooms', roles: adminLikeRoles, element: <BranchesPage />, nav: true },
+  { path: '/app/notifications/deliveries', label: 'Delivery history', labelKey: 'nav.notificationDeliveries', description: 'SMS and reminder attempts', descriptionKey: 'nav.notificationDeliveriesDescription', shortLabel: 'DL', icon: 'payments', roles: adminLikeRoles, element: <NotificationDeliveriesPage />, nav: true },
   { path: '/app/payments', label: 'Payments', labelKey: 'nav.payments', description: 'Ledger and confirmations', descriptionKey: 'nav.paymentsDescription', shortLabel: 'PY', icon: 'payments', roles: paymentsManagerRoles, element: <PaymentsPage />, nav: true },
   { path: '/app/academic', label: 'Attendance & grades', labelKey: 'nav.academic', description: 'Attendance and grades', descriptionKey: 'nav.academicDescription', shortLabel: 'AC', icon: 'courses', roles: allAppRoles, element: <AcademicPage />, nav: true },
   { path: '/app/admin-tools', label: 'Admin', labelKey: 'nav.adminTools', description: 'System-only tools', descriptionKey: 'nav.adminToolsDescription', shortLabel: 'AT', icon: 'users', roles: adminLikeRoles, element: <AdminToolsPage />, nav: true },
