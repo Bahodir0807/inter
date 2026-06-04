@@ -64,6 +64,49 @@ export const http = axios.create({
 });
 
 let refreshPromise: Promise<string | null> | null = null;
+let sessionExpired = false;
+
+const publicRequests = [
+  { method: 'post', path: '/auth/login' },
+  { method: 'post', path: '/auth/register' },
+  { method: 'post', path: '/auth/refresh' },
+  { method: 'post', path: '/phone-request' },
+  { method: 'get', path: '/phone-request' },
+  { method: 'post', path: '/phone-request/tg-request' },
+  { method: 'get', path: '/phone-request/tg-check' },
+];
+
+function getRequestPath(url?: string) {
+  if (!url) {
+    return '';
+  }
+
+  try {
+    return new URL(url, env.apiUrl).pathname;
+  } catch {
+    return url;
+  }
+}
+
+function isPublicRequest(config?: { method?: string; url?: string }) {
+  const method = config?.method?.toLowerCase() ?? 'get';
+  const path = getRequestPath(config?.url);
+  return publicRequests.some(publicRequest => publicRequest.method === method && publicRequest.path === path);
+}
+
+function expireSession() {
+  if (sessionExpired) {
+    return;
+  }
+
+  localStorage.removeItem('token');
+  sessionStorage.removeItem('refreshToken');
+  sessionExpired = true;
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('ibrat:auth-expired'));
+  }
+}
 
 async function refreshAccessToken() {
   const refreshToken = sessionStorage.getItem('refreshToken');
@@ -82,6 +125,7 @@ async function refreshAccessToken() {
         const nextAccessToken = payload.token ?? payload.accessToken ?? null;
         if (nextAccessToken) {
           localStorage.setItem('token', nextAccessToken);
+          sessionExpired = false;
         }
         if (payload.refreshToken) {
           sessionStorage.setItem('refreshToken', payload.refreshToken);
@@ -102,6 +146,14 @@ http.interceptors.request.use((config) => {
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
+    sessionExpired = false;
+    return config;
+  }
+
+  if (!isPublicRequest(config)) {
+    const error = new Error('Your session has expired. Please sign in again.');
+    expireSession();
+    return Promise.reject(error);
   }
 
   return config;
@@ -117,7 +169,12 @@ http.interceptors.response.use(
   async (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       const originalRequest = error.config as typeof error.config & { _retry?: boolean };
-      if (!originalRequest?._retry && originalRequest?.url !== '/auth/refresh') {
+      if (
+        !sessionExpired
+        && !originalRequest?._retry
+        && !isPublicRequest(originalRequest)
+        && sessionStorage.getItem('refreshToken')
+      ) {
         originalRequest._retry = true;
         const nextToken = await refreshAccessToken();
         if (nextToken) {
@@ -127,11 +184,7 @@ http.interceptors.response.use(
         }
       }
 
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('refreshToken');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('ibrat:auth-expired'));
-      }
+      expireSession();
     }
 
     error.message = getErrorMessage(error);

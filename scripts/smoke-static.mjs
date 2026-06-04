@@ -28,6 +28,8 @@ const payments = read('src/pages/payments/payments-page.tsx');
 const courses = read('src/pages/courses/courses-page.tsx');
 const groups = read('src/pages/groups/groups-page.tsx');
 const schedule = read('src/pages/schedule/schedule-page.tsx');
+const scheduleFormModal = read('src/pages/schedule/schedule-form-modal.tsx');
+const scheduleApi = read('src/entities/schedule/api.ts');
 const academic = read('src/pages/academic/academic-page.tsx');
 const http = read('src/shared/api/http.ts');
 const envConfig = read('src/shared/config/env.ts');
@@ -98,9 +100,19 @@ check('http preserves envelope meta', http.includes('response.apiMeta = unwrappe
 check('http reads backend error message', http.includes('body?.error?.message'), 'http client must read backend error.message');
 check('http reads backend validation details', http.includes('body?.error?.details'), 'http client must read backend validation details');
 check('http avoids custom request-id header for production CORS compatibility', !http.includes("config.headers['X-Request-Id']") && !http.includes("'X-Request-Id': createRequestId()"), 'frontend must not send X-Request-Id unless production CORS allows it');
+check('http sends bearer authorization from token storage', http.includes("const token = localStorage.getItem('token')") && http.includes('config.headers.Authorization = `Bearer ${token}`'), 'protected requests must send Authorization: Bearer <accessToken> when a token exists');
+check('http blocks protected requests without token', http.includes('!isPublicRequest(config)') && http.includes("Promise.reject(error)"), 'protected requests without an access token must be rejected before hitting protected endpoints');
+check('http refreshes protected 401 once', http.includes('!originalRequest?._retry') && http.includes('originalRequest._retry = true') && http.includes('return http(originalRequest)'), '401 refresh flow must retry the original protected request once');
+check('http expires session cleanly after auth failure', http.includes('function expireSession()') && http.includes("window.dispatchEvent(new CustomEvent('ibrat:auth-expired'))"), 'auth failure must clear session and notify the app once');
 check('api url uses VITE_API_BASE_URL', envConfig.includes('import.meta.env.VITE_API_BASE_URL'), 'frontend must read VITE_API_BASE_URL');
 check('api url uses configured backend domain', envConfig.includes("const defaultApiUrl = 'https://ibrat-backend-hi7w.onrender.com'"), 'frontend API fallback must use the Render backend domain');
 check('favicon is declared', indexHtml.includes('rel="icon"') && indexHtml.includes('/favicon.svg'), 'index.html must declare favicon');
+
+check('schedule create strips backend-forbidden date', scheduleApi.includes("key === 'date'") && scheduleApi.includes("http.post<ScheduleItem>('/schedule', toSchedulePayload(payload))"), 'schedule create payload must not include date');
+check('schedule update uses normalized payload', scheduleApi.includes("http.put<ScheduleItem>(`/schedule/${id}`, toSchedulePayload(payload))"), 'schedule update payload must share the create payload normalizer');
+check('schedule payload normalizes HH:mm times', scheduleApi.includes('function toTimeValue') && scheduleApi.includes("padStart(2, '0')") && scheduleApi.includes("hour: '2-digit'") && scheduleApi.includes("minute: '2-digit'"), 'schedule timeStart/timeEnd must be sent as HH:mm');
+check('schedule payload omits empty fields', scheduleApi.includes("value === undefined || value === null || value === ''") && scheduleApi.includes('Array.isArray(value) && value.length === 0'), 'schedule payload must omit empty and undefined fields');
+check('schedule form can edit HH:mm backend times', scheduleFormModal.includes('function toLocalTime') && scheduleFormModal.includes('directMatch') && scheduleFormModal.includes("padStart(2, '0')"), 'schedule edit form must preserve HH:mm time values returned by the backend');
 
 check('theme tokens use requested light background', css.includes('--color-bg: #F4F7FB'), 'light theme must define requested background token');
 check('theme tokens use requested dark background', css.includes("--color-bg: #0B1220"), 'dark theme must define requested background token');

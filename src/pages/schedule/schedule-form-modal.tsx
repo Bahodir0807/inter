@@ -51,7 +51,16 @@ function toLocalTime(value?: string) {
     return '';
   }
 
+  const directMatch = value.trim().match(/^(\d{1,2}):([0-5]\d)(?::\d{2})?$/);
+  if (directMatch) {
+    return `${directMatch[1].padStart(2, '0')}:${directMatch[2]}`;
+  }
+
   const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(11, 16);
 }
@@ -83,13 +92,6 @@ function getUpcomingDateForWeekday(weekday: Weekday, from = new Date()) {
   const next = new Date(from);
   next.setDate(from.getDate() + offsetDays);
   return next.toISOString().slice(0, 10);
-}
-
-function combineLocalDateAndTime(date: string, time: string) {
-  const [year, month, day] = date.split('-').map(Number);
-  const [hours, minutes] = time.split(':').map(Number);
-  const combined = new Date(year, month - 1, day, hours, minutes);
-  return combined.toISOString();
 }
 
 function getUpcomingLessonWindow() {
@@ -191,8 +193,8 @@ export function ScheduleFormModal({
     }
 
     const newLessonWindow = getUpcomingLessonWindow();
-    const itemWeekdays = Array.isArray((item as any)?.weekdays) && (item as any).weekdays.length > 0
-      ? (item as any).weekdays as Weekday[]
+    const itemWeekdays = Array.isArray(item?.weekdays) && item.weekdays.length > 0
+      ? item.weekdays
       : item?.date
         ? [getWeekdayFromDate(item.date)]
         : newLessonWindow.weekdays;
@@ -233,14 +235,7 @@ export function ScheduleFormModal({
         <form
           className="modal-form"
           onSubmit={handleSubmit(async values => {
-            const combinedStart = combineLocalDateAndTime(values.date, values.timeStart);
-            const combinedEnd = combineLocalDateAndTime(values.date, values.timeEnd);
-            await onSubmit({
-              ...values,
-              date: combinedStart,
-              timeStart: combinedStart,
-              timeEnd: combinedEnd,
-            });
+            await onSubmit(values);
           })}
         >
           <FormSection

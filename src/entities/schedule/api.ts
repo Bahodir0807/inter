@@ -10,6 +10,7 @@ export interface ScheduleItem {
   date: string;
   timeStart: string;
   timeEnd: string;
+  weekdays?: Weekday[];
   course: Course | string;
   room: Room | string;
   teacher: AppUser | string;
@@ -47,6 +48,47 @@ export interface ScheduleListParams extends ListQueryParams {
   to?: string;
 }
 
+function toTimeValue(value: unknown) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  const directMatch = trimmed.match(/^(\d{1,2}):([0-5]\d)(?::\d{2})?$/);
+  if (directMatch) {
+    return `${directMatch[1].padStart(2, '0')}:${directMatch[2]}`;
+  }
+
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  return trimmed;
+}
+
+export function toSchedulePayload(payload: Partial<ScheduleFormValues>) {
+  const normalized: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(payload)) {
+    if (key === 'date' || value === undefined || value === null || value === '') {
+      continue;
+    }
+
+    if (Array.isArray(value) && value.length === 0) {
+      continue;
+    }
+
+    normalized[key] = key === 'timeStart' || key === 'timeEnd' ? toTimeValue(value) : value;
+  }
+
+  return normalized as Omit<ScheduleFormValues, 'date'>;
+}
+
 export const scheduleApi = {
   async getAll(params?: ScheduleListParams) {
     const { data } = await http.get<ScheduleItem[]>('/schedule', { params });
@@ -69,11 +111,11 @@ export const scheduleApi = {
     return data;
   },
   async create(payload: ScheduleFormValues) {
-    const { data } = await http.post<ScheduleItem>('/schedule', payload);
+    const { data } = await http.post<ScheduleItem>('/schedule', toSchedulePayload(payload));
     return data;
   },
   async update(id: string, payload: Partial<ScheduleFormValues>) {
-    const { data } = await http.put<ScheduleItem>(`/schedule/${id}`, payload);
+    const { data } = await http.put<ScheduleItem>(`/schedule/${id}`, toSchedulePayload(payload));
     return data;
   },
   async remove(id: string) {
