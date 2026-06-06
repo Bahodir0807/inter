@@ -14,12 +14,8 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
   const { language, setLanguage, t } = useI18n();
   const { theme, setTheme } = useTheme();
   const userName = getUserDisplayName(user) || t('common.crmUser');
-  const initials = userName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(part => part[0]?.toUpperCase() ?? '')
-    .join('') || 'IC';
+  const showEnvironmentBadge = env.appEnv !== 'prod';
+  const initials = userName.split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase()).join('') || 'IC';
 
   return (
     <header className="app-topbar">
@@ -64,10 +60,12 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
             <option value="dark">{t('theme.dark')}</option>
           </Select>
         </div>
-        <div className={`environment-badge environment-badge--${env.appEnv}`} title={`${env.appVersion}+${env.buildHash}`}>
-          <strong>{env.appEnv.toUpperCase()}</strong>
-          <span>{env.appVersion}</span>
-        </div>
+        {showEnvironmentBadge ? (
+          <div className={`environment-badge environment-badge--${env.appEnv}`} title={`${env.appVersion}+${env.buildHash}`}>
+            <strong>{env.appEnv.toUpperCase()}</strong>
+            <span>{env.appVersion}</span>
+          </div>
+        ) : null}
         <div className="app-topbar__user-chip">
           <span className="app-topbar__initials" aria-hidden="true">
             {initials}

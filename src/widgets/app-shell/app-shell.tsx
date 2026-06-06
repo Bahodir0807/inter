@@ -12,15 +12,10 @@ export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!sidebarOpen) {
-      return;
-    }
-
     const mobileQuery = window.matchMedia('(max-width: 920px)');
+    const shouldLock = sidebarOpen && mobileQuery.matches;
 
-    if (!mobileQuery.matches) {
-      return;
-    }
+    if (!shouldLock) return;
 
     const previousBodyOverflow = document.body.style.overflow;
 
