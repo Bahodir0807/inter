@@ -1,0 +1,316 @@
+/* ============================================================
+   SURFACES — Cards, panels, and surface containers
+   ============================================================ */
+
+/* Global utilities */
+.subtle { color: var(--color-muted); }
+.stack { display: grid; gap: var(--space-xs); }
+.appIcon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+}
+.eyebrow {
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Base card */
+.uiCard,
+.sectionCard,
+.statCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  box-shadow: var(--color-shadow-soft);
+  min-width: 0;
+  padding: var(--card-padding);
+}
+
+/* Metric card */
+.metricCard {
+  min-width: 0;
+  min-height: 6.15rem;
+  display: grid;
+  align-content: space-between;
+  gap: 0.36rem;
+  padding: 0.95rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-card), var(--color-elevated));
+  box-shadow: var(--color-shadow-soft);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.metricCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+}
+
+.metricCard strong {
+  min-width: 0;
+  font-size: clamp(1.45rem, 1.8vw, 1.95rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.metricCard .subtle {
+  min-width: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+.metricCardHero {
+  color: white;
+  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.28), transparent 36%), linear-gradient(180deg, #2563eb, #1d4ed8);
+  box-shadow: 0 22px 45px rgba(37, 99, 235, 0.18);
+}
+
+.metricCardAccent { border-color: rgba(37, 99, 235, 0.18); }
+
+.metricCardQuiet {
+  background: var(--color-elevated);
+  color: var(--color-text);
+}
+
+.metricCardWarning {
+  border-color: color-mix(in srgb, var(--color-warning) 36%, var(--color-border));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-warning) 14%, var(--color-card)), var(--color-card));
+}
+
+/* Shorthand overrides */
+.metricCardHero,
+.metricCardAccent,
+.statCardHero,
+.statCardAccent {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 14%, var(--color-card)), var(--color-card));
+}
+
+.metricCardQuiet,
+.statCardQuiet { background: var(--color-elevated); }
+
+/* Dashboard panel & note */
+.dashboardPanel,
+.dashboardNote {
+  display: grid;
+  gap: var(--section-gap);
+  padding: var(--card-padding);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  box-shadow: var(--color-shadow-soft);
+}
+
+.dashboardNote {
+  background: linear-gradient(180deg, var(--color-card), var(--color-elevated));
+}
+
+.dashboardNote .eyebrow {
+  color: var(--color-primary);
+  font-size: 0.72rem;
+}
+
+.dashboardNote h3 { margin: 0; font-size: 1rem; }
+.dashboardNote p { margin: 0; }
+
+.dashboardPanelIntro {
+  display: grid;
+  gap: 0.35rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dashboardPanelIntro h3 { margin: 0; font-size: 1.05rem; }
+.dashboardPanelIntro p { margin: 0; }
+
+/* Ops panel */
+.opsPanel {
+  grid-column: span 4;
+  min-width: 0;
+  display: grid;
+  gap: 0.62rem;
+  padding: var(--card-padding);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-card) 94%, var(--color-elevated)), var(--color-card));
+  box-shadow: var(--color-shadow-soft);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.opsPanel:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, var(--color-border));
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+.opsPanelPrimary {
+  grid-column: span 8;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 10%, var(--color-card)), var(--color-card) 62%),
+    var(--color-card);
+}
+
+.opsPanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding-bottom: 0.22rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 68%, transparent);
+}
+
+.opsPanelHeader h3 { font-size: 0.98rem; line-height: 1.2; }
+
+/* Compact empty state */
+.compactEmpty {
+  display: grid;
+  gap: 0.2rem;
+  min-height: 5.25rem;
+  place-content: center;
+  padding: 0.8rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-elevated) 42%, transparent);
+  text-align: center;
+}
+
+.compactEmpty span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (min-width: 768px) {
+  .metricCard,
+  .statCard { min-height: 5.75rem; }
+}
+
+@media (min-width: 1024px) {
+  .metricCard,
+  .statCard { min-height: 6rem; }
+}
+
+@media (max-width: 1100px) {
+  .opsPanel,
+  .opsPanelPrimary { grid-column: span 6; }
+}
+
+@media (max-width: 768px) {
+  .opsPanel,
+  .opsPanelPrimary { grid-column: 1 / -1; }
+}
+
+@media (max-width: 360px) {
+  .uiCard,
+  .sectionCard,
+  .statCard,
+  .dashboardPanel,
+  .dashboardNote {
+    padding: var(--card-padding);
+  }
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+:root[data-theme='dark'] .uiCard,
+:root[data-theme='dark'] .sectionCard,
+:root[data-theme='dark'] .statCard,
+:root[data-theme='dark'] .dashboardPanel,
+:root[data-theme='dark'] .dashboardNote {
+  background: linear-gradient(180deg, #111C2D, #0F1A2B);
+  border-color: #263449;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 179, 199, 0.03);
+}
+
+:root[data-theme='dark'] .metricCard,
+:root[data-theme='dark'] .dashboardNote,
+:root[data-theme='dark'] .opsPanel {
+  background: linear-gradient(180deg, #162235, #111C2D);
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .metricCard:hover,
+:root[data-theme='dark'] .opsPanel:hover {
+  border-color: rgba(96, 165, 250, 0.32);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme='dark'] .metricCardHero,
+:root[data-theme='dark'] .metricCardAccent,
+:root[data-theme='dark'] .statCardHero,
+:root[data-theme='dark'] .statCardAccent,
+:root[data-theme='dark'] .opsPanelPrimary {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 42%),
+    linear-gradient(135deg, #162235, #111C2D);
+}
+
+:root[data-theme='dark'] .metricCardWarning {
+  background:
+    radial-gradient(circle at top left, rgba(251, 191, 36, 0.12), transparent 42%),
+    linear-gradient(135deg, #162235, #111C2D);
+}
+
+:root[data-theme='dark'] .metricCardQuiet,
+:root[data-theme='dark'] .statCardQuiet,
+:root[data-theme='dark'] .compactEmpty {
+  background: #162235;
+  border-color: #263449;
+}
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
+:root:not([data-theme='dark']) .uiCard,
+:root:not([data-theme='dark']) .sectionCard,
+:root:not([data-theme='dark']) .statCard,
+:root:not([data-theme='dark']) .dashboardPanel,
+:root:not([data-theme='dark']) .dashboardNote {
+  background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+:root:not([data-theme='dark']) .metricCard,
+:root:not([data-theme='dark']) .dashboardNote,
+:root:not([data-theme='dark']) .opsPanel {
+  background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.9);
+}
+
+:root:not([data-theme='dark']) .metricCard:hover,
+:root:not([data-theme='dark']) .opsPanel:hover {
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.09);
+}
+
+:root:not([data-theme='dark']) .metricCardHero,
+:root:not([data-theme='dark']) .metricCardAccent,
+:root:not([data-theme='dark']) .statCardHero,
+:root:not([data-theme='dark']) .statCardAccent,
+:root:not([data-theme='dark']) .opsPanelPrimary {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.13), transparent 42%),
+    linear-gradient(135deg, #FFFFFF, #FCFDFF);
+}
+
+:root:not([data-theme='dark']) .metricCardWarning {
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.12), transparent 42%),
+    linear-gradient(135deg, #FFFFFF, #FCFDFF);
+}
+
+:root:not([data-theme='dark']) .metricCardQuiet,
+:root:not([data-theme='dark']) .statCardQuiet,
+:root:not([data-theme='dark']) .compactEmpty {
+  background: #FCFDFF;
+  border-color: #E2E8F0;
+}

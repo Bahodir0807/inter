@@ -1,0 +1,51 @@
+.uiCard,
+.sectionCard,
+.statCard {
+border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  box-shadow: var(--color-shadow-soft);
+}
+
+.uiCard,
+.sectionCard,
+.statCard {
+min-width: 0;
+  padding: var(--card-padding);
+}
+
+:root[data-theme='dark'] .uiCard,
+:root[data-theme='dark'] .sectionCard,
+:root[data-theme='dark'] .statCard {
+background: linear-gradient(180deg, #111C2D, #0F1A2B);
+  border-color: #263449;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 179, 199, 0.03);
+}
+
+:root:not([data-theme='dark']) .uiCard,
+:root:not([data-theme='dark']) .sectionCard,
+:root:not([data-theme='dark']) .statCard {
+background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+@media (min-width: 768px) {
+  .statCard {
+  min-height: 5.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .statCard {
+  min-height: 6rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .uiCard,
+  .sectionCard,
+  .statCard {
+  padding: var(--card-padding);
+  }
+}

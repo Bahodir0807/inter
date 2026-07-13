@@ -1,0 +1,45 @@
+.formSection {
+display: grid;
+  min-width: 0;
+  gap: 0.7rem;
+  padding: var(--card-padding);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-elevated) 38%, transparent);
+}
+
+.formSection__header {
+display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.formSection__header h3 {
+font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.formSection__header p {
+color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.formSection__body {
+display: grid;
+  min-width: 0;
+  gap: var(--section-gap);
+}
+
+:root[data-theme='dark'] .formSection {
+background: #162235;
+  border-color: #263449;
+}
+
+:root:not([data-theme='dark']) .formSection {
+background: #FCFDFF;
+  border-color: #E2E8F0;
+}

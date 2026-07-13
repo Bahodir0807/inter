@@ -1,5 +1,6 @@
 import { forwardRef, SelectHTMLAttributes, useId } from 'react';
 import { cn } from '../../lib/cn';
+import styles from './field.module.css';
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
@@ -19,20 +20,20 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
     .join(' ') || undefined;
 
   return (
-    <label className={cn('ui-field', fieldClassName)} htmlFor={selectId}>
-      {label ? <span className="ui-field__label">{label}</span> : null}
-      {hint ? <span id={`${selectId}-hint`} className="ui-field__hint">{hint}</span> : null}
+    <label className={cn(styles.uiField, fieldClassName)} htmlFor={selectId}>
+      {label ? <span className={styles.uiFieldLabel}>{label}</span> : null}
+      {hint ? <span id={`${selectId}-hint`} className={styles.uiFieldHint}>{hint}</span> : null}
       <select
         id={selectId}
         ref={ref}
         aria-invalid={!!error}
         aria-describedby={descriptionIds}
-        className={cn('ui-select', error && 'ui-input--error', className)}
+        className={cn(styles.uiSelect, error && styles.uiInputError, className)}
         {...props}
       >
         {children}
       </select>
-      {error ? <span id={`${selectId}-error`} className="ui-field__error">{error}</span> : null}
+      {error ? <span id={`${selectId}-error`} className={styles.uiFieldError}>{error}</span> : null}
     </label>
   );
 });

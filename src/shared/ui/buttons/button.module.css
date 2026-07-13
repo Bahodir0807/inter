@@ -1,0 +1,137 @@
+/* ============================================================
+   BUTTON — Shared reusable button component
+   ============================================================ */
+
+.uiButton {
+  max-width: 100%;
+  min-height: var(--control-height);
+  height: var(--control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 0 0.72rem;
+  font-weight: 700;
+  font-size: 0.86rem;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.uiButton:hover:not(:disabled) { transform: translateY(-1px); }
+
+.uiButtonSm {
+  min-height: var(--control-height-sm);
+  height: var(--control-height-sm);
+  padding: 0 0.55rem;
+  font-size: 0.82rem;
+}
+
+.uiButtonFull { width: 100%; }
+
+.uiButtonSm:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Variants */
+.uiButtonPrimary {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+
+.uiButtonPrimary:hover:not(:disabled) { background: var(--color-primary-hover); }
+
+.uiButtonSecondary {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-card));
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+}
+
+.uiButtonGhost {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.uiButtonGhost:hover:not(:disabled) { background: var(--color-elevated); }
+
+.uiButtonDanger {
+  background: var(--color-danger);
+  color: white;
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+:root[data-theme='dark'] .uiButtonPrimary {
+  color: #F8FAFC;
+  background: linear-gradient(180deg, #3B82F6, #2563EB);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+}
+
+:root[data-theme='dark'] .uiButtonPrimary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #60A5FA, #3B82F6);
+}
+
+:root[data-theme='dark'] .uiButtonSecondary {
+  color: #BFDBFE;
+  background: rgba(59, 130, 246, 0.13);
+  border-color: rgba(96, 165, 250, 0.24);
+}
+
+:root[data-theme='dark'] .uiButtonSecondary:hover:not(:disabled),
+:root[data-theme='dark'] .uiButtonGhost:hover:not(:disabled) {
+  background: #18263A;
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+:root[data-theme='dark'] .uiButtonGhost {
+  color: #F8FAFC;
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .uiButtonDanger {
+  color: #0B1220;
+  background: linear-gradient(180deg, #FCA5A5, #F87171);
+  box-shadow: 0 10px 22px rgba(248, 113, 113, 0.16);
+}
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
+:root:not([data-theme='dark']) .uiButtonPrimary {
+  color: #FFFFFF;
+  background: linear-gradient(180deg, #2563EB, #1D4ED8);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
+}
+
+:root:not([data-theme='dark']) .uiButtonPrimary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3B82F6, #2563EB);
+}
+
+:root:not([data-theme='dark']) .uiButtonSecondary {
+  color: #1D4ED8;
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.18);
+}
+
+:root:not([data-theme='dark']) .uiButtonSecondary:hover:not(:disabled),
+:root:not([data-theme='dark']) .uiButtonGhost:hover:not(:disabled) {
+  background: #EEF3F9;
+  border-color: #CBD5E1;
+}
+
+:root:not([data-theme='dark']) .uiButtonGhost {
+  color: #0F172A;
+  border-color: #E2E8F0;
+}
+
+:root:not([data-theme='dark']) .uiButtonDanger {
+  color: #FFFFFF;
+  background: linear-gradient(180deg, #DC2626, #B91C1C);
+  box-shadow: 0 10px 22px rgba(220, 38, 38, 0.15);
+}

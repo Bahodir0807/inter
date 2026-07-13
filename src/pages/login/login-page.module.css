@@ -1,0 +1,29 @@
+.loginPage,
+.authPage {
+width: 100%;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  overflow-x: hidden;
+}
+
+.loginPage__formShell,
+.authPage__formShell {
+width: min(100%, 30rem);
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .loginPage,
+  .authPage {
+  padding: clamp(0.85rem, 4vw, 1.25rem);
+  }
+}
+
+@media (max-width: 360px) {
+  .loginPage,
+  .authPage {
+  padding: 0.75rem;
+  }
+}

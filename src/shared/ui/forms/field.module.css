@@ -1,0 +1,110 @@
+.uiField {
+display: grid; min-width: 0; gap: 0.22rem; color: var(--color-text);
+}
+
+.uiFieldLabel {
+font-size: 0.74rem; font-weight: 750;
+}
+
+.uiFieldLabel,
+.uiFieldHint,
+.uiFieldError {
+overflow-wrap: break-word;
+}
+
+.uiFieldHint,
+.uiFieldError {
+font-size: 0.72rem; color: var(--color-muted); line-height: 1.3;
+}
+
+.uiFieldError {
+color: var(--color-danger);
+}
+
+.uiInput,
+.uiSelect,
+.uiTextarea {
+width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: var(--control-height);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-input);
+  color: var(--color-text);
+  padding: 0.45rem 0.62rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.25;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.uiSelect {
+padding-right: 2rem;
+}
+
+.uiTextarea {
+min-height: 4.5rem;
+  resize: vertical;
+}
+
+.uiInput::placeholder,
+.uiTextarea::placeholder {
+color: color-mix(in srgb, var(--color-muted) 72%, transparent);
+}
+
+.uiField:has([required]) .uiFieldLabel::after {
+content: ' *';
+  color: var(--color-danger);
+}
+
+.uiInput:focus,
+.uiSelect:focus,
+.uiTextarea:focus {
+border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-focus-ring);
+  outline: none;
+}
+
+.uiInputError {
+border-color: var(--color-danger);
+}
+
+:root[data-theme='dark'] .uiInput,
+:root[data-theme='dark'] .uiSelect,
+:root[data-theme='dark'] .uiTextarea {
+background: #18263A;
+  border-color: #263449;
+  color: #F8FAFC;
+}
+
+:root[data-theme='dark'] .uiInput::placeholder,
+:root[data-theme='dark'] .uiTextarea::placeholder {
+color: rgba(168, 179, 199, 0.68);
+}
+
+:root[data-theme='dark'] .uiSelect option {
+background: #18263A;
+  color: #F8FAFC;
+}
+
+:root:not([data-theme='dark']) .uiInput,
+:root:not([data-theme='dark']) .uiSelect,
+:root:not([data-theme='dark']) .uiTextarea {
+background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #0F172A;
+  box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02);
+}
+
+:root:not([data-theme='dark']) .uiInput:focus,
+:root:not([data-theme='dark']) .uiSelect:focus,
+:root:not([data-theme='dark']) .uiTextarea:focus {
+border-color: #2563EB;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14), 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+:root:not([data-theme='dark']) .uiSelect option {
+background: #FFFFFF;
+  color: #0F172A;
+}

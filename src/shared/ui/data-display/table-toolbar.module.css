@@ -1,0 +1,134 @@
+.uiField {
+display: grid; min-width: 0; gap: 0.22rem; color: var(--color-text);
+}
+
+.tableToolbar,
+.listToolbar {
+display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem var(--card-padding);
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-elevated) 52%, transparent);
+  position: static !important;
+  margin-top: 0 !important;
+  transform: none !important;
+  z-index: 1 !important;
+  height: auto !important;
+  overflow: visible !important;
+  flex-wrap: wrap;
+}
+
+.tableToolbar__main,
+.tableToolbar__side,
+.tableToolbar__filters,
+.tableToolbar__active,
+.listToolbar__main,
+.listToolbar__side,
+.listToolbar__filters,
+.listToolbar__active {
+display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: end; min-width: 0;
+}
+
+.tableToolbar__main,
+.listToolbar__main {
+flex: 1 1 32rem;
+}
+
+.tableToolbar__side,
+.listToolbar__side {
+flex: 0 1 auto; justify-content: flex-end;
+}
+
+.tableToolbar__searchWrap,
+.tableToolbar__filtersWrap,
+.tableToolbar__actions {
+min-width: min(100%, 14rem);
+}
+
+.tableToolbar__searchField {
+width: min(100%, 20rem);
+}
+
+.tableToolbar__filters .uiField,
+.listToolbar__filters .uiField {
+width: min(100%, 13rem);
+}
+
+.tableToolbar__label,
+.tableToolbar__meta {
+color: var(--color-muted); font-size: 0.72rem; font-weight: 700;
+}
+
+.tableToolbar__chip {
+max-width: 100%; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-card); color: var(--color-muted); padding: 0.18rem 0.45rem; font-size: 0.72rem; overflow-wrap: anywhere;
+}
+
+:root[data-theme='dark'] .tableToolbar,
+:root[data-theme='dark'] .listToolbar {
+background: #101827;
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .tableToolbar__chip {
+background: #162235;
+  border-color: #263449;
+}
+
+:root:not([data-theme='dark']) .tableToolbar,
+:root:not([data-theme='dark']) .listToolbar {
+background: linear-gradient(180deg, #FCFDFF, #F8FAFC);
+  border-color: #E2E8F0;
+}
+
+:root:not([data-theme='dark']) .tableToolbar__chip {
+background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+@media (max-width: 900px) {
+  .tableToolbar,
+  .listToolbar {
+  flex-direction: column;
+  
+      align-items: stretch;
+  }
+
+  .tableToolbar__side,
+  .listToolbar__side {
+  justify-content: flex-start;
+  }
+
+  .tableToolbar__main,
+  .listToolbar__main,
+  .tableToolbar__side,
+  .listToolbar__side {
+  flex: 1 1 auto;
+  }
+
+  .tableToolbar__searchField,
+  .tableToolbar__searchWrap,
+  .tableToolbar__filters .uiField,
+  .listToolbar__filters .uiField {
+  width: min(100%, 28rem);
+  }
+}
+
+@media (max-width: 600px) {
+  .tableToolbar__main,
+  .listToolbar__main,
+  .tableToolbar__side,
+  .listToolbar__side,
+  .tableToolbar__searchWrap,
+  .tableToolbar__filtersWrap,
+  .tableToolbar__searchField,
+  .tableToolbar__filters,
+  .listToolbar__filters,
+  .tableToolbar__filters .uiField,
+  .listToolbar__filters .uiField,
+  .tableToolbar__actions,
+  .tableToolbar__actions > * {
+  width: 100%;
+  }
+}

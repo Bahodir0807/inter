@@ -1,0 +1,24 @@
+.breadcrumbs {
+display: flex; align-items: center; gap: 0.25rem; min-width: 0; color: var(--color-muted); font-size: 0.74rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.breadcrumbs__root,
+.breadcrumbs__item,
+.breadcrumbs__current {
+min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breadcrumbs__root,
+.breadcrumbs__item {
+display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.breadcrumbs__sep {
+display: inline-flex;
+  flex: 0 0 auto;
+}

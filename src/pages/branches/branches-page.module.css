@@ -1,0 +1,123 @@
+.subtle {
+color: var(--color-muted);
+}
+
+.metricCard {
+min-width: 0;
+  min-height: 6.15rem;
+  display: grid;
+  align-content: space-between;
+  gap: 0.36rem;
+  padding: 0.95rem;
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, var(--color-card), var(--color-elevated));
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.metricCard:hover {
+transform: translateY(-1px);
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+}
+
+.metricCard strong {
+min-width: 0;
+  font-size: clamp(1.45rem, 1.8vw, 1.95rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.metricCard .subtle {
+min-width: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+.dashboardGrid {
+display: grid;
+  min-width: 0;
+  gap: var(--section-gap);
+}
+
+.dashboardGrid {
+grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.dataTable__cellActions {
+text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.cellStack {
+display: grid; min-width: 0; gap: 0.15rem;
+}
+
+.cellTitle {
+font-weight: 750; color: var(--color-text);
+}
+
+.cellMeta {
+color: var(--color-muted); font-size: 0.76rem;
+}
+
+.cellTitle,
+.cellMeta {
+overflow-wrap: anywhere;
+}
+
+:root[data-theme='dark'] .metricCard {
+background: linear-gradient(180deg, #162235, #111C2D);
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .metricCard:hover {
+border-color: rgba(96, 165, 250, 0.32);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme='dark'] .dataTable__cellActions {
+background: color-mix(in srgb, #101B2D 88%, #162235);
+}
+
+:root:not([data-theme='dark']) .metricCard {
+background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.9);
+}
+
+:root:not([data-theme='dark']) .metricCard:hover {
+border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.09);
+}
+
+:root:not([data-theme='dark']) .dataTable__cellActions {
+background: color-mix(in srgb, #FFFFFF 88%, #F8FAFC);
+}
+
+@media (min-width: 768px) {
+  .metricCard {
+  min-height: 5.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .metricCard {
+  min-height: 6rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboardGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboardGrid {
+  grid-template-columns: 1fr;
+  }
+
+  .dataTable__cellActions {
+  text-align: left;
+  }
+}

@@ -1,0 +1,280 @@
+/* ============================================================
+   SIDEBAR — Application navigation sidebar
+   ============================================================ */
+.appSidebar {
+  position: sticky;
+  top: 0;
+  width: var(--sidebar-width);
+  height: 100dvh;
+  min-height: 0;
+  flex: 0 0 var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: 0.95rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, hsl(229 48% 12%), hsl(228 38% 10%));
+  color: var(--color-sidebar-text);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  isolation: isolate;
+  scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+  scrollbar-width: thin;
+}
+
+.appSidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 24% 0%, rgba(59, 130, 246, 0.16), transparent 14rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 18rem);
+}
+
+.appSidebar::-webkit-scrollbar { width: 0.45rem; }
+.appSidebar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+/* Brand block */
+.appSidebarBrand {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 4.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 34px rgba(2, 6, 23, 0.16);
+}
+
+.appSidebarLogo {
+  flex: 0 0 auto;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+  color: white;
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.22);
+}
+
+.appSidebarBrandCopy,
+.appSidebarLinkCopy,
+.appSidebarLabel,
+.appSidebarDescription { min-width: 0; overflow-wrap: break-word; }
+
+.appSidebarBrandCopy strong { display: block; font-size: 0.98rem; line-height: 1.15; letter-spacing: 0; }
+.appSidebarBrandCopy p { margin-top: 0.2rem; color: var(--color-sidebar-muted); font-size: 0.72rem; line-height: 1.25; }
+
+/* Nav sections */
+.appSidebarSection { display: grid; gap: var(--space-sm); padding-top: 0.15rem; }
+.appSidebarSectionLabel {
+  padding-inline: 0.35rem;
+  color: var(--color-sidebar-muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+}
+.appSidebarNav { display: grid; gap: 0.2rem; }
+
+/* Nav link */
+.appSidebarLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  min-height: 2.45rem;
+  padding: 0.62rem 0.72rem;
+  border-radius: var(--radius-md);
+  color: var(--color-sidebar-muted);
+  border: 1px solid transparent;
+  font-weight: 650;
+  transition: transform 180ms ease, color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.appSidebarLink:hover,
+.appSidebarLinkActive {
+  color: var(--color-sidebar-text);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(1px);
+}
+
+.appSidebarLinkActive {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 24px rgba(2, 6, 23, 0.18);
+}
+
+.appSidebarLinkActive::before {
+  content: "";
+  position: absolute;
+  left: -0.35rem;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 0.18rem;
+  border-radius: 999px;
+  background: var(--color-primary-hover);
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.42);
+}
+
+.appSidebarIcon {
+  width: 1.25rem;
+  flex: 0 0 1.25rem;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  opacity: 0.9;
+}
+
+.appSidebarLinkCopy {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.appSidebarDescription {
+  color: var(--color-sidebar-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+/* Footer */
+.appSidebarFooter {
+  margin-top: auto;
+  padding: 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: 0.16rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 30px rgba(2, 6, 23, 0.14);
+}
+
+.appSidebarFooter .subtle {
+  color: var(--color-sidebar-muted);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (min-width: 1024px) {
+  .appSidebar {
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .appSidebarBrand { min-height: 6rem; }
+
+  .appSidebarLogo {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .appSidebarLink {
+    min-height: 2.55rem;
+    padding: 0.65rem 0.75rem;
+  }
+}
+
+@media (max-width: 920px) {
+  .appSidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    width: min(17.75rem, calc(100vw - 1.25rem));
+    max-width: 100%;
+    height: 100dvh;
+    border-right: 1px solid color-mix(in srgb, var(--color-border) 22%, transparent);
+    box-shadow: 16px 0 44px rgba(0, 0, 0, 0.28);
+    transform: translateX(-105%);
+    transition: transform 0.18s ease;
+  }
+
+  .appSidebarOpen { transform: translateX(0); }
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+:root[data-theme='dark'] .appSidebar {
+  background: linear-gradient(180deg, #0A1020, #080E1B);
+  border-right-color: #1E293B;
+  box-shadow: inset -1px 0 0 rgba(38, 52, 73, 0.72), 18px 0 46px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme='dark'] .appSidebarLogo {
+  color: #F8FAFC;
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.24);
+}
+
+:root[data-theme='dark'] .appSidebarLink:hover,
+:root[data-theme='dark'] .appSidebarLinkActive {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.18);
+}
+
+:root[data-theme='dark'] .appSidebarFooter {
+  border-top-color: #1E293B;
+}
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
+:root:not([data-theme='dark']) .appSidebar {
+  color: #0F172A;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94));
+  border-right-color: rgba(203, 213, 225, 0.82);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.74), 16px 0 38px rgba(15, 23, 42, 0.055);
+}
+
+:root:not([data-theme='dark']) .appSidebar::before {
+  background:
+    radial-gradient(circle at 24% 0%, rgba(37, 99, 235, 0.08), transparent 14rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 18rem);
+}
+
+:root:not([data-theme='dark']) .appSidebarBrand,
+:root:not([data-theme='dark']) .appSidebarFooter {
+  color: #0F172A;
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+:root:not([data-theme='dark']) .appSidebarBrandCopy p,
+:root:not([data-theme='dark']) .appSidebarSectionLabel,
+:root:not([data-theme='dark']) .appSidebarFooter .subtle {
+  color: #64748B;
+}
+
+:root:not([data-theme='dark']) .appSidebarLogo {
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.2);
+}
+
+:root:not([data-theme='dark']) .appSidebarLink {
+  color: #64748B;
+}
+
+:root:not([data-theme='dark']) .appSidebarLink:hover,
+:root:not([data-theme='dark']) .appSidebarLinkActive {
+  color: #0F172A;
+  background: rgba(37, 99, 235, 0.07);
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
+:root:not([data-theme='dark']) .appSidebarLinkActive {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 22px rgba(37, 99, 235, 0.09);
+}

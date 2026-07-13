@@ -1,0 +1,75 @@
+.tableShell {
+border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  box-shadow: var(--color-shadow-soft);
+  overflow: hidden;
+}
+
+.tableShellHeader {
+display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: 0.85rem var(--card-padding);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tableShellTitle {
+display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.tableShellTitleText {
+font-size: 0.98rem;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+.tableShellDescription {
+font-size: 0.8rem;
+  line-height: 1.32;
+  color: var(--color-muted);
+  overflow-wrap: break-word;
+}
+
+.tableShellHeader > * {
+min-width: 0;
+}
+
+
+:root[data-theme='dark'] .tableShell {
+background: linear-gradient(180deg, #111C2D, #0F1A2B);
+  border-color: #263449;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 179, 199, 0.03);
+}
+
+:root[data-theme='dark'] .tableShellHeader {
+background: #101827;
+  border-color: #263449;
+}
+
+:root:not([data-theme='dark']) .tableShell {
+background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+:root:not([data-theme='dark']) .tableShellHeader {
+background: linear-gradient(180deg, #FCFDFF, #F8FAFC);
+  border-color: #E2E8F0;
+}
+
+@media (max-width: 900px) {
+  .tableShellHeader {
+  flex-direction: column;
+  align-items: stretch;
+  }
+}
+
+@media (max-width: 600px) {
+  .tableShellContent {
+  overflow-x: visible;
+  }
+}

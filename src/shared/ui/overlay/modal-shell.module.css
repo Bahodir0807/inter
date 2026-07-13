@@ -1,0 +1,128 @@
+.subtle {
+color: var(--color-muted);
+}
+
+.stack {
+display: grid; gap: var(--space-xs);
+}
+
+.uiModalBackdrop,
+.modalBackdrop {
+position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(10px);
+}
+
+.uiModal,
+.modalCard {
+width: min(calc(100vw - 1.5rem), 42rem);
+  max-width: 100%;
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  color: var(--color-text);
+  box-shadow: var(--color-shadow);
+}
+
+.uiModalHeader,
+.modalCardHeader {
+position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  padding: 0.85rem var(--card-padding);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+
+.uiModalHeader .stack,
+.modalCardHeader .stack {
+min-width: 0;
+}
+
+.uiModalHeader h3,
+.modalCardHeader h3,
+.uiModalHeader p,
+.modalCardHeader p {
+overflow-wrap: break-word;
+}
+
+.uiModalContent,
+.modalCardContent,
+.modalCardBody {
+padding: var(--card-padding);
+}
+
+:root[data-theme='dark'] .uiModalBackdrop,
+:root[data-theme='dark'] .modalBackdrop {
+background: rgba(5, 10, 20, 0.78);
+}
+
+:root[data-theme='dark'] .uiModal,
+:root[data-theme='dark'] .modalCard {
+background: #111C2D;
+  border-color: #263449;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(168, 179, 199, 0.04);
+}
+
+:root[data-theme='dark'] .uiModalHeader,
+:root[data-theme='dark'] .modalCardHeader {
+background: rgba(16, 24, 39, 0.96);
+  border-color: #263449;
+}
+
+:root:not([data-theme='dark']) .uiModalBackdrop,
+:root:not([data-theme='dark']) .modalBackdrop {
+background: rgba(15, 23, 42, 0.38);
+}
+
+:root:not([data-theme='dark']) .uiModal,
+:root:not([data-theme='dark']) .modalCard {
+background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+:root:not([data-theme='dark']) .uiModalHeader,
+:root:not([data-theme='dark']) .modalCardHeader {
+background: rgba(252, 253, 255, 0.96);
+  border-color: #E2E8F0;
+}
+
+@media (min-width: 768px) {
+  .uiModal,
+  .modalCard {
+  width: min(calc(100vw - 2rem), 42rem);
+  
+      max-height: calc(100dvh - 2rem);
+  
+      border-radius: var(--radius-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .uiModal,
+  .modalCard {
+  width: 100vw;
+  
+      max-height: 100dvh;
+  }
+
+  .uiModalHeader,
+  .modalCardHeader {
+  flex-direction: column;
+  
+      align-items: stretch;
+  }
+}

@@ -1,0 +1,594 @@
+/* ============================================================
+   DATA DISPLAY — Data table, toolbar, cell helpers, grids, and pagination
+   ============================================================ */
+
+/* Content & Stats grids */
+.dashboardGrid,
+.statsGrid,
+.detailGrid,
+.contentGrid {
+  display: grid;
+  min-width: 0;
+  gap: var(--section-gap);
+}
+
+.dashboardGrid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
+.dashboardGridOverview { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
+.statsGrid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); }
+.statsGridDashboard { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); }
+.contentGrid { grid-template-columns: minmax(0, 2fr) minmax(min(100%, 18rem), 1fr); align-items: start; }
+.contentGridWide { grid-column: span 1; }
+
+/* Ops layout (12-column) */
+.opsLayout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--section-gap);
+  grid-auto-flow: dense;
+  align-items: start;
+}
+
+.opsLayoutTwo > .opsPanel,
+.opsLayoutTeacher > .opsPanel,
+.opsLayoutStudent > .opsPanel {
+  grid-column: span 6;
+}
+
+/* Attention strip */
+.attentionStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.attentionStrip > div,
+.studentContext > div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.68rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-card) 72%, var(--color-elevated));
+}
+
+.attentionStrip strong {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  line-height: 1;
+}
+
+.attentionStrip span,
+.studentContext span {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+/* Student context */
+.studentContext {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.studentContext strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Quick actions */
+.quickActions { display: grid; gap: 0.45rem; }
+
+.quickAction {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  min-height: 2.9rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-card) 78%, var(--color-elevated));
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.quickAction:hover {
+  transform: translateX(2px);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-card));
+}
+
+.quickActionIcon {
+  width: 1.85rem;
+  height: 1.85rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+}
+
+.quickAction span,
+.quickAction small { min-width: 0; }
+
+.quickAction strong,
+.quickAction small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quickAction small {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+}
+
+/* Ops list / workload list */
+.opsList,
+.workloadList {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.opsListItem,
+.workloadList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: 0.58rem 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 76%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-elevated) 38%, transparent);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.opsListItem:hover,
+.workloadList li:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-card));
+}
+
+.workloadList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(5rem, 28%);
+}
+
+.workloadMeter {
+  height: 0.48rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-border) 58%, transparent);
+}
+
+.workloadMeter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-info));
+}
+
+/* Table shell */
+.tableShell { min-width: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-card); box-shadow: var(--color-shadow-soft); }
+
+.tableShellHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: 0.85rem var(--card-padding);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tableShellTitle { display: grid; min-width: 0; gap: 0.15rem; }
+.tableShellTitle h3 { font-size: 0.98rem; line-height: 1.2; overflow-wrap: break-word; }
+.tableShellTitle p { font-size: 0.8rem; line-height: 1.32; color: var(--color-muted); overflow-wrap: break-word; }
+.tableShellHeader > * { min-width: 0; }
+
+.tableShellContent {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+/* Table toolbar / list toolbar */
+.tableToolbar,
+.listToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: 0.75rem var(--card-padding);
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-elevated) 52%, transparent);
+}
+
+.tableToolbarMain, .tableToolbarSide, .tableToolbarFilters, .tableToolbarActive,
+.listToolbarMain, .listToolbarSide, .listToolbarFilters, .listToolbarActive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: end;
+  min-width: 0;
+}
+
+.tableToolbarMain,
+.listToolbarMain { flex: 1 1 32rem; }
+
+.tableToolbarSide,
+.listToolbarSide { flex: 0 1 auto; justify-content: flex-end; }
+
+.tableToolbarSearchWrap,
+.tableToolbarFiltersWrap,
+.tableToolbarActions { min-width: min(100%, 14rem); }
+
+.tableToolbarSearchField { width: min(100%, 20rem); }
+
+.tableToolbarFilters .uiField,
+.listToolbarFilters .uiField { width: min(100%, 13rem); }
+
+.tableToolbarLabel, .tableToolbarMeta,
+.listToolbarLabel, .listToolbarMeta {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.tableToolbarChip,
+.listToolbarChip {
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-card);
+  color: var(--color-muted);
+  padding: 0.18rem 0.45rem;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+/* Data table */
+.dataTable {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--color-table);
+}
+
+.dataTable th,
+.dataTable td {
+  padding: 0.66rem 0.8rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: break-word;
+}
+
+.dataTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dataTable tbody tr:last-child td { border-bottom: 0; }
+.dataTable tr:hover td { background: color-mix(in srgb, var(--color-primary) 4%, transparent); }
+
+.dataTableCellActions,
+.dataTableHeadActions {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Cell helpers */
+.cellStack { display: grid; min-width: 0; gap: 0.15rem; }
+.cellTitle { font-weight: 750; color: var(--color-text); overflow-wrap: anywhere; }
+.cellMeta { color: var(--color-muted); font-size: 0.76rem; overflow-wrap: anywhere; }
+.cellBadges { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.1rem; }
+
+/* Pagination */
+.pagination,
+.tablePagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  padding: 0.75rem var(--card-padding);
+}
+
+.tablePagination { padding: 0; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 840px) {
+  .contentGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1100px) {
+  .contentGrid { grid-template-columns: 1fr; }
+  .attentionStrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1024px) {
+  .dashboardGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .statsGrid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .tableShellHeader,
+  .tableToolbar,
+  .listToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tableToolbarSide,
+  .listToolbarSide { justify-content: flex-start; }
+
+  .tableToolbarMain,
+  .listToolbarMain,
+  .tableToolbarSide,
+  .listToolbarSide { flex: 1 1 auto; }
+
+  .tableToolbarSearchField,
+  .tableToolbarSearchWrap,
+  .tableToolbarFilters .uiField,
+  .listToolbarFilters .uiField { width: min(100%, 28rem); }
+}
+
+@media (max-width: 768px) {
+  .dataTable { min-width: 42rem; }
+}
+
+@media (max-width: 600px) {
+  .dashboardGrid,
+  .statsGrid { grid-template-columns: 1fr; }
+  .opsLayout { grid-template-columns: 1fr; }
+  .attentionStrip,
+  .studentContext { grid-template-columns: 1fr; }
+  .opsListItem,
+  .workloadList li { align-items: flex-start; }
+  .workloadList li { grid-template-columns: 1fr; }
+
+  .tableToolbarMain,
+  .listToolbarMain,
+  .tableToolbarSide,
+  .listToolbarSide,
+  .tableToolbarSearchWrap,
+  .tableToolbarFiltersWrap,
+  .tableToolbarSearchField,
+  .tableToolbarFilters,
+  .listToolbarFilters,
+  .tableToolbarFilters .uiField,
+  .listToolbarFilters .uiField,
+  .tableToolbarActions,
+  .tableToolbarActions > * {
+    width: 100%;
+  }
+
+  .tableShellContent { overflow-x: visible; }
+
+  .dataTable,
+  .dataTable thead,
+  .dataTable tbody,
+  .dataTable tr,
+  .dataTable th,
+  .dataTable td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dataTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+  }
+
+  .dataTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .dataTable tbody {
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+
+  .dataTable tr {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-table);
+    overflow: hidden;
+  }
+
+  .dataTable td {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 34%) minmax(0, 1fr);
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  .dataTable td:last-child { border-bottom: 0; }
+
+  .dataTable td::before {
+    content: attr(data-label);
+    color: var(--color-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    overflow-wrap: break-word;
+  }
+
+  .dataTableCellActions,
+  .dataTableHeadActions { text-align: left; }
+
+  .dataTableEmpty { display: block; padding: 0; }
+  .dataTableEmpty::before { display: none; }
+
+  .pagination,
+  .tablePagination { justify-content: stretch; }
+}
+
+@media (max-width: 430px) {
+  .dataTable td {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+:root[data-theme='dark'] .tableShell {
+  background: linear-gradient(180deg, #111C2D, #0F1A2B);
+  border-color: #263449;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 179, 199, 0.03);
+}
+
+:root[data-theme='dark'] .tableShellHeader,
+:root[data-theme='dark'] .tableToolbar,
+:root[data-theme='dark'] .listToolbar {
+  background: #101827;
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .tableToolbarChip,
+:root[data-theme='dark'] .listToolbarChip {
+  background: #162235;
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .dataTable { background: #101B2D; }
+
+:root[data-theme='dark'] .dataTable th {
+  background: #101827;
+  border-bottom-color: #263449;
+}
+
+:root[data-theme='dark'] .dataTable td {
+  border-bottom-color: rgba(38, 52, 73, 0.72);
+}
+
+:root[data-theme='dark'] .dataTable tbody tr:nth-child(even) td {
+  background: rgba(22, 34, 53, 0.36);
+}
+
+:root[data-theme='dark'] .dataTable tr:hover td {
+  background: rgba(59, 130, 246, 0.10);
+}
+
+:root[data-theme='dark'] .dataTableCellActions {
+  background: color-mix(in srgb, #101B2D 88%, #162235);
+}
+
+:root[data-theme='dark'] .quickAction,
+:root[data-theme='dark'] .opsListItem,
+:root[data-theme='dark'] .workloadList li {
+  background: #162235;
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .quickAction:hover,
+:root[data-theme='dark'] .opsListItem:hover,
+:root[data-theme='dark'] .workloadList li:hover {
+  border-color: rgba(96, 165, 250, 0.32);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme='dark'] .quickActionIcon {
+  background: #18263A;
+}
+
+:root[data-theme='dark'] .attentionStrip > div,
+:root[data-theme='dark'] .studentContext > div {
+  background: #162235;
+  border-color: #263449;
+}
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
+:root:not([data-theme='dark']) .tableShell {
+  background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+:root:not([data-theme='dark']) .tableShellHeader,
+:root:not([data-theme='dark']) .tableToolbar,
+:root:not([data-theme='dark']) .listToolbar {
+  background: linear-gradient(180deg, #FCFDFF, #F8FAFC);
+  border-color: #E2E8F0;
+}
+
+:root:not([data-theme='dark']) .tableToolbarChip,
+:root:not([data-theme='dark']) .listToolbarChip {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+:root:not([data-theme='dark']) .dataTable { background: #FFFFFF; }
+
+:root:not([data-theme='dark']) .dataTable th {
+  background: #F8FAFC;
+  border-bottom-color: #E2E8F0;
+}
+
+:root:not([data-theme='dark']) .dataTable td {
+  border-bottom-color: rgba(226, 232, 240, 0.8);
+}
+
+:root:not([data-theme='dark']) .dataTable tbody tr:nth-child(even) td {
+  background: rgba(248, 250, 252, 0.68);
+}
+
+:root:not([data-theme='dark']) .dataTable tr:hover td {
+  background: rgba(37, 99, 235, 0.045);
+}
+
+:root:not([data-theme='dark']) .dataTableCellActions {
+  background: color-mix(in srgb, #FFFFFF 88%, #F8FAFC);
+}
+
+:root:not([data-theme='dark']) .quickAction,
+:root:not([data-theme='dark']) .opsListItem,
+:root:not([data-theme='dark']) .workloadList li {
+  background: #FCFDFF;
+  border-color: #E2E8F0;
+}
+
+:root:not([data-theme='dark']) .quickAction:hover,
+:root:not([data-theme='dark']) .opsListItem:hover,
+:root:not([data-theme='dark']) .workloadList li:hover {
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.09);
+}
+
+:root:not([data-theme='dark']) .quickActionIcon {
+  background: #EEF3F9;
+}
+
+:root:not([data-theme='dark']) .attentionStrip > div,
+:root:not([data-theme='dark']) .studentContext > div {
+  background: #FCFDFF;
+  border-color: #E2E8F0;
+}

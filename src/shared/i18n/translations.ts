@@ -9,8 +9,21 @@ export const languageOptions: Array<{ value: Language; label: string }> = [
   { value: 'en', label: 'English' },
 ];
 
+import { dashboard as dashboardRu } from '../../pages/dashboard/i18n/ru';
+import { dashboard as dashboardEn } from '../../pages/dashboard/i18n/en';
+import { dashboard as dashboardUz } from '../../pages/dashboard/i18n/uz';
+import { login as loginRu } from '../../pages/login/i18n/ru';
+import { login as loginEn } from '../../pages/login/i18n/en';
+import { login as loginUz } from '../../pages/login/i18n/uz';
+import { profile as profileRu } from '../../pages/profile/i18n/ru';
+import { profile as profileEn } from '../../pages/profile/i18n/en';
+import { profile as profileUz } from '../../pages/profile/i18n/uz';
+
 export const translations: Record<Language, Record<string, string>> = {
   ru: {
+    ...dashboardRu,
+    ...loginRu,
+    ...profileRu,
     'validation.required': 'Обязательное поле',
     'validation.minChars': 'Минимум {{count}} символа(ов)',
     'validation.email': 'Введите корректный email',
@@ -1004,6 +1017,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'phoneStatus.rejected': 'Отклонено',
   },
   uz: {
+    ...dashboardUz,
+    ...loginUz,
+    ...profileUz,
     'validation.required': 'Majburiy maydon',
     'validation.minChars': 'Kamida {{count}} belgi',
     'validation.email': 'To‘g‘ri email kiriting',
@@ -1997,6 +2013,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'phoneStatus.rejected': 'Rad etildi',
   },
   en: {
+    ...dashboardEn,
+    ...loginEn,
+    ...profileEn,
     'validation.required': 'Required field',
     'validation.minChars': 'At least {{count}} characters',
     'validation.email': 'Enter a valid email address',

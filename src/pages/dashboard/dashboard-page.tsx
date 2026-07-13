@@ -24,7 +24,8 @@ import { TableToolbar } from '../../shared/ui/data-display/table-toolbar';
 import { TableShell } from '../../shared/ui/data-display/table-shell';
 import { DataTable, type Column } from '../../shared/ui/data-display/data-table';
 import { Pagination } from '../../shared/ui/data-display/pagination';
-
+import { cn } from '../../shared/lib/cn';
+import styles from './dashboard-page.module.css'
 const debtorsPageSize = 10;
 
 const statusColorMap: Record<PaymentStatus, 'success' | 'warning' | 'danger' | 'neutral' | 'info'> = {
@@ -180,9 +181,9 @@ export function DashboardPage() {
       header: t('finance.student'),
       className: 'data-table__cell--primary',
       cell: item => (
-        <div className="cell-stack cell-stack--primary">
-          <span className="cell-title">{item.studentNumber || '-'}</span>
-          <span className="cell-meta">{item.studentName || '-'}</span>
+        <div className={cn(styles.cellStack, styles.cellStackPrimary)}>
+          <span className={styles.cellTitle}>{item.studentNumber || '-'}</span>
+          <span className={styles.cellMeta}>{item.studentName || '-'}</span>
         </div>
       ),
     },
@@ -190,9 +191,9 @@ export function DashboardPage() {
       key: 'contact',
       header: t('finance.contact'),
       cell: item => (
-        <div className="cell-stack">
+        <div className={styles.cellStack}>
           <span>{item.phone || '-'}</span>
-          <span className="cell-meta">{item.parentPhone || '-'}</span>
+          <span className={styles.cellMeta}>{item.parentPhone || '-'}</span>
         </div>
       ),
     },
@@ -200,9 +201,9 @@ export function DashboardPage() {
       key: 'course',
       header: t('academic.course'),
       cell: item => (
-        <div className="cell-stack">
+        <div className={styles.cellStack}>
           <span>{item.courseName || '-'}</span>
-          <span className="cell-meta">{item.groupName || '-'}</span>
+          <span className={styles.cellMeta}>{item.groupName || '-'}</span>
         </div>
       ),
     },
@@ -215,7 +216,7 @@ export function DashboardPage() {
       key: 'amounts',
       header: t('finance.amounts'),
       cell: item => (
-        <div className="cell-stack cell-stack--amount">
+        <div className={cn(styles.cellStack, styles.cellStackAmount)}>
           <span>{t('finance.expectedAmount')}: {formatMoney(item.expectedAmount)}</span>
           <span>{t('finance.paidAmount')}: {formatMoney(item.paidAmount)}</span>
           <span>{t('finance.remainingAmount')}: {formatMoney(item.remainingAmount)}</span>
@@ -231,9 +232,9 @@ export function DashboardPage() {
       key: 'dueDate',
       header: t('finance.dueDate'),
       cell: item => (
-        <div className="cell-stack">
+        <div className={styles.cellStack}>
           <span>{formatDate(item.dueDate)}</span>
-          <span className="cell-meta">{item.month}/{item.year}</span>
+          <span className={styles.cellMeta}>{item.month}/{item.year}</span>
         </div>
       ),
     },
@@ -392,18 +393,18 @@ export function DashboardPage() {
         </Card>
       ) : null}
 
-      <div className="ops-layout">
-        <Card className="ops-panel">
+      <div className={styles.opsLayout}>
+        <Card className={styles.opsPanel}>
           <h3>{t('dashboard.upcomingLessons')}</h3>
           {schedule.length === 0 ? (
             <EmptyState compact title={t('dashboard.noUpcomingLessons')} description={t('dashboard.scheduledLessonsAppear')} />
           ) : (
-            <ul className="ops-list">
+            <ul className={styles.opsList}>
               {schedule.slice(0, 8).map(item => (
-                <li className="ops-list__item" key={item.id}>
-                  <div className="cell-stack">
-                    <span className="cell-title">{typeof item.course === 'string' ? item.course : item.course?.name || '-'}</span>
-                    <span className="cell-meta">{item.timeStart || item.date}</span>
+                <li className={styles.opsListItem} key={item.id}>
+                  <div className={styles.cellStack}>
+                    <span className={styles.cellTitle}>{typeof item.course === 'string' ? item.course : item.course?.name || '-'}</span>
+                    <span className={styles.cellMeta}>{item.timeStart || item.date}</span>
                   </div>
                 </li>
               ))}

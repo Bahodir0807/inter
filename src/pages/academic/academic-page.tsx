@@ -23,7 +23,7 @@ import { formatDate, formatDateTime } from '../../shared/lib/date';
 import { getCourseDisplayName, getUserDisplayName } from '../../shared/lib/entity-display';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { useI18n } from '../../shared/i18n/i18n';
-
+import "./academic-page.module.css"
 function toDateInputValue(value: Date | string) {
   return new Date(value).toISOString().slice(0, 10);
 }

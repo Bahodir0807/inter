@@ -19,7 +19,7 @@ import { toast } from '../../shared/ui/feedback/toaster';
 import { Select } from '../../shared/ui/forms/select';
 import { Card } from '../../shared/ui/surfaces/card';
 import { PageLayout } from '../../widgets/page/page-layout';
-import { BranchFormModal } from './branch-form-modal';
+import { BranchFormModal } from '../../features/branch-management/ui/branch-form-modal';
 
 const pageSize = 10;
 

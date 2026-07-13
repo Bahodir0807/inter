@@ -1,3 +1,5 @@
+import { paymentsManagerRoles, adminRoles } from '../../shared/lib/roles';
+export { paymentsManagerRoles, adminRoles };
 import { lazy, ReactNode } from 'react';
 import { Role } from '../../shared/types/auth';
 import { AppIconName } from '../../shared/ui/icons/app-icon';
@@ -31,7 +33,6 @@ export interface AppRouteConfig {
 
 export const adminLikeRoles: Role[] = ['admin', 'owner', 'panda'];
 export const teachingRoles: Role[] = ['teacher', 'admin', 'owner', 'panda'];
-export const paymentsManagerRoles: Role[] = ['admin', 'owner', 'panda'];
 const allAppRoles: Role[] = ['teacher', 'admin', 'owner', 'panda'];
 const teacherWorkspaceRoles: Role[] = ['teacher', ...adminLikeRoles];
 
@@ -45,7 +46,7 @@ export const appRoutes: AppRouteConfig[] = [
   { path: '/app/rooms', label: 'Rooms', labelKey: 'nav.rooms', description: 'Classroom availability', descriptionKey: 'nav.roomsDescription', shortLabel: 'RM', icon: 'rooms', roles: adminLikeRoles, element: <RoomsPage />, nav: true },
   { path: '/app/branches', label: 'Branches', labelKey: 'nav.branches', description: 'Branch directory', descriptionKey: 'nav.branchesDescription', shortLabel: 'BR', icon: 'rooms', roles: adminLikeRoles, element: <BranchesPage />, nav: true },
   { path: '/app/notifications/deliveries', label: 'Delivery history', labelKey: 'nav.notificationDeliveries', description: 'SMS and reminder attempts', descriptionKey: 'nav.notificationDeliveriesDescription', shortLabel: 'DL', icon: 'payments', roles: adminLikeRoles, element: <NotificationDeliveriesPage />, nav: true },
-  { path: '/app/payments', label: 'Payments', labelKey: 'nav.payments', description: 'Ledger and confirmations', descriptionKey: 'nav.paymentsDescription', shortLabel: 'PY', icon: 'payments', roles: paymentsManagerRoles, element: <PaymentsPage />, nav: true },
+  { path: '/app/payments', label: 'Payments', labelKey: 'nav.payments', description: 'Ledger and confirmations', descriptionKey: 'nav.paymentsDescription', shortLabel: 'PY', icon: 'payments', roles: [...paymentsManagerRoles], element: <PaymentsPage />, nav: true },
   { path: '/app/academic', label: 'Attendance & grades', labelKey: 'nav.academic', description: 'Attendance and grades', descriptionKey: 'nav.academicDescription', shortLabel: 'AC', icon: 'courses', roles: allAppRoles, element: <AcademicPage />, nav: true },
   { path: '/app/admin-tools', label: 'Admin', labelKey: 'nav.adminTools', description: 'System-only tools', descriptionKey: 'nav.adminToolsDescription', shortLabel: 'AT', icon: 'users', roles: adminLikeRoles, element: <AdminToolsPage />, nav: true },
   { path: '/app/profile', label: 'Profile', labelKey: 'nav.profile', description: 'Your account settings', descriptionKey: 'nav.profileDescription', shortLabel: 'PF', icon: 'profile', roles: allAppRoles, element: <ProfilePage />, nav: true },

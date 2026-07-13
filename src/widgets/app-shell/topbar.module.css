@@ -1,0 +1,247 @@
+.subtle {
+color: var(--color-muted);
+}
+
+.appTopbar {
+position: sticky;
+  top: 0;
+  z-index: 20;
+  flex: 0 0 auto;
+  min-height: 3.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.62rem var(--page-padding);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
+}
+
+.appTopbar__left,
+.appTopbar__right {
+display: flex; align-items: center; gap: var(--space-sm); min-width: 0;
+}
+
+.appTopbar__left {
+flex: 1 1 auto;
+}
+
+.appTopbar__right {
+flex: 0 1 auto; justify-content: flex-end; flex-wrap: wrap;
+}
+
+.appTopbar__identity {
+display: grid; gap: 0.08rem; min-width: 0;
+}
+
+.appTopbar__headline {
+display: grid; gap: 0.05rem;
+}
+
+.appTopbar__menu {
+display: none;
+}
+
+.appTopbar__headline strong {
+font-size: 0.9rem; line-height: 1.15;
+}
+
+.appTopbar__headline span {
+font-size: 0.76rem;
+}
+
+.appTopbar__headline strong,
+.appTopbar__headline span,
+.appTopbar__userCopy strong,
+.appTopbar__userCopy span {
+min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appTopbar__controls {
+display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs);
+}
+
+.appTopbar__controls .uiField {
+width: auto; min-width: 6.75rem;
+}
+
+.appTopbar__userChip {
+display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  max-width: min(18rem, 100%);
+  padding: 0.3rem 0.48rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+}
+
+.appTopbar__initials {
+flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-card));
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.appTopbar__userCopy {
+display: grid; min-width: 0; line-height: 1.15; font-size: 0.82rem;
+}
+
+.environmentBadge {
+display: grid;
+  gap: 0.05rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-elevated);
+  font-size: 0.66rem;
+}
+
+.uiField {
+display: grid; min-width: 0; gap: 0.22rem; color: var(--color-text);
+}
+
+:root[data-theme='dark'] .appTopbar {
+background: rgba(16, 24, 39, 0.94);
+  border-bottom-color: rgba(38, 52, 73, 0.82);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme='dark'] .appTopbar__userChip,
+:root[data-theme='dark'] .environmentBadge {
+background: #162235;
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .appTopbar__initials {
+color: #93C5FD;
+  background: rgba(59, 130, 246, 0.16);
+}
+
+:root:not([data-theme='dark']) .appTopbar {
+background: rgba(255, 255, 255, 0.94);
+  border-bottom-color: rgba(203, 213, 225, 0.72);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.075);
+}
+
+:root:not([data-theme='dark']) .appTopbar__userChip,
+:root:not([data-theme='dark']) .environmentBadge {
+background: #FCFDFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+}
+
+:root:not([data-theme='dark']) .appTopbar__initials {
+color: #1D4ED8;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+@media (min-width: 768px) {
+  .appTopbar {
+  gap: var(--space-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .appTopbar {
+  min-height: 3.9rem;  
+      padding: 0.65rem var(--page-padding);
+  }
+
+  .appTopbar__initials {
+  width: 2.1rem;  
+      height: 2.1rem;
+  }
+}
+
+@media (max-width: 920px) {
+  .appTopbar__menu {
+  display: inline-flex;
+  }
+
+  .appTopbar {
+  align-items: flex-start;  
+      flex-wrap: wrap;
+  }
+
+  .appTopbar__right {
+  width: 100%; justify-content: flex-start; flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .appTopbar__right {
+  justify-content: flex-start;
+  }
+
+  .appTopbar__userChip {
+  max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .appTopbar {
+  display: grid;  
+      grid-template-columns: 1fr;
+  }
+
+  .appTopbar__left,
+  .appTopbar__right,
+  .appTopbar__controls {
+  width: 100%;
+  }
+
+  .appTopbar__left {
+  align-items: flex-start;  
+      display: grid;  
+      grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .appTopbar__menu {
+  width: auto;
+  }
+
+  .appTopbar__headline span {
+  display: none;
+  }
+
+  .appTopbar__controls {
+  display: grid;  
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .appTopbar__controls .uiField {
+  width: 100%; min-width: 0;
+  }
+
+  .appTopbar__right {
+  display: grid;  
+      grid-template-columns: auto minmax(0, 1fr) auto;  
+      align-items: center;
+  }
+
+  .appTopbar__right .appTopbar__controls {
+  grid-column: 1 / -1;
+  }
+
+  .appTopbar__userChip {
+  width: auto;  
+      max-width: 100%;  
+      justify-self: stretch;
+  }
+
+  .environmentBadge {
+  width: fit-content;
+  }
+}

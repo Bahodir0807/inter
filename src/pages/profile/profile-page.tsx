@@ -14,6 +14,8 @@ import { Input } from '../../shared/ui/forms/input';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { ProfileFormModal } from './profile-form-modal';
 import { useI18n } from '../../shared/i18n/i18n';
+import { cn } from '../../shared/lib/cn';
+import styles from './profile-page.module.css';
 
 export function ProfilePage() {
   const queryClient = useQueryClient();
@@ -70,12 +72,12 @@ export function ProfilePage() {
       variant="feature"
       actions={<Button onClick={() => setFormOpen(true)}>{t('profile.editButton')}</Button>}
     >
-      <div className="content-grid">
-        <Card className="content-grid__side">
-          <div className="stack">
-            <span className="eyebrow">{t('profile.currentSession')}</span>
+      <div className={styles.contentGrid}>
+        <Card className={styles.contentGridSide}>
+          <div className={styles.stack}>
+            <span className={styles.eyebrow}>{t('profile.currentSession')}</span>
             <h3>{getUserDisplayName(profile)}</h3>
-            <div className="cell-badges">
+            <div className={styles.cellBadges}>
               <Badge tone="info">{getRoleDisplayName(profile.role)}</Badge>
               <Badge tone={profile.isActive ? 'success' : 'warning'}>
                 {profile.isActive ? t('common.active') : t('common.inactive')}
@@ -83,37 +85,37 @@ export function ProfilePage() {
             </div>
           </div>
         </Card>
-        <Card className="content-grid__wide">
-          <div className="stats-grid">
-            <div className="cell-stack">
-              <span className="subtle">{t('profile.username')}</span>
-              <span className="cell-title">{profile.username}</span>
+        <Card className={styles.contentGridWide}>
+          <div className={styles.statsGrid}>
+            <div className={styles.cellStack}>
+              <span className={styles.subtle}>{t('profile.username')}</span>
+              <span className={styles.cellTitle}>{profile.username}</span>
             </div>
-            <div className="cell-stack">
-              <span className="subtle">{t('profile.phone')}</span>
-              <span className="cell-title">{profile.phoneNumber || '-'}</span>
+            <div className={styles.cellStack}>
+              <span className={styles.subtle}>{t('profile.phone')}</span>
+              <span className={styles.cellTitle}>{profile.phoneNumber || '-'}</span>
             </div>
-            <div className="cell-stack">
-              <span className="subtle">{t('profile.email')}</span>
-              <span className="cell-title">{profile.email || '-'}</span>
+            <div className={styles.cellStack}>
+              <span className={styles.subtle}>{t('profile.email')}</span>
+              <span className={styles.cellTitle}>{profile.email || '-'}</span>
             </div>
-            <div className="cell-stack">
-              <span className="subtle">{t('profile.telegram')}</span>
-              <span className="cell-title">{profile.telegramId || '-'}</span>
+            <div className={styles.cellStack}>
+              <span className={styles.subtle}>{t('profile.telegram')}</span>
+              <span className={styles.cellTitle}>{profile.telegramId || '-'}</span>
             </div>
-            <div className="cell-stack">
-              <span className="subtle">{t('profile.created')}</span>
-              <span className="cell-title">{formatDate(profile.createdAt)}</span>
+            <div className={styles.cellStack}>
+              <span className={styles.subtle}>{t('profile.created')}</span>
+              <span className={styles.cellTitle}>{formatDate(profile.createdAt)}</span>
             </div>
-            <div className="cell-stack">
-              <span className="subtle">{t('profile.updated')}</span>
-              <span className="cell-title">{formatDate(profile.updatedAt)}</span>
+            <div className={styles.cellStack}>
+              <span className={styles.subtle}>{t('profile.updated')}</span>
+              <span className={styles.cellTitle}>{formatDate(profile.updatedAt)}</span>
             </div>
           </div>
         </Card>
       </div>
       <Card>
-        <div className="detail-grid">
+        <div className={styles.detailGrid}>
           <Input
             label={t('profile.currentPassword')}
             type="password"

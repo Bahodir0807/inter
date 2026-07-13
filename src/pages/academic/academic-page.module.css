@@ -1,0 +1,46 @@
+.subtle {
+color: var(--color-muted);
+}
+
+.stack {
+display: grid; gap: var(--space-xs);
+}
+
+.eyebrow {
+color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detailGrid {
+display: grid;
+  min-width: 0;
+  gap: var(--section-gap);
+}
+
+.detailGrid {
+display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr));
+  gap: var(--section-gap);
+  align-items: end;
+}
+
+.inlineActions {
+display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
+  min-width: 0;
+}
+
+.inlineActions {
+justify-content: flex-start;
+}
+
+@media (max-width: 600px) {
+  .inlineActions > * {
+  flex: 1 1 auto;
+  }
+}

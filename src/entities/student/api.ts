@@ -1,5 +1,6 @@
 import { http } from '../../shared/api/http';
 import { ListQueryParams, PaginatedList } from '../../shared/types/api';
+import { StudentFormValues } from '../../shared/lib/schemas/student-schema';
 
 export type StudentStatus = 'active' | 'inactive' | 'archived' | 'deleted';
 
@@ -26,23 +27,6 @@ export interface Student {
   updatedAt?: string;
 }
 
-export interface StudentFormValues {
-  firstName: string;
-  lastName: string;
-  phoneNumber?: string;
-  telegramId?: string;
-  parentPhoneNumber?: string;
-  parentName?: string;
-  groupIds?: string[];
-  courseIds?: string[];
-  branchIds?: string[];
-  monthlyPayment?: number;
-  paymentDueDate?: string;
-  comment?: string;
-  isActive?: boolean;
-  status?: StudentStatus;
-}
-
 export interface StudentsListParams extends ListQueryParams {
   status?: StudentStatus;
   isActive?: boolean;
@@ -61,29 +45,29 @@ const optionalStringFields = new Set([
   'comment',
 ]);
 
-function normalizeStudentPayload(payload: StudentFormValues) {
-  return Object.fromEntries(
-    Object.entries(payload).flatMap(([key, value]) => {
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (!trimmed && optionalStringFields.has(key)) {
-          return [];
-        }
-        return [[key, trimmed]];
+function normalizeStudentPayload(payload: Partial<StudentFormValues>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(payload)) {
+    const value = (payload as Record<string, unknown>)[key];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed || !optionalStringFields.has(key)) {
+        result[key] = trimmed;
       }
-
-      if (Array.isArray(value)) {
-        const cleaned = value.map(item => item.trim()).filter(Boolean);
-        return cleaned.length ? [[key, cleaned]] : [];
+    } else if (Array.isArray(value)) {
+      const cleaned = value.filter((item): item is string => typeof item === 'string').map(item => item.trim()).filter(Boolean);
+      if (cleaned.length) {
+        result[key] = cleaned;
       }
+    } else if (value !== undefined && value !== null) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
 
-      if (value === undefined || value === null || value === '') {
-        return [];
-      }
-
-      return [[key, value]];
-    }),
-  ) as Partial<StudentFormValues>;
+export async function updateStudent(id: string, data: StudentFormValues) {
+  return http.post(`/students/${id}`, data);
 }
 
 export const studentsApi = {

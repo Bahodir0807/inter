@@ -1,0 +1,57 @@
+# Neduco Project Rules
+
+## Architecture
+
+**Feature-Sliced Design (FSD)**
+- Strict separation of layers: `app`, `pages`, `widgets`, `features`, `entities`, `shared`
+- No cross-imports inside the same layer slicing
+- Respect FSD boundaries: lower layers can import from higher layers, but never the reverse
+- Example: `pages` can import from `widgets`, `features`, `entities`, `shared`; `shared` cannot import from any other layer
+
+## Styling Code Style
+
+**CSS Modules**
+- Local component styles MUST use CSS Modules with strict camelCase selectors
+- Correct: `.metricCard`, `.pageLayoutHeader`, `appSidebarLink`
+- Incorrect: `.metric-card`, `.page-layout__header`, `app-sidebar__link` (kebab-case/BEM banned in modules)
+- TSX must reference module classes: `className={styles.metricCard}`
+
+**Global Utilities**
+- Systemic global helper utilities are hosted ONLY in `src/app/styles/index.css`
+- Examples: `.dashboard-grid`, `.detail-grid`, `.metric-card`
+- These can be used as global string literals in TSX: `className="dashboard-grid"`
+- Do not duplicate global utilities in CSS modules
+
+## Localization (i18n)
+
+**Page-Specific Translations**
+- Page-specific translations must be modularized and co-located within the page directory
+- Structure: `src/pages/[name]/i18n/ru.ts`, `src/pages/[name]/i18n/en.ts`, `src/pages/[name]/i18n/uz.ts`
+- Export format: `export const pageName = { 'page.key': 'Translation', ... }`
+
+**Central Registry**
+- The central registry `src/shared/i18n/translations.ts` imports and spreads these local dictionary modules dynamically
+- Import pattern:
+  ```ts
+  import { dashboard as dashboardRu } from '../../pages/dashboard/i18n/ru';
+  import { dashboard as dashboardEn } from '../../pages/dashboard/i18n/en';
+  import { dashboard as dashboardUz } from '../../pages/dashboard/i18n/uz';
+  ```
+- Merge pattern:
+  ```ts
+  export const translations = {
+    ru: { ...dashboardRu, ...loginRu, ...profileRu, /* ... */ },
+    en: { ...dashboardEn, ...loginEn, ...profileEn, /* ... */ },
+    uz: { ...dashboardUz, ...loginUz, ...profileUz, /* ... */ },
+  };
+  ```
+- Do not hardcode page keys directly into the global monolith block
+
+## Coding Principles
+
+- Prefer architectural consistency over quick and dirty inline overrides
+- Follow established patterns rather than creating exceptions
+- Maintain clear separation of concerns across layers
+- When refactoring, update both TSX and CSS Module files to stay in sync
+- Use TypeScript strictly - no `any` types unless absolutely necessary
+- Keep components focused and single-responsibility

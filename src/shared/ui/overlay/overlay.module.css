@@ -1,0 +1,302 @@
+/* ============================================================
+   OVERLAY — Modals, backdrops, toasts, language gate
+   ============================================================ */
+
+/* Modal backdrop */
+.uiModalBackdrop,
+.modalBackdrop,
+.languageGate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(10px);
+}
+
+/* Modal panel */
+.uiModal,
+.modalCard,
+.languageGatePanel {
+  width: min(calc(100vw - 1.5rem), 42rem);
+  max-width: 100%;
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  color: var(--color-text);
+  box-shadow: var(--color-shadow);
+}
+
+/* Modal header */
+.uiModalHeader,
+.modalCardHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  padding: 0.85rem var(--card-padding);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+
+.uiModalHeader .stack,
+.modalCardHeader .stack { min-width: 0; }
+
+.uiModalHeader h3,
+.modalCardHeader h3,
+.uiModalHeader p,
+.modalCardHeader p { overflow-wrap: break-word; }
+
+/* Modal content */
+.uiModalContent,
+.modalCardContent,
+.modalCardBody { padding: var(--card-padding); }
+
+/* Language gate */
+.languageGatePanel {
+  width: min(calc(100vw - 1.5rem), 30rem);
+  max-height: calc(100dvh - 1.5rem);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.languageGateActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+  gap: var(--space-sm);
+}
+
+.languageOption {
+  min-height: 3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-elevated);
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.languageOption:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Toast */
+.toastStack {
+  position: fixed;
+  right: var(--page-padding);
+  bottom: var(--page-padding);
+  z-index: 120;
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.toast {
+  width: min(calc(100vw - 2rem), 26rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  color: var(--color-text);
+  box-shadow: var(--color-shadow);
+  padding: 0.65rem 0.8rem;
+  text-align: left;
+}
+
+.toastSuccess { border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border)); }
+.toastError { border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border)); }
+.toastInfo { border-color: color-mix(in srgb, var(--color-info) 45%, var(--color-border)); }
+
+/* Auth / Login layout */
+.loginPage,
+.authPage {
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  overflow-x: hidden;
+}
+
+.loginPageFormShell,
+.authPageFormShell {
+  width: min(100%, 30rem);
+  min-width: 0;
+}
+
+.loginCard,
+.authPanel {
+  width: 100%;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  box-shadow: var(--color-shadow-soft);
+}
+
+.loginForm,
+.authForm { display: grid; gap: var(--section-gap); }
+
+.loginFormHeader,
+.authFormHeader { display: grid; gap: 0.35rem; }
+
+.loginFormHeader h1,
+.loginFormHeader h2,
+.authFormHeader h1,
+.authFormHeader h2 {
+  font-size: clamp(1.65rem, 7vw, 2.25rem);
+  line-height: 1.1;
+  overflow-wrap: break-word;
+}
+
+.loginFormHeader p,
+.authFormHeader p {
+  color: var(--color-muted);
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  line-height: 1.45;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (min-width: 768px) {
+  .uiModal,
+  .modalCard {
+    width: min(calc(100vw - 2rem), 42rem);
+    max-height: calc(100dvh - 2rem);
+    border-radius: var(--radius-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .languageGateActions { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .uiModal,
+  .modalCard,
+  .languageGatePanel {
+    width: 100vw;
+    max-height: 100dvh;
+  }
+
+  .uiModalHeader,
+  .modalCardHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .loginPage,
+  .authPage {
+    padding: clamp(0.85rem, 4vw, 1.25rem);
+  }
+}
+
+@media (max-width: 430px) {
+  .toastStack {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+
+  .toast { width: calc(100vw - 1.5rem); }
+}
+
+@media (max-width: 360px) {
+  .loginPage,
+  .authPage { padding: 0.75rem; }
+
+  .loginCard,
+  .authPanel { padding: 1rem; }
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+:root[data-theme='dark'] .uiModalBackdrop,
+:root[data-theme='dark'] .modalBackdrop,
+:root[data-theme='dark'] .languageGate {
+  background: rgba(5, 10, 20, 0.78);
+}
+
+:root[data-theme='dark'] .uiModal,
+:root[data-theme='dark'] .modalCard,
+:root[data-theme='dark'] .languageGatePanel {
+  background: #111C2D;
+  border-color: #263449;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(168, 179, 199, 0.04);
+}
+
+:root[data-theme='dark'] .uiModalHeader,
+:root[data-theme='dark'] .modalCardHeader {
+  background: rgba(16, 24, 39, 0.96);
+  border-color: #263449;
+}
+
+:root[data-theme='dark'] .toast {
+  background: #111C2D;
+  border-color: #263449;
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.44);
+}
+
+:root[data-theme='dark'] .loginCard,
+:root[data-theme='dark'] .authPanel {
+  background: linear-gradient(180deg, #111C2D, #0F1A2B);
+  border-color: #263449;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 179, 199, 0.03);
+}
+
+:root[data-theme='dark'] .languageOption {
+  background: #18263A;
+  border-color: #263449;
+  color: #F8FAFC;
+}
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
+:root:not([data-theme='dark']) .uiModalBackdrop,
+:root:not([data-theme='dark']) .modalBackdrop,
+:root:not([data-theme='dark']) .languageGate {
+  background: rgba(15, 23, 42, 0.38);
+}
+
+:root:not([data-theme='dark']) .uiModal,
+:root:not([data-theme='dark']) .modalCard,
+:root:not([data-theme='dark']) .languageGatePanel {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+:root:not([data-theme='dark']) .uiModalHeader,
+:root:not([data-theme='dark']) .modalCardHeader {
+  background: rgba(252, 253, 255, 0.96);
+  border-color: #E2E8F0;
+}
+
+:root:not([data-theme='dark']) .toast {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+}
+
+:root:not([data-theme='dark']) .loginCard,
+:root:not([data-theme='dark']) .authPanel {
+  background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+:root:not([data-theme='dark']) .languageOption {
+  background: #FCFDFF;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}

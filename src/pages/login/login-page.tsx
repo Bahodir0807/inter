@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '../../features/auth/ui/login-form';
 import { useAuthStore } from '../../features/auth/model/auth-store';
+import { cn } from '../../shared/lib/cn';
+import styles from './login-page.module.css';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -14,8 +16,8 @@ export function LoginPage() {
   }, [navigate, user]);
 
   return (
-    <div className="login-page auth-page">
-      <div className="login-page__form-shell auth-page__form-shell">
+    <div className={cn(styles.loginPage, styles.authPage)}>
+      <div className={cn(styles.loginPageFormShell, styles.authPageFormShell)}>
         <LoginForm />
       </div>
     </div>

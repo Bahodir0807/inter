@@ -1,6 +1,7 @@
 import { KeyboardEvent, PropsWithChildren, useEffect, useId, useRef } from 'react';
 import { Button } from '../buttons/button';
 import { translate } from '../../i18n/i18n';
+import styles from './modal-shell.module.css';
 
 interface ModalShellProps extends PropsWithChildren {
   title: string;
@@ -146,10 +147,10 @@ export function ModalShell({
   }
 
   return (
-    <div className="ui-modal-backdrop modal-backdrop" role="presentation" onClick={handleBackdropClick}>
+    <div className={`${styles.uiModalBackdrop} ${styles.modalBackdrop}`} role="presentation" onClick={handleBackdropClick}>
       <div
         ref={dialogRef}
-        className="ui-modal modal-card"
+        className={`${styles.uiModal} ${styles.modalCard}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -158,8 +159,8 @@ export function ModalShell({
         onClick={event => event.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <header className="ui-modal__header modal-card__header">
-          <div className="stack">
+        <header className={`${styles.uiModalHeader} ${styles.modalCardHeader}`}>
+          <div className={styles.stack}>
             <h3 id={titleId}>{title}</h3>
             {description ? (
               <p id={descriptionId} className="subtle">
@@ -171,7 +172,7 @@ export function ModalShell({
             {translate('common.close')}
           </Button>
         </header>
-        <div className="ui-modal__content modal-card__content modal-card__body">{children}</div>
+        <div className={`${styles.uiModalContent} ${styles.modalCardContent} ${styles.modalCardBody}`}>{children}</div>
       </div>
     </div>
   );

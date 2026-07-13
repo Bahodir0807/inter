@@ -59,7 +59,7 @@ function getErrorMessage(error: unknown) {
 }
 
 export const http = axios.create({
-  baseURL: env.apiUrl,
+  baseURL: import.meta.env.VITE_API_BASE_URL || env.apiUrl,
   withCredentials: false,
 });
 
@@ -99,6 +99,7 @@ function expireSession() {
     return;
   }
 
+  localStorage.removeItem('neduco_auth_token');
   localStorage.removeItem('token');
   sessionStorage.removeItem('refreshToken');
   sessionExpired = true;
@@ -124,6 +125,7 @@ async function refreshAccessToken() {
         const payload = unwrapEnvelope(response.data).data as { token?: string; accessToken?: string; refreshToken?: string };
         const nextAccessToken = payload.token ?? payload.accessToken ?? null;
         if (nextAccessToken) {
+          localStorage.setItem('neduco_auth_token', nextAccessToken);
           localStorage.setItem('token', nextAccessToken);
           sessionExpired = false;
         }
@@ -142,7 +144,7 @@ async function refreshAccessToken() {
 }
 
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('neduco_auth_token') || localStorage.getItem('token');
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
@@ -167,7 +169,7 @@ http.interceptors.response.use(
     return response;
   },
   async (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    if (error?.response?.status === 401) {
       const originalRequest = error.config as typeof error.config & { _retry?: boolean };
       if (
         !sessionExpired
@@ -185,13 +187,16 @@ http.interceptors.response.use(
       }
 
       expireSession();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
 
     error.message = getErrorMessage(error);
     captureFrontendError(error, {
-      status: axios.isAxiosError(error) ? error.response?.status : undefined,
-      requestId: axios.isAxiosError(error) ? error.response?.headers?.['x-request-id'] : undefined,
-      url: axios.isAxiosError(error) ? error.config?.url : undefined,
+      status: error?.response?.status,
+      requestId: error?.response?.headers ? error.response.headers['x-request-id'] : undefined,
+      url: error?.config?.url,
     });
     return Promise.reject(error);
   },

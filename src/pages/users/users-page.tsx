@@ -25,6 +25,8 @@ import { UserDetailModal } from './user-detail-modal';
 import { UserFormInput, UserFormModal } from './user-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
 import { useI18n } from '../../shared/i18n/i18n';
+import { cn } from '../../shared/lib/cn';
+import styles from './users-page.module.css';
 
 const pageSize = 8;
 
@@ -253,10 +255,10 @@ export function UsersPage() {
       header: t('users.userLabel'),
       className: 'data-table__cell--primary',
       cell: item => (
-        <div className="cell-stack cell-stack--primary cell-stack--relation">
-          <span className="cell-title">{getUserDisplayName(item)}</span>
-          {isAdminLike ? <span className="cell-meta cell-meta--strong">@{item.username}</span> : null}
-          <span className="cell-meta">{item.studentYear || item.phoneNumber || item.email || t('users.noContactDetailsLabel')}</span>
+        <div className={cn(styles.cellStack, styles.cellStackPrimary, styles.cellStackRelation)}>
+          <span className={styles.cellTitle}>{getUserDisplayName(item)}</span>
+          {isAdminLike ? <span className={cn(styles.cellMeta, styles.cellMetaStrong)}>@{item.username}</span> : null}
+          <span className={styles.cellMeta}>{item.studentYear || item.phoneNumber || item.email || t('users.noContactDetailsLabel')}</span>
         </div>
       ),
     },
@@ -265,9 +267,9 @@ export function UsersPage() {
       header: t('users.studentProfileLabel'),
       className: 'data-table__cell--relation',
       cell: item => (
-        <div className="cell-stack cell-stack--relation">
-          <span className="cell-title">{item.studentYear || t('common.notSet')}</span>
-          <span className="cell-meta">{formatPaymentMethod(item.paymentMethod)}</span>
+        <div className={cn(styles.cellStack, styles.cellStackRelation)}>
+          <span className={styles.cellTitle}>{item.studentYear || t('common.notSet')}</span>
+          <span className={styles.cellMeta}>{formatPaymentMethod(item.paymentMethod)}</span>
         </div>
       ),
     },
@@ -276,9 +278,9 @@ export function UsersPage() {
       header: t('users.contactOwnerLabel'),
       className: 'data-table__cell--relation',
       cell: item => (
-        <div className="cell-stack cell-stack--relation">
-          <span className="cell-title">{item.contactOwnerFullName || item.contactOwner || t('common.notSet')}</span>
-          <span className="cell-meta">{item.contactOwnerRelation || t('common.notSet')}</span>
+        <div className={cn(styles.cellStack, styles.cellStackRelation)}>
+          <span className={styles.cellTitle}>{item.contactOwnerFullName || item.contactOwner || t('common.notSet')}</span>
+          <span className={styles.cellMeta}>{item.contactOwnerRelation || t('common.notSet')}</span>
         </div>
       ),
     },
@@ -289,14 +291,14 @@ export function UsersPage() {
             header: t('users.accessLabel'),
             className: 'data-table__cell--relation',
             cell: (item: AppUser) => (
-              <div className="cell-stack cell-stack--relation">
-                <div className="cell-badges">
+              <div className={cn(styles.cellStack, styles.cellStackRelation)}>
+                <div className={styles.cellBadges}>
                   <Badge tone="info">{getRoleDisplayName(item.role)}</Badge>
                   <Badge tone={item.isActive ? 'success' : 'warning'}>
                     {item.isActive ? t('common.active') : t('common.inactive')}
                   </Badge>
                 </div>
-                <span className="cell-meta">
+                <span className={styles.cellMeta}>
                   {item.telegramId ? `${t('users.telegramLinked')}: ${item.telegramId}` : t('users.telegramNotLinked')}
                 </span>
               </div>
@@ -309,9 +311,9 @@ export function UsersPage() {
             header: t('users.contactLabel'),
             className: 'data-table__cell--relation',
             cell: (item: AppUser) => (
-              <div className="cell-stack cell-stack--relation">
-                <span className="cell-title">{item.email || item.phoneNumber || t('users.noContactDetailsLabel')}</span>
-                <span className="cell-meta">
+              <div className={cn(styles.cellStack, styles.cellStackRelation)}>
+                <span className={styles.cellTitle}>{item.email || item.phoneNumber || t('users.noContactDetailsLabel')}</span>
+                <span className={styles.cellMeta}>
                   {item.email && item.phoneNumber
                     ? item.phoneNumber
                     : item.email
@@ -330,7 +332,7 @@ export function UsersPage() {
       className: 'data-table__cell--actions',
       headClassName: 'data-table__head--actions',
       cell: item => (
-        <div className="row-actions">
+        <div className={styles.rowActions}>
           <Button size="sm" variant="ghost" onClick={() => openDetail(item)}>
             {t('users.viewButton')}
           </Button>

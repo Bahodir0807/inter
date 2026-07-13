@@ -1,5 +1,6 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '../../lib/cn';
+import styles from './button.module.css';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'md' | 'sm';
@@ -18,10 +19,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       className={cn(
-        'ui-button',
-        `ui-button--${variant}`,
-        `ui-button--${size}`,
-        fullWidth && 'ui-button--full',
+        styles.uiButton,
+        variant === 'primary' && styles.uiButtonPrimary,
+        variant === 'secondary' && styles.uiButtonSecondary,
+        variant === 'ghost' && styles.uiButtonGhost,
+        variant === 'danger' && styles.uiButtonDanger,
+        size === 'sm' && styles.uiButtonSm,
+        fullWidth && styles.uiButtonFull,
         className,
       )}
       {...props}

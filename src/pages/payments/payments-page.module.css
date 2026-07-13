@@ -1,0 +1,36 @@
+.dataTable__cellActions {
+text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.cellStack {
+display: grid; min-width: 0; gap: 0.15rem;
+}
+
+.cellTitle {
+font-weight: 750; color: var(--color-text);
+}
+
+.cellMeta {
+color: var(--color-muted); font-size: 0.76rem;
+}
+
+.cellTitle,
+.cellMeta {
+overflow-wrap: anywhere;
+}
+
+:root[data-theme='dark'] .dataTable__cellActions {
+background: color-mix(in srgb, #101B2D 88%, #162235);
+}
+
+:root:not([data-theme='dark']) .dataTable__cellActions {
+background: color-mix(in srgb, #FFFFFF 88%, #F8FAFC);
+}
+
+@media (max-width: 600px) {
+  .dataTable__cellActions {
+  text-align: left;
+  }
+}

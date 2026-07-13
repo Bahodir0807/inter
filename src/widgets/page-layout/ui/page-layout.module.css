@@ -1,0 +1,121 @@
+.pageLayout {
+  display: grid;
+  gap: var(--page-gap);
+  width: min(100%, var(--workspace-width));
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.pageLayoutHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-width: 0;
+  padding-bottom: 0.1rem;
+}
+
+.pageLayoutLead,
+.pageLayoutCopy,
+.pageLayoutActionDock {
+  min-width: 0;
+}
+
+.pageLayoutHeadline {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.pageLayoutHeadline h1 {
+  font-size: clamp(1.28rem, 4vw, 1.75rem);
+  line-height: 1.12;
+  overflow-wrap: break-word;
+}
+
+.pageLayoutHeadline p {
+  color: var(--color-muted);
+  max-width: 58rem;
+  font-size: 0.88rem;
+  line-height: 1.38;
+  overflow-wrap: break-word;
+}
+
+.pageLayoutActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+}
+
+.pageLayoutBody {
+  display: grid;
+  gap: var(--page-gap);
+  min-width: 0;
+}
+
+.pageLayoutFeature {
+  padding-top: 0.15rem;
+}
+
+.pageLayoutFeature .pageLayoutHeader {
+  padding: 0.95rem 1rem;
+  margin: 0;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 7%, transparent), transparent 58%),
+    linear-gradient(180deg, rgba(37, 99, 235, 0.06), transparent);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(37, 99, 235, 0.14);
+}
+
+.pageLayoutFeature .pageLayoutHeadline h1 {
+  font-size: clamp(1.55rem, 3vw, 2rem);
+}
+
+.pageLayoutFeature .pageLayoutHeadline p {
+  font-size: 0.94rem;
+}
+
+@media (max-width: 840px) {
+  .pageLayoutFeature .pageLayoutHeader {
+    margin: 0;
+    padding: 1rem 0.65rem 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .pageLayoutHeadline h1 {
+    font-size: clamp(1.55rem, 2.6vw, 2.25rem);
+  }
+
+  .pageLayoutHeadline p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .pageLayoutHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pageLayoutActions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .pageLayoutActions > * {
+    width: 100%;
+  }
+}
+
+:root[data-theme='dark'] .pageLayoutFeature .pageLayoutHeader {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.09), rgba(17, 28, 45, 0.28));
+  border-color: rgba(38, 52, 73, 0.9);
+}
+
+:root:not([data-theme='dark']) .pageLayoutFeature .pageLayoutHeader {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(252, 253, 255, 0.72));
+  border-color: rgba(226, 232, 240, 0.9);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.045);
+}

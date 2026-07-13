@@ -1,0 +1,137 @@
+.subtle {
+color: var(--color-muted);
+}
+
+.uiField {
+display: grid; min-width: 0; gap: 0.22rem; color: var(--color-text);
+}
+
+.uiField__label {
+font-size: 0.74rem; font-weight: 750;
+}
+
+.uiField__label,
+.uiField__hint {
+overflow-wrap: break-word;
+}
+
+.uiField__hint {
+font-size: 0.72rem; color: var(--color-muted); line-height: 1.3;
+}
+
+.uiField:has([required]) .uiField__label::after {
+content: ' *';
+  color: var(--color-danger);
+}
+
+.choiceHeader {
+display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  align-items: flex-start;
+}
+
+.choiceHeader__copy {
+display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.choiceHeader__meta {
+flex: 0 0 auto;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.choiceSummary,
+.choiceGrid {
+display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.choiceSummary__item {
+max-width: 100%;
+  padding: 0.28rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-card);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.choiceSummary__itemMuted {
+color: var(--color-muted);
+}
+
+.choiceGrid {
+display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+.choiceCard {
+min-width: 0;
+  min-height: 4.1rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.72rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.choiceCardActive {
+border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.choiceCard__head {
+display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.choiceCard__head strong {
+min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.choiceCard__mark {
+width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 0.85rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+}
+
+.choiceCard__markActive {
+border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: inset 0 0 0 3px var(--color-card);
+}
+
+.choiceEmpty {
+display: grid;
+  gap: 0.18rem;
+  padding: 0.85rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-elevated);
+  color: var(--color-muted);
+}
+
+.choiceEmpty strong {
+color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.choiceEmpty span {
+font-size: 0.8rem;
+  line-height: 1.45;
+}

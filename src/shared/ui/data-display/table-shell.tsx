@@ -1,4 +1,5 @@
 import { PropsWithChildren, ReactNode } from 'react';
+import styles from './table-shell.module.css';
 
 interface TableShellProps extends PropsWithChildren {
   title: string;
@@ -8,15 +9,15 @@ interface TableShellProps extends PropsWithChildren {
 
 export function TableShell({ title, description, actions, children }: TableShellProps) {
   return (
-    <section className="table-shell">
-      <header className="table-shell__header">
-        <div className="table-shell__title">
-          <h3>{title}</h3>
-          {description ? <p>{description}</p> : null}
+    <section className={styles.tableShell}>
+      <header className={styles.tableShellHeader}>
+        <div className={styles.tableShellTitle}>
+          <h3 className={styles.tableShellTitleText}>{title}</h3>
+          {description ? <p className={styles.tableShellDescription}>{description}</p> : null}
         </div>
         {actions}
       </header>
-      <div className="table-shell__content">{children}</div>
+      <div className={styles.tableShellContent}>{children}</div>
     </section>
   );
 }

@@ -1,0 +1,90 @@
+.eyebrow {
+color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.loginCard,
+.authPanel {
+border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  box-shadow: var(--color-shadow-soft);
+}
+
+.formStack {
+display: grid; min-width: 0; gap: var(--section-gap);
+}
+
+.loginCard,
+.authPanel {
+width: 100%;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+}
+
+.loginForm,
+.authForm {
+display: grid; gap: var(--section-gap);
+}
+
+.loginForm__header,
+.authForm__header {
+display: grid; gap: 0.35rem;
+}
+
+.loginForm__header h1,
+.loginForm__header h2,
+.authForm__header h1,
+.authForm__header h2 {
+font-size: clamp(1.65rem, 7vw, 2.25rem);
+  line-height: 1.1;
+  overflow-wrap: break-word;
+}
+
+.loginForm__header p,
+.authForm__header p {
+color: var(--color-muted);
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  line-height: 1.45;
+}
+
+.banner {
+border-radius: var(--radius-md); padding: 0.65rem 0.75rem;
+}
+
+.bannerError {
+color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 10%, transparent); border: 1px solid color-mix(in srgb, var(--color-danger) 24%, transparent);
+}
+
+:root[data-theme='dark'] .loginCard,
+:root[data-theme='dark'] .authPanel {
+background: linear-gradient(180deg, #111C2D, #0F1A2B);
+  border-color: #263449;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(168, 179, 199, 0.03);
+}
+
+:root[data-theme='dark'] .bannerError {
+background: rgba(248, 113, 113, 0.10);
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+:root:not([data-theme='dark']) .loginCard,
+:root:not([data-theme='dark']) .authPanel {
+background: linear-gradient(180deg, #FFFFFF, #FCFDFF);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+:root:not([data-theme='dark']) .bannerError {
+background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.22);
+}
+
+@media (max-width: 360px) {
+  .loginCard,
+  .authPanel {
+  padding: 1rem;
+  }
+}

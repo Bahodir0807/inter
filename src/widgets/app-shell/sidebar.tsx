@@ -5,7 +5,8 @@ import { cn } from '../../shared/lib/cn';
 import { getRoleDisplayName } from '../../shared/lib/entity-display';
 import { AppIcon } from '../../shared/ui/icons/app-icon';
 import { useI18n } from '../../shared/i18n/i18n';
-
+import styles from './sidebar.module.css';
+import '../../../public/NeducoLogoDark.png';
 export function Sidebar({
   role,
   open,
@@ -19,40 +20,38 @@ export function Sidebar({
   const { t } = useI18n();
 
   return (
-    <aside id="app-sidebar" className={cn('app-sidebar', open && 'app-sidebar--open')}>
-      <div className="app-sidebar__brand">
-        <span className="app-sidebar__logo" aria-hidden="true">
-          <AppIcon name="spark" />
-        </span>
-        <div className="app-sidebar__brand-copy">
-          <strong>Inter CRM</strong>
+    <aside id="app-sidebar" className={cn(styles.appSidebar, open && styles.appSidebarOpen)}>
+      <div className={styles.appSidebarBrand}>
+        <img src="/NeducoLogoDark.png" alt="Neduco Logo" width="32" height="32" />
+        <div className={styles.appSidebarBrandCopy}>
+          <strong>Neduco</strong>
           <p>{t('shell.brandHint')}</p>
         </div>
       </div>
-      <div className="app-sidebar__section">
-        <span className="app-sidebar__section-label">{t('common.workspace')}</span>
-        <nav className="app-sidebar__nav">
+      <div className={styles.appSidebarSection}>
+        <span className={styles.appSidebarSectionLabel}>{t('common.workspace')}</span>
+        <nav className={styles.appSidebarNav}>
           {items.map(item => (
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) => cn('app-sidebar__link', isActive && 'app-sidebar__link--active')}
+              className={({ isActive }) => cn(styles.appSidebarLink, isActive && styles.appSidebarLinkActive)}
               onClick={onNavigate}
             >
-              <span className="app-sidebar__icon" aria-hidden="true">
+              <span className={styles.appSidebarIcon} aria-hidden="true">
                 <AppIcon name={item.icon} />
               </span>
-              <span className="app-sidebar__link-copy">
-                <span className="app-sidebar__label">{t(item.labelKey, item.label)}</span>
+              <span className={styles.appSidebarLinkCopy}>
+                <span className={styles.appSidebarLabel}>{t(item.labelKey, item.label)}</span>
                 {item.descriptionKey ? (
-                  <span className="app-sidebar__description">{t(item.descriptionKey, item.description)}</span>
+                  <span className={styles.appSidebarDescription}>{t(item.descriptionKey, item.description)}</span>
                 ) : null}
               </span>
             </NavLink>
           ))}
         </nav>
       </div>
-      <div className="app-sidebar__footer">
+      <div className={styles.appSidebarFooter}>
         <span className="subtle">{t('common.currentRole')}</span>
         <strong>{getRoleDisplayName(role)}</strong>
       </div>
