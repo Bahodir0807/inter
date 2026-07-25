@@ -53,7 +53,7 @@ export function PaymentsPage() {
   const queryClient = useQueryClient();
   const { t } = useI18n();
   const user = useAuthStore(state => state.user);
-  const isAdminLike = !!user && paymentsManagerRoles.includes(user.role);
+  const isAdminLike = !!user && paymentsManagerRoles.includes(user.role as 'owner');
   const canManagePayments = user?.role === 'owner';
   const urlState = useUrlState();
 

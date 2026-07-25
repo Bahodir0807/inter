@@ -14,7 +14,6 @@ import { Input } from '../../shared/ui/forms/input';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { ProfileFormModal } from './profile-form-modal';
 import { useI18n } from '../../shared/i18n/i18n';
-import { cn } from '../../shared/lib/cn';
 import styles from './profile-page.module.css';
 
 export function ProfilePage() {

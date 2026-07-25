@@ -1,6 +1,7 @@
 import { http } from '../../shared/api/http';
 import { ListQueryParams, PaginatedList } from '../../shared/types/api';
-import { StudentFormValues } from '../../shared/lib/schemas/student-schema';
+import type { StudentFormValues } from '../../shared/lib/schemas/student-schema';
+export type { StudentFormValues } from '../../shared/lib/schemas/student-schema';
 
 export type StudentStatus = 'active' | 'inactive' | 'archived' | 'deleted';
 

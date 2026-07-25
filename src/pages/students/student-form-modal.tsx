@@ -74,7 +74,7 @@ export function StudentFormModal({ open, student, courses, groups, loading, onCl
   })), [courses]);
 
   const update = <K extends keyof StudentFormValues>(key: K, value: StudentFormValues[K]) => {
-    setForm(current => ({ ...current, [key]: value }));
+    setForm((current: StudentFormValues) => ({ ...current, [key]: value }));
   };
 
   const submit = async (event: FormEvent) => {
