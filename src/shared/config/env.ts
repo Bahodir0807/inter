@@ -1,5 +1,5 @@
 const fallbackEnvironment = 'prod';
-const defaultApiUrl = 'http://localhost:3000';
+const defaultApiUrl = 'https://ibrat-backend-hi7w.onrender.com/';
 
 function normalizeApiUrl(value: string | undefined) {
   const url = value?.trim() || defaultApiUrl;
