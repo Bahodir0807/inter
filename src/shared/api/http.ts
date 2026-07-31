@@ -2,6 +2,7 @@ import axios from 'axios';
 import { env } from '../config/env';
 import { ApiMeta } from '../types/api';
 import { captureFrontendError } from '../lib/observability';
+import { toast } from '../ui/feedback/toaster';
 
 declare module 'axios' {
   interface AxiosResponse<T = any, D = any> {
@@ -169,7 +170,9 @@ http.interceptors.response.use(
     return response;
   },
   async (error) => {
-    if (error?.response?.status === 401) {
+    const status = error?.response?.status;
+
+    if (status === 401) {
       const originalRequest = error.config as typeof error.config & { _retry?: boolean };
       if (
         !sessionExpired
@@ -190,6 +193,14 @@ http.interceptors.response.use(
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }
+    }
+
+    if (status === 403) {
+      toast.error('У вас нет прав для этого действия');
+    }
+
+    if (status && status >= 500) {
+      toast.error('Ошибка сервера. Пожалуйста, попробуйте позже или обратитесь в поддержку');
     }
 
     error.message = getErrorMessage(error);

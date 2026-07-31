@@ -5,6 +5,14 @@ import { Input } from '../../../shared/ui/forms/input';
 import { toast } from '../../../shared/ui/feedback/toaster';
 import { useAuthStore } from '../model/auth-store';
 import { useI18n } from '../../../shared/i18n/i18n';
+import { z } from 'zod';
+
+const loginSchema = z.object({
+  username: z.string().min(3, 'Логин должен содержать минимум 3 символа'),
+  password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -14,9 +22,26 @@ export function LoginForm() {
   const { t } = useI18n();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    // Client-side validation
+    const validationResult = loginSchema.safeParse({ username, password });
+    if (!validationResult.success) {
+      const errors: Partial<Record<keyof LoginFormData, string>> = {};
+      validationResult.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[issue.path[0] as keyof LoginFormData] = issue.message;
+        }
+      });
+      setValidationErrors(errors);
+      return;
+    }
+
+    // Clear validation errors
+    setValidationErrors({});
 
     try {
       await login({ login: username, username, password });
@@ -49,6 +74,7 @@ export function LoginForm() {
             required
             type="text"
             value={username}
+            error={validationErrors.username}
           />
           <Input
             autoComplete="current-password"
@@ -59,6 +85,7 @@ export function LoginForm() {
             required
             type="password"
             value={password}
+            error={validationErrors.password}
           />
         </div>
 

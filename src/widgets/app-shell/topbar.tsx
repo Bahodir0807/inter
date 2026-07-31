@@ -8,7 +8,7 @@ import { languageOptions, useI18n } from '../../shared/i18n/i18n';
 import { useTheme } from '../../shared/theme/theme';
 import { Select } from '../../shared/ui/forms/select';
 
-export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: () => void }) {
+export function Topbar({ open, onMenuToggle, onNavigate }: { open: boolean; onMenuToggle: () => void; onNavigate?: () => void }) {
   const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
   const { language, setLanguage, t } = useI18n();
@@ -31,7 +31,7 @@ export function Topbar({ open, onMenuToggle }: { open: boolean; onMenuToggle: ()
           <span>{t('common.menu')}</span>
         </Button>
         <div className="app-topbar__identity">
-          <Breadcrumbs />
+          <Breadcrumbs onNavigate={() => onNavigate?.()} />
           <div className="app-topbar__headline">
             <strong>{t('shell.headline')}</strong>
             <span className="subtle">{t('shell.subheadline')}</span>

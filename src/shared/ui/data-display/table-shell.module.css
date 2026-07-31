@@ -70,6 +70,12 @@ background: linear-gradient(180deg, #FCFDFF, #F8FAFC);
 
 @media (max-width: 600px) {
   .tableShellContent {
-  overflow-x: visible;
+    overflow-x: visible;
+  }
+
+  .tableShellScroller {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

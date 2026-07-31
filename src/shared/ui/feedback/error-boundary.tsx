@@ -27,14 +27,23 @@ export class ErrorBoundary extends Component<PropsWithChildren<{ fallback?: Reac
       return this.props.fallback;
     }
 
+    const handleReload = () => {
+      window.location.reload();
+    };
+
     return (
       <div className="ui-state ui-state--error">
         <span className="ui-state__eyebrow">{translate('common.applicationError')}</span>
         <h3>{translate('common.somethingWentWrong')}</h3>
         <p>{this.state.error.message || translate('common.renderFailed')}</p>
-        <Button type="button" variant="secondary" onClick={() => this.setState({ error: null })}>
-          {translate('common.tryAgain')}
-        </Button>
+        <div className="inline-actions">
+          <Button type="button" variant="secondary" onClick={() => this.setState({ error: null })}>
+            {translate('common.tryAgain')}
+          </Button>
+          <Button type="button" variant="primary" onClick={handleReload}>
+            {translate('common.reloadPage')}
+          </Button>
+        </div>
       </div>
     );
   }

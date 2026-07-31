@@ -48,7 +48,7 @@ export function AppShell() {
       />
       <Sidebar role={user.role} open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
       <div className="app-shell__main">
-        <Topbar open={sidebarOpen} onMenuToggle={() => setSidebarOpen(current => !current)} />
+        <Topbar open={sidebarOpen} onMenuToggle={() => setSidebarOpen(current => !current)} onNavigate={() => setSidebarOpen(false)} />
         <main className="app-shell__content">
           <Outlet />
         </main>

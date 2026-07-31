@@ -17,7 +17,11 @@ export function TableShell({ title, description, actions, children }: TableShell
         </div>
         {actions}
       </header>
-      <div className={styles.tableShellContent}>{children}</div>
+      <div className={styles.tableShellContent}>
+        <div className={styles.tableShellScroller}>
+          {children}
+        </div>
+      </div>
     </section>
   );
 }

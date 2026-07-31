@@ -19,7 +19,8 @@ import { Button } from '../../shared/ui/buttons/button';
 import { Select } from '../../shared/ui/forms/select';
 import { Badge } from '../../shared/ui/badges/badge';
 import { getCourseDisplayName, getUserDisplayName, getUserListSummary } from '../../shared/lib/entity-display';
-import { paginate, sortBy, SortDirection } from '../../shared/lib/table';
+import { SortDirection } from '../../shared/lib/table';
+import useTableState from '../../shared/lib/hooks/use-table-state';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { GroupFormModal } from './group-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
@@ -35,10 +36,8 @@ export function GroupsPage() {
   const isTeacher = sessionUser?.role === 'teacher';
   const isStudent = sessionUser?.role === 'student';
 
-  const [search, setSearch] = useState('');
-  const [teacherFilter, setTeacherFilter] = useState<'all' | string>('all');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [page, setPage] = useState(1);
+  const table = useTableState<Group>({ initialPageSize: pageSize });
+  const { page, setPage, search, setSearch, filters, setFilter, sortDirection, setSortDirection, apply } = table;
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteCandidate, setDeleteCandidate] = useState<Group | null>(null);
@@ -132,27 +131,25 @@ export function GroupsPage() {
     });
   }, [groups, isAdminLike, isStudent, isTeacher, sessionUser]);
 
-  const filteredGroups = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    const filtered = visibleGroups.filter(group => {
-      const teacherId = typeof group.teacher === 'string' ? group.teacher : group.teacher.id;
-      const haystack = [
-        group.name,
-        getCourseDisplayName(group.course),
-        getUserDisplayName(group.teacher),
-      ]
-        .join(' ')
-        .toLowerCase();
+  const teacherFilter = (filters.teacher as string) ?? 'all';
 
-      const matchesTeacher = !isAdminLike || teacherFilter === 'all' || teacherId === teacherFilter;
-      return matchesTeacher && haystack.includes(normalizedSearch);
+  const { paged: pagedGroups, total, totalPages } = useMemo(() => {
+    return apply(visibleGroups, {
+      filterFn: group => {
+        const normalizedSearch = (search || '').trim().toLowerCase();
+        const teacherId = typeof group.teacher === 'string' ? group.teacher : group.teacher.id;
+        const haystack = [group.name, getCourseDisplayName(group.course), getUserDisplayName(group.teacher)]
+          .join(' ')
+          .toLowerCase();
+
+        const matchesTeacher = !isAdminLike || teacherFilter === 'all' || teacherId === teacherFilter;
+        return matchesTeacher && haystack.includes(normalizedSearch);
+      },
+      sortAccessor: item => item.name.toLowerCase(),
     });
+  }, [visibleGroups, search, filters.teacher, sortDirection, page]);
 
-    return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
-  }, [isAdminLike, search, sortDirection, teacherFilter, visibleGroups]);
-
-  const selectedTeacherLabel =
-    teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
+  const selectedTeacherLabel = teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
 
   const toolbarFilters = [
     ...(isAdminLike && teacherFilter !== 'all' ? [t('group.filterTeacherValue', { teacher: selectedTeacherLabel })] : []),
@@ -167,8 +164,7 @@ export function GroupsPage() {
     return <ErrorState description={groupsQuery.error.message} onRetry={() => void groupsQuery.refetch()} />;
   }
 
-  const totalPages = Math.max(1, Math.ceil(filteredGroups.length / pageSize));
-  const pagedGroups = paginate(filteredGroups, page, pageSize);
+  // pagedGroups and totalPages are provided by the table hook via apply
   const totalLinkedStudents = visibleGroups.reduce((sum, item) => sum + item.students.length, 0);
   const columns: Column<Group>[] = [
     {
@@ -255,11 +251,11 @@ export function GroupsPage() {
         />
       ) : null}
       <div className="dashboard-grid">
-        <Card className="metric-card">
-          <span className="subtle">{t('group.visibleGroups')}</span>
-          <strong>{filteredGroups.length}</strong>
-          <span className="subtle">{t('group.afterFilters')}</span>
-        </Card>
+            <Card className="metric-card">
+              <span className="subtle">{t('group.visibleGroups')}</span>
+              <strong>{total}</strong>
+              <span className="subtle">{t('group.afterFilters')}</span>
+            </Card>
         <Card className="metric-card">
           <span className="subtle">{t('group.linkedStudents')}</span>
           <strong>{totalLinkedStudents}</strong>
@@ -283,12 +279,9 @@ export function GroupsPage() {
         >
           <TableToolbar
             search={search}
-            onSearchChange={value => {
-              setSearch(value);
-              setPage(1);
-            }}
+            onSearchChange={value => setSearch(value)}
             searchPlaceholder={isAdminLike ? t('common.searchByCourseRoomTeacherGroup') : t('common.searchByCourseRoomTeacher')}
-            resultsLabel={t('common.resultsLabel', { count: filteredGroups.length })}
+            resultsLabel={t('common.resultsLabel', { count: total })}
             activeFilters={toolbarFilters}
             filters={
               <>
@@ -296,10 +289,7 @@ export function GroupsPage() {
                   <Select
                     aria-label={t('group.filterTeacherLabel')}
                     value={teacherFilter}
-                    onChange={event => {
-                      setTeacherFilter(event.target.value);
-                      setPage(1);
-                    }}
+                    onChange={event => setFilter('teacher', event.target.value)}
                   >
                     <option value="all">{t('common.allTeachers')}</option>
                     {teachers.map(teacher => (

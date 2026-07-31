@@ -4,6 +4,7 @@ import { coursesApi } from '../../entities/course/api';
 import { groupsApi } from '../../entities/group/api';
 import { Student, StudentFormValues, studentsApi, StudentStatus } from '../../entities/student/api';
 import { PageLayout } from '../../widgets/page/page-layout';
+import useTableState from '../../shared/lib/hooks/use-table-state';
 import { Badge } from '../../shared/ui/badges/badge';
 import { Button } from '../../shared/ui/buttons/button';
 import { DataTable, Column } from '../../shared/ui/data-display/data-table';
@@ -26,20 +27,19 @@ function getStudentName(student: Student) {
 
 export function StudentsPage() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'all' | StudentStatus>('all');
+  const table = useTableState<Student>({ initialPageSize: pageSize });
+  const { page, setPage, search, setSearch, filters, setFilter } = table;
   const [selected, setSelected] = useState<Student | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [archiveCandidate, setArchiveCandidate] = useState<Student | null>(null);
 
   const studentsQuery = useQuery({
-    queryKey: ['students', page, search, status],
+    queryKey: ['students', page, search, filters.status ?? 'all'],
     queryFn: () => studentsApi.getStudentsPage({
       page,
       limit: pageSize,
       search: search || undefined,
-      status: status === 'all' ? undefined : status,
+      status: (filters.status ?? 'all') === 'all' ? undefined : (filters.status as StudentStatus),
     }),
   });
 
@@ -158,14 +158,14 @@ export function StudentsPage() {
       actions={<Button onClick={() => { setSelected(null); setFormOpen(true); }}>New student</Button>}
     >
       <TableShell title="Student list" description="Students are stored separately from operational users." actions={<Pagination page={page} totalPages={totalPages} onChange={setPage} />}>
-        <TableToolbar
+          <TableToolbar
           search={search}
-          onSearchChange={value => { setSearch(value); setPage(1); }}
+          onSearchChange={value => setSearch(value)}
           searchPlaceholder="Search by name, phone, Telegram, or parent"
           resultsLabel={`${studentsQuery.data?.pagination?.total ?? students.length} students`}
-          activeFilters={status === 'all' ? [] : [`Status: ${status}`]}
+          activeFilters={(filters.status ?? 'all') === 'all' ? [] : [`Status: ${filters.status}`]}
           filters={(
-            <Select value={status} onChange={event => { setStatus(event.target.value as 'all' | StudentStatus); setPage(1); }} aria-label="Filter by status">
+            <Select value={(filters.status ?? 'all') as string} onChange={event => setFilter('status', event.target.value)} aria-label="Filter by status">
               {statusOptions.map(option => <option key={option} value={option}>{option}</option>)}
             </Select>
           )}

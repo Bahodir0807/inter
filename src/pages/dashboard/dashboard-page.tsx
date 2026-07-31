@@ -9,9 +9,9 @@ import { gradesApi } from '../../entities/grade/api';
 import { attendanceApi } from '../../entities/attendance/api';
 import { usersApi } from '../../entities/user/api';
 import { useAuthStore } from '../../features/auth/model/auth-store';
-import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
 import { EmptyState } from '../../shared/ui/feedback/empty-state';
+import { SkeletonCard, SkeletonTable } from '../../shared/ui/feedback/skeleton';
 import { Card } from '../../shared/ui/surfaces/card';
 import { PageLayout } from '../../widgets/page/page-layout';
 import { Badge } from '../../shared/ui/badges/badge';
@@ -96,10 +96,10 @@ export function DashboardPage() {
       const [grades, attendance, payments] = isStudent
         ? await Promise.all([
             gradesApi.getMine().catch(() => []),
-            attendanceApi.getMine().catch(() => []),
+            attendanceApi.getByGroup('', new Date().toISOString().split('T')[0]).catch(() => ({ groupId: '', date: '', records: [] })),
             paymentsApi.getMine().catch(() => []),
           ])
-        : [[], [], []];
+        : [[], { groupId: '', date: '', records: [] }, []];
       const [users, courses, groups, schedule] = await Promise.all([
         usersApi.getAll().catch(() => []),
         coursesApi.getAll().catch(() => []),
@@ -141,7 +141,23 @@ export function DashboardPage() {
     enabled: !!user && capabilities.dashboard.finance,
   });
 
-  if (dashboardQuery.isLoading) return <LoadingState label={t('common.loading')} />;
+  if (dashboardQuery.isLoading) {
+    return (
+      <PageLayout
+        eyebrow={t('dashboard.overview')}
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
+        variant="feature"
+      >
+        <div className="dashboard-grid">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </PageLayout>
+    );
+  }
   if (dashboardQuery.error) return <ErrorState description={dashboardQuery.error.message} onRetry={() => void dashboardQuery.refetch()} />;
   if (!dashboardQuery.data) return <EmptyState title={t('dashboard.noDataTitle')} description={t('dashboard.noDataDescription')} />;
 
@@ -336,7 +352,15 @@ export function DashboardPage() {
               void debtorsQuery.refetch();
             }} />
           ) : financeLoading ? (
-            <LoadingState label={t('finance.loading')} />
+            <>
+              <div className="dashboard-grid">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+              <SkeletonTable rows={5} columns={7} />
+            </>
           ) : (
             <>
               <div className="dashboard-grid">

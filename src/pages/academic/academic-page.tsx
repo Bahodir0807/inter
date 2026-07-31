@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { attendanceApi, AttendanceStatus } from '../../entities/attendance/api';
+import { attendanceApi, AttendanceStatus, AttendanceEntry } from '../../entities/attendance/api';
 import { gradesApi, GradeEntry } from '../../entities/grade/api';
 import { notificationsApi, NotificationType } from '../../entities/notification/api';
 import { usersApi } from '../../entities/user/api';
@@ -9,6 +9,7 @@ import { useAuthStore } from '../../features/auth/model/auth-store';
 import { PageLayout } from '../../widgets/page/page-layout';
 import { LoadingState } from '../../shared/ui/feedback/loading-state';
 import { ErrorState } from '../../shared/ui/feedback/error-state';
+import { SkeletonTable } from '../../shared/ui/feedback/skeleton';
 import { Card } from '../../shared/ui/surfaces/card';
 import { TableShell } from '../../shared/ui/data-display/table-shell';
 import { DataTable } from '../../shared/ui/data-display/data-table';
@@ -33,7 +34,7 @@ export function AcademicPage() {
   const capabilities = getRoleCapabilities(user?.role);
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>('present');
+  const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>('PRESENT');
   const [attendanceDate, setAttendanceDate] = useState(() => toDateInputValue(new Date()));
   const [selectedScheduleId, setSelectedScheduleId] = useState('');
   const [gradeSubject, setGradeSubject] = useState('');
@@ -85,8 +86,8 @@ export function AcademicPage() {
       const selectedSchedule = scheduleQuery.data?.find(item => item.id === selectedScheduleId);
 
       return attendanceApi.mark({
-        userId: effectiveUserId,
-        scheduleId: selectedScheduleId || undefined,
+        groupId: typeof selectedSchedule?.group === 'string' ? selectedSchedule.group : selectedSchedule?.group?.id || '',
+        studentId: effectiveUserId,
         date: selectedSchedule?.date ?? `${attendanceDate}T00:00:00.000Z`,
         status: attendanceStatus,
       });
@@ -215,10 +216,9 @@ export function AcademicPage() {
               ))}
             </Select>
             <Select label={t('academic.attendanceStatus')} value={attendanceStatus} onChange={event => setAttendanceStatus(event.target.value as AttendanceStatus)}>
-              <option value="present">{t('attendance.status.present')}</option>
-              <option value="absent">{t('attendance.status.absent')}</option>
-              <option value="late">{t('attendance.status.late')}</option>
-              <option value="excused">{t('attendance.status.excused')}</option>
+              <option value="PRESENT">{t('attendance.status.present')}</option>
+              <option value="ABSENT">{t('attendance.status.absent')}</option>
+              <option value="TRIAL">{t('attendance.status.trial')}</option>
             </Select>
             <Button disabled={!effectiveUserId || !attendanceDate || markAttendance.isPending} onClick={() => markAttendance.mutate()}>
               {t('academic.markAttendance')}
@@ -229,18 +229,18 @@ export function AcademicPage() {
 
       <TableShell title={t('academic.attendanceTitle')} description={t('academic.attendanceDescription')}>
         {attendanceQuery.isLoading ? (
-          <LoadingState label={t('common.loading')} />
+          <SkeletonTable rows={5} columns={2} />
         ) : attendanceQuery.error ? (
           <ErrorState description={attendanceQuery.error.message} onRetry={() => void attendanceQuery.refetch()} />
         ) : (
           <DataTable
             rows={attendance}
-            getRowKey={item => item.id}
+            getRowKey={item => item._id}
             emptyTitle={t('academic.noAttendanceTitle')}
             emptyDescription={t('academic.noAttendanceDescription')}
             columns={[
-              { key: 'date', header: t('common.date'), cell: item => formatDate(item.date) },
-              { key: 'status', header: t('common.status'), cell: item => <Badge tone={item.status === 'present' ? 'success' : 'warning'}>{t(`attendance.status.${item.status}`)}</Badge> },
+              { key: 'date', header: t('common.date'), cell: (item: AttendanceEntry) => formatDate(item.date) },
+              { key: 'status', header: t('common.status'), cell: (item: AttendanceEntry) => <Badge tone={item.status === 'PRESENT' ? 'success' : item.status === 'ABSENT' ? 'danger' : 'info'}>{item.status}</Badge> },
             ]}
           />
         )}
@@ -260,7 +260,7 @@ export function AcademicPage() {
 
       <TableShell title={t('academic.gradesTitle')} description={t('academic.gradesDescription')}>
         {gradesQuery.isLoading ? (
-          <LoadingState label={t('common.loading')} />
+          <SkeletonTable rows={5} columns={3} />
         ) : gradesQuery.error ? (
           <ErrorState description={gradesQuery.error.message} onRetry={() => void gradesQuery.refetch()} />
         ) : (
@@ -309,7 +309,7 @@ export function AcademicPage() {
       {canLookupUserSchedule ? (
         <TableShell title={t('academic.scheduleLookupTitle')} description={t('academic.scheduleLookupDescription')}>
           {scheduleQuery.isLoading ? (
-            <LoadingState label={t('common.loading')} />
+            <SkeletonTable rows={5} columns={2} />
           ) : scheduleQuery.error ? (
             <ErrorState description={scheduleQuery.error.message} onRetry={() => void scheduleQuery.refetch()} />
           ) : (

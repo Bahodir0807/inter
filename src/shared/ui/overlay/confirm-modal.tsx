@@ -9,7 +9,7 @@ interface ConfirmModalProps {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  tone?: 'primary' | 'danger';
+  tone?: 'primary' | 'danger' | 'warning';
   loading?: boolean;
   onConfirm: () => Promise<void> | void;
   onClose: () => void;
@@ -59,11 +59,12 @@ export function ConfirmModal({
           </Button>
           <Button
             type="button"
-            variant={tone === 'danger' ? 'danger' : 'primary'}
+            variant={tone === 'danger' ? 'danger' : tone === 'warning' ? 'secondary' : 'primary'}
             onClick={() => void handleConfirm()}
             disabled={busy}
+            isLoading={busy}
           >
-            {busy ? translate('common.working') : confirmLabel}
+            {confirmLabel}
           </Button>
         </div>
       </div>

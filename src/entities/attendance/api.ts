@@ -1,35 +1,48 @@
 import { http } from '../../shared/api/http';
-import { AppUser } from '../../shared/types/auth';
-import { ScheduleItem } from '../schedule/api';
 
 export interface AttendanceEntry {
-  id: string;
+  _id: string;
+  student: string;
+  group: string;
   date: string;
   status: AttendanceStatus;
-  userId?: string | AppUser;
-  scheduleId?: string | ScheduleItem;
 }
 
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'TRIAL';
 
-export interface AttendanceFormValues {
-  userId: string;
-  scheduleId?: string;
+export interface AttendanceMarkPayload {
+  groupId: string;
+  studentId: string;
   date: string;
   status: AttendanceStatus;
+}
+
+export interface AttendanceByGroupResponse {
+  groupId: string;
+  date: string;
+  records: AttendanceEntry[];
 }
 
 export const attendanceApi = {
+  async getByGroup(groupId: string, date: string) {
+    const { data } = await http.get<AttendanceByGroupResponse>(`/attendance/by-group`, {
+      params: { groupId, date }
+    });
+    return data;
+  },
+  async mark(payload: AttendanceMarkPayload) {
+    const { data } = await http.post<AttendanceEntry>('/attendance/mark', payload);
+    return data;
+  },
+  // Legacy methods for backward compatibility
+  async getByUser(_userId: string) {
+    // This method is deprecated - use getByGroup instead
+    console.warn('attendanceApi.getByUser is deprecated. Use getByGroup with groupId parameter.');
+    return [] as AttendanceEntry[];
+  },
   async getMine() {
-    const { data } = await http.get<AttendanceEntry[]>('/attendance/me');
-    return data;
-  },
-  async getByUser(userId: string) {
-    const { data } = await http.get<AttendanceEntry[]>(`/attendance/user/${userId}`);
-    return data;
-  },
-  async mark(payload: AttendanceFormValues) {
-    const { data } = await http.post<AttendanceEntry>('/attendance', payload);
-    return data;
+    // This method is deprecated - use getByGroup instead
+    console.warn('attendanceApi.getMine is deprecated. Use getByGroup with groupId parameter.');
+    return [] as AttendanceEntry[];
   },
 };

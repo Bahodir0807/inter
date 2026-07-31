@@ -19,7 +19,8 @@ import { TableToolbar } from '../../shared/ui/data-display/table-toolbar';
 import { Pagination } from '../../shared/ui/data-display/pagination';
 import { Button } from '../../shared/ui/buttons/button';
 import { Select } from '../../shared/ui/forms/select';
-import { sortBy, paginate, SortDirection } from '../../shared/lib/table';
+import { SortDirection } from '../../shared/lib/table';
+import useTableState from '../../shared/lib/hooks/use-table-state';
 import { toast } from '../../shared/ui/feedback/toaster';
 import { CourseFormModal } from './course-form-modal';
 import { ConfirmModal } from '../../shared/ui/overlay/confirm-modal';
@@ -35,10 +36,8 @@ export function CoursesPage() {
   const isTeacher = sessionUser?.role === 'teacher';
   const isStudent = sessionUser?.role === 'student';
 
-  const [search, setSearch] = useState('');
-  const [teacherFilter, setTeacherFilter] = useState<'all' | string>('all');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [page, setPage] = useState(1);
+  const table = useTableState<Course>({ initialPageSize: pageSize });
+  const { page, setPage, search, setSearch, filters, setFilter, sortDirection, setSortDirection, apply } = table;
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteCandidate, setDeleteCandidate] = useState<Course | null>(null);
@@ -123,18 +122,21 @@ export function CoursesPage() {
     );
   }, [courses, isAdminLike, isTeacher, sessionUser]);
 
-  const filteredCourses = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    const filtered = visibleCourses.filter(course => {
-      const teacherId = typeof course.teacherId === 'string' ? course.teacherId : course.teacherId?.id;
-      const teacherName = typeof course.teacherId === 'string' ? course.teacherId : getUserDisplayName(course.teacherId);
-      const matchesTeacher = !isAdminLike || teacherFilter === 'all' || teacherId === teacherFilter;
-      const haystack = [course.name, course.description, teacherName].filter(Boolean).join(' ').toLowerCase();
-      return matchesTeacher && haystack.includes(normalizedSearch);
-    });
+  const teacherFilter = (filters.teacher as string) ?? 'all';
 
-    return sortBy(filtered, item => item.name.toLowerCase(), sortDirection);
-  }, [isAdminLike, search, sortDirection, teacherFilter, visibleCourses]);
+  const { paged: pagedCourses, total, totalPages } = useMemo(() => {
+    return apply(visibleCourses, {
+      filterFn: course => {
+        const normalizedSearch = (search || '').trim().toLowerCase();
+        const teacherId = typeof course.teacherId === 'string' ? course.teacherId : course.teacherId?.id;
+        const teacherName = typeof course.teacherId === 'string' ? course.teacherId : getUserDisplayName(course.teacherId);
+        const matchesTeacher = !isAdminLike || teacherFilter === 'all' || teacherId === teacherFilter;
+        const haystack = [course.name, course.description, teacherName].filter(Boolean).join(' ').toLowerCase();
+        return matchesTeacher && haystack.includes(normalizedSearch);
+      },
+      sortAccessor: item => item.name.toLowerCase(),
+    });
+  }, [visibleCourses, search, filters.teacher, sortDirection, page]);
 
   const selectedTeacherLabel =
     teacherFilter === 'all' ? '' : getUserDisplayName(teachers.find(teacher => teacher.id === teacherFilter));
@@ -152,8 +154,7 @@ export function CoursesPage() {
     return <ErrorState description={coursesQuery.error.message} onRetry={() => void coursesQuery.refetch()} />;
   }
 
-  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / pageSize));
-  const pagedCourses = paginate(filteredCourses, page, pageSize);
+  // pagedCourses and totalPages are provided by the table hook via apply
   const totalStudents = visibleCourses.reduce((sum, item) => sum + (item.students?.length ?? 0), 0);
   const coursesWithTeacher = visibleCourses.filter(item => item.teacherId).length;
   const columns: Column<Course>[] = [
@@ -246,7 +247,7 @@ export function CoursesPage() {
       <div className="dashboard-grid">
         <Card className="metric-card">
           <span className="subtle">{t('course.visibleCourses')}</span>
-          <strong>{filteredCourses.length}</strong>
+          <strong>{total}</strong>
           <span className="subtle">{t('course.afterFilters')}</span>
         </Card>
         <Card className="metric-card">
@@ -274,12 +275,9 @@ export function CoursesPage() {
         >
           <TableToolbar
             search={search}
-            onSearchChange={value => {
-              setSearch(value);
-              setPage(1);
-            }}
+            onSearchChange={value => setSearch(value)}
             searchPlaceholder={isStudent ? t('common.searchByCourseRoomTeacher') : t('common.searchByCourseRoomTeacherGroup')}
-            resultsLabel={t('common.resultsLabel', { count: filteredCourses.length })}
+            resultsLabel={t('common.resultsLabel', { count: total })}
             activeFilters={toolbarFilters}
             filters={
               <>
@@ -287,10 +285,7 @@ export function CoursesPage() {
                   <Select
                     aria-label={t('course.filterTeacherLabel')}
                     value={teacherFilter}
-                    onChange={event => {
-                      setTeacherFilter(event.target.value);
-                      setPage(1);
-                    }}
+                    onChange={event => setFilter('teacher', event.target.value)}
                   >
                     <option value="all">{t('course.allTeachers')}</option>
                     {teachers.map(teacher => (

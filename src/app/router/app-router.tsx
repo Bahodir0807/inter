@@ -4,6 +4,7 @@ import { ProtectedRoute } from '../../features/auth/ui/protected-route';
 import { RoleGate } from '../../features/auth/ui/role-gate';
 import { useAuthStore } from '../../features/auth/model/auth-store';
 import { AppShell } from '../../widgets/app-shell/app-shell';
+import { NotFoundPage } from '../../pages/not-found/not-found-page';
 import { LoginPage } from '../../pages/login/login-page';
 import { appRoutes } from './navigation';
 import { LoadingState } from '../../shared/ui/feedback/loading-state';
@@ -36,7 +37,16 @@ export function AppRouter() {
               )}
             />
           ))}
-          <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="not-found" element={(
+            <Suspense fallback={<LoadingState label={translate('common.loadingPage')} />}>
+              <NotFoundPage />
+            </Suspense>
+          )} />
+          <Route path="*" element={(
+            <Suspense fallback={<LoadingState label={translate('common.loadingPage')} />}>
+              <NotFoundPage />
+            </Suspense>
+          )} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

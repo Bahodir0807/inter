@@ -167,6 +167,16 @@ h1, h2, h3, p { margin: 0; }
 
 .cell-badges { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.1rem; }
 
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.cell-title { display: block; font-weight: 750; color: var(--color-text); }
+.cell-meta { display: block; color: var(--color-muted); font-size: 0.76rem; }
+
 .dashboard-grid {
   display: grid;
   min-width: 0;
@@ -176,56 +186,7 @@ h1, h2, h3, p { margin: 0; }
 
 .dashboard-grid.dashboard-grid--overview { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
 
-.metric-card {
-  min-width: 0;
-  min-height: 6.15rem;
-  display: grid;
-  align-content: space-between;
-  gap: 0.36rem;
-  padding: 0.95rem;
-  border: 1px solid transparent;
-  background: linear-gradient(180deg, var(--color-card), var(--color-elevated));
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
-}
-
-.metric-card strong {
-  min-width: 0;
-  font-size: clamp(1.45rem, 1.8vw, 1.95rem);
-  line-height: 1.05;
-  overflow-wrap: anywhere;
-}
-
-.metric-card .subtle {
-  min-width: 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.01em;
-  overflow-wrap: anywhere;
-}
-
-.metric-card--hero {
-  color: white;
-  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.28), transparent 36%), linear-gradient(180deg, #2563eb, #1d4ed8);
-  box-shadow: 0 22px 45px rgba(37, 99, 235, 0.18);
-}
-
-.metric-card--accent {
-  border-color: rgba(37, 99, 235, 0.18);
-}
-
-.metric-card--quiet {
-  background: var(--color-elevated);
-  color: var(--color-text);
-}
-
-.metric-card--warning {
-  border-color: color-mix(in srgb, var(--color-warning) 36%, var(--color-border));
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-warning) 14%, var(--color-card)), var(--color-card));
-}
+/* metric-card styles moved to component CSS module (card.module.css) to avoid global duplication */
 
 /* App Shell Layout - Core Systemic Rules */
 .app-shell {
@@ -558,6 +519,11 @@ h1, h2, h3, p { margin: 0; }
   background: var(--color-table);
   transition: width 180ms ease;
 }
+.data-table th,
+.data-table td {
+  padding: 0.6rem 0.9rem;
+  vertical-align: middle;
+}
 .data-table th {
   position: sticky;
   top: 0;
@@ -571,6 +537,27 @@ h1, h2, h3, p { margin: 0; }
 .data-table tbody tr:last-child td { border-bottom: 0; }
 
 .data-table tr:hover td { background: color-mix(in srgb, var(--color-primary) 4%, transparent); }
+
+.data-table tbody tr { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent); }
+
+.data-table__cell--actions {
+  text-align: right;
+  width: 12%;
+  white-space: nowrap;
+  padding-right: 1rem;
+}
+
+.data-table__cell--actions .row-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+}
+
+.data-table__cell--actions .uiButton {
+  max-width: none;
+}
 
 .data-table__cell--actions, .data-table__head--actions {
   text-align: right;
